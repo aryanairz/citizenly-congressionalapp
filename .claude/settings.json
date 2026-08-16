@@ -1,4 +1,15 @@
 {
+  "permissions": {
+    "allow": [
+      "Bash(npm view *)",
+      "WebSearch",
+      "Bash(npx --yes expo install nativewind tailwindcss@^3.4.17)",
+      "Bash(node -e \"const p=require\\('./package.json'\\); console.log\\('nativewind:', p.dependencies.nativewind\\); console.log\\('tailwindcss:', p.dependencies.tailwindcss||p.devDependencies.tailwindcss\\); console.log\\('reanimated:', p.dependencies['react-native-reanimated']\\); console.log\\('safe-area:', p.dependencies['react-native-safe-area-context']\\);\")",
+      "Bash(npx tsc *)",
+      "Bash(echo \"=== EXIT: $? ===\")",
+      "Bash(node -e ' *)"
+    ]
+  },
   "enabledPlugins": {
     "expo@claude-plugins-official": true
   }

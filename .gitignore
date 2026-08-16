@@ -32,9 +32,15 @@ yarn-error.*
 
 # local env files
 .env*.local
+.env
+# but keep the template committed
+!.env.example
 
 # typescript
 *.tsbuildinfo
+
+# Playwright MCP session artifacts
+.playwright-mcp/
 
 example
 
