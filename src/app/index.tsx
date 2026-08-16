@@ -1,98 +1,191 @@
-import * as Device from 'expo-device';
-import { Platform, StyleSheet } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { MaterialIcons } from '@expo/vector-icons';
+import { Image } from 'expo-image';
+import { Redirect, useRouter } from 'expo-router';
+import { useEffect, useState } from 'react';
+import { ScrollView, StyleSheet, View } from 'react-native';
+import Animated, {
+  cancelAnimation,
+  Easing,
+  useAnimatedStyle,
+  useReducedMotion,
+  useSharedValue,
+  withRepeat,
+  withTiming,
+} from 'react-native-reanimated';
 
-import { AnimatedIcon } from '@/components/animated-icon';
-import { HintRow } from '@/components/hint-row';
-import { ThemedText } from '@/components/themed-text';
-import { ThemedView } from '@/components/themed-view';
-import { WebBadge } from '@/components/web-badge';
-import { BottomTabInset, MaxContentWidth, Spacing } from '@/constants/theme';
+import { AppText } from '@/components/app-text';
+import { Button } from '@/components/button';
+import { ScreenContainer } from '@/components/screen-container';
+import { MARQUEE_LANGUAGE_NAMES } from '@/constants/brand';
+import { Colors, Spacing } from '@/constants/design';
+import { useSession } from '@/lib/session-context';
 
-function getDevMenuHint() {
-  if (Platform.OS === 'web') {
-    return <ThemedText type="small">use browser devtools</ThemedText>;
+const wordmark = require('@/assets/images/og-image.png');
+
+export default function WelcomeScreen() {
+  const router = useRouter();
+  const session = useSession();
+
+  // Hold while the stored session restores; skip Welcome when signed in.
+  if (session.status === 'restoring') {
+    return null;
   }
-  if (Device.isDevice) {
-    return (
-      <ThemedText type="small">
-        shake device or press <ThemedText type="code">m</ThemedText> in terminal
-      </ThemedText>
-    );
+  if (session.status === 'signedIn') {
+    return <Redirect href="/dashboard" />;
   }
-  const shortcut = Platform.OS === 'android' ? 'cmd+m (or ctrl+m)' : 'cmd+d';
+
   return (
-    <ThemedText type="small">
-      press <ThemedText type="code">{shortcut}</ThemedText>
-    </ThemedText>
+    <ScreenContainer>
+      {/* Brand + value proposition, anchored to the top */}
+      <View style={styles.hero}>
+        <Image
+          source={wordmark}
+          style={styles.wordmark}
+          contentFit="contain"
+          accessibilityLabel="Citizenly"
+        />
+        <View style={styles.copy}>
+          <AppText variant="headlineLg" color="navy" center>
+            Practice the US Citizenship Test in your language
+          </AppText>
+          <AppText variant="bodyLg" color="muted" center>
+            Your path to citizenship starts here.
+          </AppText>
+        </View>
+      </View>
+
+      {/* Flexible spacers position the actions in the lower-middle of the screen */}
+      <View style={styles.spacerAboveActions} />
+
+      <View style={styles.actions}>
+        <Button
+          label="Get Started"
+          onPress={() => router.push('/sign-up')}
+          rightIcon={<MaterialIcons name="arrow-forward" size={22} color={Colors.onNavy} />}
+        />
+        <Button
+          label="I already have an account"
+          variant="secondary"
+          onPress={() => router.push('/log-in')}
+        />
+      </View>
+
+      <View style={styles.spacerBelowActions} />
+
+      <LanguageMarquee />
+    </ScreenContainer>
   );
 }
 
-export default function HomeScreen() {
+/** Slow, seamless infinite loop of every platform language in native script. */
+function LanguageMarquee() {
+  const reduceMotion = useReducedMotion();
+  const offset = useSharedValue(0);
+  // Width of ONE copy of the name set (incl. trailing gap); the loop translates
+  // by exactly this amount, so copy 2 lands where copy 1 started — seamless.
+  const [setWidth, setSetWidth] = useState(0);
+
+  useEffect(() => {
+    if (reduceMotion || setWidth === 0) return;
+    offset.value = 0;
+    offset.value = withRepeat(
+      withTiming(-setWidth, {
+        // Constant speed (~60 px/s) regardless of how wide the names render.
+        duration: (setWidth / 60) * 1000,
+        easing: Easing.linear,
+      }),
+      -1,
+    );
+    return () => cancelAnimation(offset);
+  }, [offset, reduceMotion, setWidth]);
+
+  const scrollStyle = useAnimatedStyle(() => ({
+    transform: [{ translateX: offset.value }],
+  }));
+
+  const renderNames = () =>
+    MARQUEE_LANGUAGE_NAMES.map((name) => (
+      // No letter-spacing: tracking can break complex-script ligatures
+      // (Devanagari, Malayalam, Gujarati).
+      <AppText key={name} variant="bodyMd" color="muted">
+        {name}
+      </AppText>
+    ));
+
+  // Respect "reduce motion": a static, finger-scrollable row instead of animation.
+  if (reduceMotion) {
+    return (
+      <ScrollView
+        horizontal
+        showsHorizontalScrollIndicator={false}
+        style={styles.marquee}
+        contentContainerStyle={[styles.marqueeSet, styles.marqueeStaticPad]}>
+        {renderNames()}
+      </ScrollView>
+    );
+  }
+
   return (
-    <ThemedView style={styles.container}>
-      <SafeAreaView style={styles.safeArea}>
-        <ThemedView style={styles.heroSection}>
-          <AnimatedIcon />
-          <ThemedText type="title" style={styles.title}>
-            Welcome to&nbsp;Expo
-          </ThemedText>
-        </ThemedView>
-
-        <ThemedText type="code" style={styles.code}>
-          get started
-        </ThemedText>
-
-        <ThemedView type="backgroundElement" style={styles.stepContainer}>
-          <HintRow
-            title="Try editing"
-            hint={<ThemedText type="code">src/app/index.tsx</ThemedText>}
-          />
-          <HintRow title="Dev tools" hint={getDevMenuHint()} />
-          <HintRow
-            title="Fresh start"
-            hint={<ThemedText type="code">npm run reset-project</ThemedText>}
-          />
-        </ThemedView>
-
-        {Platform.OS === 'web' && <WebBadge />}
-      </SafeAreaView>
-    </ThemedView>
+    <View
+      style={styles.marquee}
+      accessible
+      accessibilityLabel={`Available in ${MARQUEE_LANGUAGE_NAMES.length} languages`}>
+      <Animated.View style={[styles.marqueeTrack, scrollStyle]}>
+        <View
+          style={styles.marqueeSet}
+          onLayout={(e) => setSetWidth(Math.round(e.nativeEvent.layout.width))}>
+          {renderNames()}
+        </View>
+        <View style={styles.marqueeSet}>{renderNames()}</View>
+      </Animated.View>
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
-  container: {
+  hero: {
+    alignItems: 'center',
+    gap: Spacing.lg,
+    paddingTop: Spacing.xl,
+  },
+  wordmark: {
+    width: '100%',
+    maxWidth: 320,
+    aspectRatio: 1600 / 630,
+  },
+  copy: {
+    gap: Spacing.sm,
+  },
+  // 2:1 flex ratio puts the actions below center, comfortably above the marquee.
+  spacerAboveActions: {
+    flex: 2,
+    minHeight: Spacing.xl,
+  },
+  spacerBelowActions: {
     flex: 1,
-    justifyContent: 'center',
+    minHeight: Spacing.lg,
+  },
+  actions: {
+    gap: Spacing.md,
+  },
+  // Bleed past the container's 24px side padding so the loop runs edge-to-edge.
+  marquee: {
+    marginHorizontal: -Spacing.screenX,
+    overflow: 'hidden',
+    paddingBottom: Spacing.sm,
+  },
+  // Width hugs its content (two copies of the set) instead of stretching.
+  marqueeTrack: {
     flexDirection: 'row',
+    alignSelf: 'flex-start',
   },
-  safeArea: {
-    flex: 1,
-    paddingHorizontal: Spacing.four,
+  marqueeSet: {
+    flexDirection: 'row',
     alignItems: 'center',
-    gap: Spacing.three,
-    paddingBottom: BottomTabInset + Spacing.three,
-    maxWidth: MaxContentWidth,
+    gap: Spacing.xl,
+    paddingRight: Spacing.xl,
   },
-  heroSection: {
-    alignItems: 'center',
-    justifyContent: 'center',
-    flex: 1,
-    paddingHorizontal: Spacing.four,
-    gap: Spacing.four,
-  },
-  title: {
-    textAlign: 'center',
-  },
-  code: {
-    textTransform: 'uppercase',
-  },
-  stepContainer: {
-    gap: Spacing.three,
-    alignSelf: 'stretch',
-    paddingHorizontal: Spacing.three,
-    paddingVertical: Spacing.four,
-    borderRadius: Spacing.four,
+  marqueeStaticPad: {
+    paddingLeft: Spacing.screenX,
   },
 });
