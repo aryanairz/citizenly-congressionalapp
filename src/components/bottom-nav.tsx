@@ -5,6 +5,8 @@ import { Pressable, StyleSheet, View } from 'react-native';
 
 import { AppText } from '@/components/app-text';
 import { Colors, Radius, Spacing } from '@/constants/design';
+import { t } from '@/lib/ui-i18n';
+import { useLang } from '@/lib/use-lang';
 
 export type BottomNavTab = 'home' | 'profile';
 
@@ -31,6 +33,7 @@ export interface BottomNavProps {
  */
 export function BottomNav({ active }: BottomNavProps) {
   const router = useRouter();
+  const lang = useLang();
 
   const handlePress = (tab: BottomNavTab) => {
     if (tab === active) return; // already here
@@ -43,6 +46,8 @@ export function BottomNav({ active }: BottomNavProps) {
       {TABS.map((tab) => (
         <NavItem
           key={tab.key}
+          // 'Profile' has no website translation yet — stays English for now.
+          label={tab.key === 'home' ? t('home', lang) : tab.label}
           tab={tab}
           active={tab.key === active}
           onPress={() => handlePress(tab.key)}
@@ -52,7 +57,17 @@ export function BottomNav({ active }: BottomNavProps) {
   );
 }
 
-function NavItem({ tab, active, onPress }: { tab: TabSpec; active: boolean; onPress: () => void }) {
+function NavItem({
+  tab,
+  label,
+  active,
+  onPress,
+}: {
+  tab: TabSpec;
+  label: string;
+  active: boolean;
+  onPress: () => void;
+}) {
   const [pressed, setPressed] = useState(false);
   const color = active ? Colors.navy : Colors.muted;
 
@@ -60,14 +75,14 @@ function NavItem({ tab, active, onPress }: { tab: TabSpec; active: boolean; onPr
     <Pressable
       accessibilityRole="tab"
       accessibilityState={{ selected: active }}
-      accessibilityLabel={tab.label}
+      accessibilityLabel={label}
       onPress={onPress}
       onPressIn={() => setPressed(true)}
       onPressOut={() => setPressed(false)}>
       <View style={[styles.item, active && styles.itemActive, pressed && styles.pressed]}>
         <MaterialIcons name={tab.icon} size={26} color={color} />
         <AppText variant="labelMd" style={[styles.label, { color }]}>
-          {tab.label}
+          {label}
         </AppText>
       </View>
     </Pressable>

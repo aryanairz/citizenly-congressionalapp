@@ -8,8 +8,10 @@ import { Button } from '@/components/button';
 import { Input } from '@/components/input';
 import { OptionRow } from '@/components/option-row';
 import { ScreenContainer } from '@/components/screen-container';
+import { ScreenHeader } from '@/components/screen-header';
 import { US_STATES, type USPlace } from '@/constants/us-states';
 import { Colors, FontFamily, Radius, Sizing, Spacing } from '@/constants/design';
+import { normalizeDigits } from '@/lib/digits';
 
 const FIND_REP_URL = 'https://www.house.gov/representatives/find-your-representative';
 
@@ -31,10 +33,16 @@ export interface StateDistrictPickerProps {
 }
 
 /**
- * The shared state + congressional-district picker: searchable state list,
- * optional district field with per-state caps, at-large auto-assignment, and
- * DC/territory handling. Used by onboarding's State step and the Profile
- * location editor so behavior can never drift between them.
+ * The shared state + congressional-district picker, as a two-step flow:
+ *
+ *   1. "state" — the caller's header, a search field, and the full-height
+ *      state list. Tapping a state advances immediately.
+ *   2. "district" — its own page: back arrow (returns to the list), the
+ *      chosen state (tap to change), the district question when the state
+ *      has one, and the submit button.
+ *
+ * Used by onboarding's State step and the Profile location editor so
+ * behavior can never drift between them.
  */
 export function StateDistrictPicker({
   header,
@@ -45,6 +53,7 @@ export function StateDistrictPicker({
   serverError,
   onSubmit,
 }: StateDistrictPickerProps) {
+  const [step, setStep] = useState<'state' | 'district'>('state');
   const [selected, setSelected] = useState<USPlace | null>(
     US_STATES.find((place) => place.code === initialCode) ?? null,
   );
@@ -53,9 +62,6 @@ export function StateDistrictPicker({
   );
   const [districtError, setDistrictError] = useState<string | undefined>();
   const [query, setQuery] = useState('');
-  // While the user is searching (keyboard up), the district field stays out of
-  // the way; it appears once a state is tapped and the keyboard drops.
-  const [searching, setSearching] = useState(false);
 
   const filtered = US_STATES.filter((place) =>
     place.name.toLowerCase().includes(query.trim().toLowerCase()),
@@ -68,15 +74,18 @@ export function StateDistrictPicker({
   const districtApplies = districtCap > 1;
 
   const handleSelect = (place: USPlace) => {
-    // Picking a state ends the search — drop the keyboard so the selection,
-    // district field, and submit button are all visible.
     Keyboard.dismiss();
-    setSearching(false);
     if (place.code !== selected?.code) {
       setDistrictText('');
       setDistrictError(undefined);
     }
     setSelected(place);
+    setStep('district');
+  };
+
+  const backToStates = () => {
+    Keyboard.dismiss();
+    setStep('state');
   };
 
   const handleSubmit = () => {
@@ -100,29 +109,79 @@ export function StateDistrictPicker({
     onSubmit(selected, district);
   };
 
-  return (
-    <ScreenContainer
-      keyboardAvoiding
-      footer={
-        <View style={styles.footer}>
-          {serverError ? (
-            <AppText variant="bodyMd" center style={styles.serverError}>
-              {serverError}
+  if (step === 'district' && selected) {
+    return (
+      <ScreenContainer
+        keyboardAvoiding
+        footer={
+          <View style={styles.footer}>
+            {serverError ? (
+              <AppText variant="bodyMd" center style={styles.serverError}>
+                {serverError}
+              </AppText>
+            ) : null}
+            <Button label={submitLabel} onPress={handleSubmit} loading={submitting} />
+          </View>
+        }>
+        {/* Tapping anywhere outside the input dismisses the keyboard. */}
+        <Pressable accessible={false} onPress={Keyboard.dismiss}>
+          <ScreenHeader onBack={backToStates} />
+          <View style={styles.districtTop}>
+            <AppText variant="headlineLg" color="navy">
+              Your congressional district
             </AppText>
-          ) : null}
-          <Button
-            label={submitLabel}
-            onPress={handleSubmit}
-            disabled={!selected}
-            loading={submitting}
-          />
-        </View>
-      }>
+            <OptionRow
+              title={selected.name}
+              trailingLabel="Change"
+              selected
+              checkmark={false}
+              onPress={backToStates}
+            />
+          </View>
+          <View style={styles.districtArea}>
+            {districtApplies ? (
+              <>
+                <Input
+                  label="Congressional District (Optional)"
+                  value={districtText}
+                  onChangeText={(text) => {
+                    setDistrictText(normalizeDigits(text));
+                    setDistrictError(undefined);
+                  }}
+                  placeholder={`1 to ${districtCap}`}
+                  keyboardType="number-pad"
+                  maxLength={2}
+                  error={districtError}
+                />
+                {/* The error (rendered by Input) replaces the helper line. */}
+                {!districtError ? (
+                  <AppText variant="bodyMd" color="muted">
+                    This helps us show you questions about your U.S. Representative. Skip it
+                    if you&apos;re not sure.
+                  </AppText>
+                ) : null}
+                <FindRepresentativeLink />
+              </>
+            ) : (
+              <AppText variant="bodyMd" color="muted">
+                {districtCap === 1
+                  ? `${selected.name} has one statewide representative, so there's no district number to enter.`
+                  : `${selected.name} doesn't use congressional district numbers, so there's nothing to enter here.`}
+              </AppText>
+            )}
+          </View>
+        </Pressable>
+      </ScreenContainer>
+    );
+  }
+
+  return (
+    <ScreenContainer>
       {/* Tapping anywhere in the fixed header area dismisses the keyboard. */}
       <Pressable accessible={false} onPress={Keyboard.dismiss}>
         {header}
         <View style={styles.searchWrap}>
-          <SearchField value={query} onChange={setQuery} onFocusChange={setSearching} />
+          <SearchField value={query} onChange={setQuery} />
         </View>
       </Pressable>
       <ScrollView
@@ -145,31 +204,6 @@ export function StateDistrictPicker({
           </AppText>
         ) : null}
       </ScrollView>
-
-      {districtApplies && !searching ? (
-        <View style={styles.districtArea}>
-          <Input
-            label="Congressional District (Optional)"
-            value={districtText}
-            onChangeText={(text) => {
-              setDistrictText(text.replace(/\D/g, ''));
-              setDistrictError(undefined);
-            }}
-            placeholder={`1 to ${districtCap}`}
-            keyboardType="number-pad"
-            maxLength={2}
-            error={districtError}
-          />
-          {/* The error (rendered by Input) replaces the helper line to save space. */}
-          {!districtError ? (
-            <AppText variant="bodyMd" color="muted">
-              This helps us show you questions about your U.S. Representative. Skip it if
-              you&apos;re not sure.
-            </AppText>
-          ) : null}
-          <FindRepresentativeLink />
-        </View>
-      ) : null}
     </ScreenContainer>
   );
 }
@@ -198,11 +232,9 @@ function FindRepresentativeLink() {
 function SearchField({
   value,
   onChange,
-  onFocusChange,
 }: {
   value: string;
   onChange: (text: string) => void;
-  onFocusChange?: (focused: boolean) => void;
 }) {
   const [focused, setFocused] = useState(false);
   const [clearPressed, setClearPressed] = useState(false);
@@ -219,14 +251,8 @@ function SearchField({
         selectionColor={Colors.navy}
         autoCorrect={false}
         accessibilityLabel="Search states"
-        onFocus={() => {
-          setFocused(true);
-          onFocusChange?.(true);
-        }}
-        onBlur={() => {
-          setFocused(false);
-          onFocusChange?.(false);
-        }}
+        onFocus={() => setFocused(true)}
+        onBlur={() => setFocused(false)}
       />
       {value.length > 0 ? (
         <Pressable
@@ -287,9 +313,13 @@ const styles = StyleSheet.create({
   empty: {
     paddingTop: Spacing.xl,
   },
+  districtTop: {
+    gap: Spacing.lg,
+    paddingTop: Spacing.sm,
+  },
   districtArea: {
     gap: Spacing.sm,
-    paddingTop: Spacing.md,
+    paddingTop: Spacing.lg,
   },
   repLink: {
     flexDirection: 'row',

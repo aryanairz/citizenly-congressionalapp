@@ -13,10 +13,13 @@ import {
 import { Colors, Spacing } from '@/constants/design';
 import { ApiError, apiLogin } from '@/lib/api';
 import { useSession } from '@/lib/session-context';
+import { t } from '@/lib/ui-i18n';
+import { useLang } from '@/lib/use-lang';
 
 export default function LogInScreen() {
   const router = useRouter();
   const session = useSession();
+  const lang = useLang();
 
   const [email, setEmail] = useState('');
   const [pin, setPin] = useState('');
@@ -53,17 +56,28 @@ export default function LogInScreen() {
     setServerError(undefined);
     setSubmitting(true);
     try {
-      const { user, token } = await apiLogin(entered, pin);
-      await session.signIn(user, token);
+      let auth: Awaited<ReturnType<typeof apiLogin>>;
+      try {
+        auth = await apiLogin(entered, pin);
+      } catch (error: unknown) {
+        // ApiError = the server answered (wrong PIN, lockout, …) — show its
+        // message. Anything else from the request itself is connectivity.
+        setServerError(
+          error instanceof ApiError
+            ? error.message
+            : "We couldn't reach the server. Please check your connection and try again.",
+        );
+        return;
+      }
+      try {
+        await session.signIn(auth.user, auth.token);
+      } catch {
+        // The server accepted the login but this device couldn't persist the
+        // session — a storage problem, not a connectivity one.
+        setServerError("We couldn't save your session on this device. Please try again.");
+        return;
+      }
       router.replace('/dashboard');
-    } catch (error: unknown) {
-      // ApiError = the server answered (wrong PIN, lockout, …) — show its
-      // message. Anything else is connectivity.
-      setServerError(
-        error instanceof ApiError
-          ? error.message
-          : "We couldn't reach the server. Please check your connection and try again.",
-      );
     } finally {
       setSubmitting(false);
     }
@@ -75,7 +89,7 @@ export default function LogInScreen() {
       <View style={styles.content}>
         <View style={styles.headingGroup}>
           <AppText variant="headlineLg" color="navy">
-            Log In
+            {t('logIn', lang)}
           </AppText>
           <AppText variant="bodyLg" color="muted">
             Enter your details to access your account.
@@ -83,7 +97,7 @@ export default function LogInScreen() {
         </View>
 
         <Input
-          label="Email Address"
+          label={t('emailAddress', lang)}
           value={email}
           onChangeText={setEmail}
           placeholder="your.email@example.com"
@@ -106,7 +120,7 @@ export default function LogInScreen() {
               {serverError}
             </AppText>
           ) : null}
-          <Button label="Log In" onPress={handleLogIn} loading={submitting} />
+          <Button label={t('logIn', lang)} onPress={handleLogIn} loading={submitting} />
           <Pressable
             accessibilityRole="link"
             onPress={() => {}}

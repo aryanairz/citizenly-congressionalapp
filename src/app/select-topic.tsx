@@ -6,14 +6,17 @@ import { ActivityIndicator, Pressable, ScrollView, StyleSheet, View } from 'reac
 import { AppText, BottomNav, OfflineNotice, ScreenContainer, ScreenHeader } from '@/components';
 import { Colors, Radius, Sizing, Spacing } from '@/constants/design';
 import { filterByTopic, TOPIC_OPTIONS, type TopicKey } from '@/constants/topics';
+import { t, tCount } from '@/lib/ui-i18n';
+import { useLang } from '@/lib/use-lang';
 import { useQuestionPool } from '@/lib/use-question-pool';
+import type { UiKey } from '@/lib/ui-strings';
 
 type Mode = 'study' | 'flashcards' | 'quiz';
 
-const MODE_META: Record<Mode, { label: string; target: string }> = {
-  study: { label: 'Study Questions', target: '/study-list' },
-  flashcards: { label: 'Flashcards', target: '/flashcards' },
-  quiz: { label: 'Quiz', target: '/quiz' },
+const MODE_META: Record<Mode, { labelKey: UiKey; target: string }> = {
+  study: { labelKey: 'modeStudy', target: '/study-list' },
+  flashcards: { labelKey: 'modeFlashcards', target: '/flashcards' },
+  quiz: { labelKey: 'modeQuiz', target: '/quiz' },
 };
 
 /**
@@ -27,6 +30,7 @@ export default function SelectTopicScreen() {
   const mode: Mode =
     params.mode === 'flashcards' || params.mode === 'quiz' ? params.mode : 'study';
 
+  const lang = useLang();
   const pool = useQuestionPool();
   const questions = pool.status === 'ready' ? pool.questions : [];
 
@@ -45,10 +49,10 @@ export default function SelectTopicScreen() {
         <ScreenHeader />
         <View style={styles.headingGroup}>
           <AppText variant="labelMd" color="muted" style={styles.modeLabel}>
-            {MODE_META[mode].label}
+            {t(MODE_META[mode].labelKey, lang)}
           </AppText>
           <AppText variant="headlineLg" color="navy">
-            Select a Topic
+            {t('selectTopic', lang)}
           </AppText>
           {pool.status === 'ready' && pool.offline ? (
             <OfflineNotice onRetry={pool.reload} />
@@ -86,11 +90,12 @@ export default function SelectTopicScreen() {
 
 function TopicRow({ name, count, onPress }: { name: string; count: number; onPress: () => void }) {
   const [pressed, setPressed] = useState(false);
+  const lang = useLang();
 
   return (
     <Pressable
       accessibilityRole="button"
-      accessibilityLabel={`${name}, ${count} questions`}
+      accessibilityLabel={`${name}, ${tCount('questionsCount', count, lang)}`}
       onPress={onPress}
       onPressIn={() => setPressed(true)}
       onPressOut={() => setPressed(false)}>

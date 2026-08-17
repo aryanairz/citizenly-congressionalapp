@@ -19,12 +19,15 @@ import { ScreenContainer } from '@/components/screen-container';
 import { MARQUEE_LANGUAGE_NAMES } from '@/constants/brand';
 import { Colors, Spacing } from '@/constants/design';
 import { useSession } from '@/lib/session-context';
+import { t } from '@/lib/ui-i18n';
+import { useLang } from '@/lib/use-lang';
 
 const wordmark = require('@/assets/images/og-image.png');
 
 export default function WelcomeScreen() {
   const router = useRouter();
   const session = useSession();
+  const lang = useLang();
 
   // Hold while the stored session restores; skip Welcome when signed in.
   if (session.status === 'restoring') {
@@ -59,12 +62,12 @@ export default function WelcomeScreen() {
 
       <View style={styles.actions}>
         <Button
-          label="Get Started"
+          label={t('getStarted', lang)}
           onPress={() => router.push('/sign-up')}
           rightIcon={<MaterialIcons name="arrow-forward" size={22} color={Colors.onNavy} />}
         />
         <Button
-          label="I already have an account"
+          label={t('alreadyHaveAccount', lang)}
           variant="secondary"
           onPress={() => router.push('/log-in')}
         />

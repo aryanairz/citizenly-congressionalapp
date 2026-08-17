@@ -25,17 +25,20 @@ export default function EditLocationScreen() {
     setSaving(true);
     try {
       await apiUpdatePlace(place.code, district, session.token);
-      await session.updateUser({ state: place.code, district: district ?? undefined });
-      router.back();
     } catch (e: unknown) {
       setServerError(
         e instanceof ApiError
           ? e.message
           : "We couldn't save your changes. Please check your connection and try again.",
       );
-    } finally {
       setSaving(false);
+      return;
     }
+    // Server saved and updateUser refreshes in-memory state before it touches
+    // the offline cache — a cache-write failure is not worth blocking on.
+    await session.updateUser({ state: place.code, district: district ?? undefined }).catch(() => {});
+    setSaving(false);
+    router.back();
   };
 
   return (

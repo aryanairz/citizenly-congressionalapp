@@ -1,6 +1,6 @@
 import { useRouter } from 'expo-router';
 import { useState } from 'react';
-import { Alert, ScrollView, StyleSheet, View } from 'react-native';
+import { Alert, Platform, ScrollView, StyleSheet, View } from 'react-native';
 
 import {
   AppText,
@@ -17,6 +17,8 @@ import { US_STATES } from '@/constants/us-states';
 import { Colors, Spacing } from '@/constants/design';
 import { ApiError, apiUpdateEmail, apiUpdatePin } from '@/lib/api';
 import { useSession } from '@/lib/session-context';
+import { t } from '@/lib/ui-i18n';
+import { useLang } from '@/lib/use-lang';
 
 type OpenSection = 'none' | 'email' | 'pin';
 
@@ -28,6 +30,7 @@ type OpenSection = 'none' | 'email' | 'pin';
 export default function ProfileScreen() {
   const router = useRouter();
   const session = useSession();
+  const lang = useLang();
   const user = session.user;
 
   const [open, setOpen] = useState<OpenSection>('none');
@@ -51,17 +54,23 @@ export default function ProfileScreen() {
   const locationValue =
     user.district && user.district > 0 ? `${placeName} · District ${user.district}` : placeName;
 
+  const confirmedLogout = async () => {
+    await session.signOut();
+    router.replace('/');
+  };
+
   const handleLogout = () => {
+    // RN-web's Alert.alert is a silent no-op, so the button would do nothing
+    // on web — use the browser's own confirm dialog there.
+    if (Platform.OS === 'web') {
+      if (window.confirm('Log out? You will need your email and PIN to log back in.')) {
+        void confirmedLogout();
+      }
+      return;
+    }
     Alert.alert('Log out?', 'You will need your email and PIN to log back in.', [
       { text: 'Cancel', style: 'cancel' },
-      {
-        text: 'Log Out',
-        style: 'destructive',
-        onPress: async () => {
-          await session.signOut();
-          router.replace('/');
-        },
-      },
+      { text: 'Log Out', style: 'destructive', onPress: () => void confirmedLogout() },
     ]);
   };
 
@@ -114,7 +123,7 @@ export default function ProfileScreen() {
           </Card>
 
           <Button
-            label="Log Out"
+            label={t('logOut', lang)}
             variant="secondary"
             labelColor="red"
             onPress={handleLogout}
@@ -203,19 +212,23 @@ function EmailEditor({ onDone }: { onDone: () => void }) {
     }
     setError(undefined);
     setSaving(true);
+    let saved: string;
     try {
-      const saved = await apiUpdateEmail(entered, pin, session.token);
-      await session.updateUser({ email: saved });
-      onDone();
+      saved = await apiUpdateEmail(entered, pin, session.token);
     } catch (e: unknown) {
       setError(
         e instanceof ApiError
           ? e.message
           : "We couldn't save your changes. Please check your connection and try again.",
       );
-    } finally {
       setSaving(false);
+      return;
     }
+    // Server saved and updateUser refreshes in-memory state before it touches
+    // the offline cache — a cache-write failure is not worth blocking on.
+    await session.updateUser({ email: saved }).catch(() => {});
+    setSaving(false);
+    onDone();
   };
 
   return (
@@ -272,7 +285,12 @@ function PinEditor({ onDone }: { onDone: () => void }) {
     setSaving(true);
     try {
       await apiUpdatePin(currentPin, newPin, session.token);
-      Alert.alert('PIN changed', 'Use your new PIN the next time you log in.');
+      // RN-web's Alert is a no-op; window.alert gives the same confirmation.
+      if (Platform.OS === 'web') {
+        window.alert('PIN changed. Use your new PIN the next time you log in.');
+      } else {
+        Alert.alert('PIN changed', 'Use your new PIN the next time you log in.');
+      }
       onDone();
     } catch (e: unknown) {
       setError(

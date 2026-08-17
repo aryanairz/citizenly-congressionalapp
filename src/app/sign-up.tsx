@@ -12,10 +12,13 @@ import {
 } from '@/components';
 import { Spacing } from '@/constants/design';
 import { useOnboarding } from '@/lib/onboarding-context';
+import { t } from '@/lib/ui-i18n';
+import { useLang } from '@/lib/use-lang';
 
 export default function SignUpScreen() {
   const router = useRouter();
   const { data, update } = useOnboarding();
+  const lang = useLang();
 
   const [firstName, setFirstName] = useState(data.firstName);
   const [lastName, setLastName] = useState(data.lastName);
@@ -102,7 +105,7 @@ export default function SignUpScreen() {
         />
 
         <Input
-          label="Email Address"
+          label={t('emailAddress', lang)}
           value={email}
           onChangeText={setEmail}
           placeholder="your.email@example.com"

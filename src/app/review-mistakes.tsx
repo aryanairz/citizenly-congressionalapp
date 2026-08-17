@@ -21,6 +21,7 @@ import { apiClearMistakes, apiGetMistakes, apiRemoveMistake } from '@/lib/api';
 import { correctAnswerText, localize } from '@/lib/i18n';
 import { useOnboarding } from '@/lib/onboarding-context';
 import { useSession } from '@/lib/session-context';
+import { t } from '@/lib/ui-i18n';
 import { useQuestionPool } from '@/lib/use-question-pool';
 
 /**
@@ -171,7 +172,7 @@ export default function ReviewMistakesScreen() {
               Reviewing mistakes needs a connection. Please try again.
             </AppText>
             <Button
-              label="Try Again"
+              label={t('tryAgain', lang)}
               onPress={() => {
                 setReloadKey((k) => k + 1);
                 pool.reload();
@@ -193,7 +194,7 @@ export default function ReviewMistakesScreen() {
               Questions you miss in Quiz or mark &ldquo;Review again&rdquo; in Flashcards will
               appear here.
             </AppText>
-            <Button label="Back to Home" onPress={() => router.replace('/dashboard')} fullWidth={false} />
+            <Button label={t('backToHome', lang)} onPress={() => router.replace('/dashboard')} fullWidth={false} />
           </View>
         ) : null}
 
@@ -214,7 +215,7 @@ export default function ReviewMistakesScreen() {
                 />
               ) : null}
               <Button
-                label="Back to Home"
+                label={t('backToHome', lang)}
                 variant="secondary"
                 onPress={() => router.replace('/dashboard')}
               />

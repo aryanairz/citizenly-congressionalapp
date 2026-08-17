@@ -17,6 +17,7 @@ import { filterByTopic, parseTopicKey, topicLabel } from '@/constants/topics';
 import type { Question } from '@/lib/api';
 import { correctAnswerText, localize } from '@/lib/i18n';
 import { useOnboarding } from '@/lib/onboarding-context';
+import { t } from '@/lib/ui-i18n';
 import { useQuestionPool } from '@/lib/use-question-pool';
 
 /**
@@ -144,7 +145,7 @@ function QuestionCard({
                 Answer
               </AppText>
               {/* Placeholder read-aloud — no real audio yet. */}
-              <IconButton icon="volume-up" label="Read aloud" onPress={() => {}} />
+              <IconButton icon="volume-up" label={t('readAloud', lang)} onPress={() => {}} />
             </View>
             <AppText variant="labelLg" color="navy">
               {correctAnswerText(question, lang)}

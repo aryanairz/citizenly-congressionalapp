@@ -117,11 +117,21 @@ export interface SignupPayload {
 /** Thrown when the server answered with an error body (vs. network failure). */
 export class ApiError extends Error {
   status: number;
-  constructor(message: string, status: number) {
+  /**
+   * Stable machine code when the server provides one. /api/signup forwards
+   * Postgres codes (e.g. '23505' = unique violation → duplicate email).
+   * Match on this, never on English message text.
+   */
+  code?: string;
+  constructor(message: string, status: number, code?: string) {
     super(message);
     this.status = status;
+    this.code = code;
   }
 }
+
+/** Postgres unique-violation — the stable signal for "account already exists". */
+export const API_CODE_DUPLICATE = '23505';
 
 /** Abort after `ms` so unreachable hosts fail fast instead of dangling. */
 function timeoutSignal(ms: number): { signal: AbortSignal; cancel: () => void } {
@@ -148,9 +158,16 @@ async function authFetch(
       body: options.body !== undefined ? JSON.stringify(options.body) : undefined,
       signal,
     });
-    const data = (await response.json().catch(() => ({}))) as { error?: string };
+    const data = (await response.json().catch(() => ({}))) as {
+      error?: string;
+      code?: string;
+    };
     if (!response.ok) {
-      throw new ApiError(data.error ?? `Request failed (${response.status})`, response.status);
+      throw new ApiError(
+        data.error ?? `Request failed (${response.status})`,
+        response.status,
+        data.code,
+      );
     }
     return data;
   } finally {

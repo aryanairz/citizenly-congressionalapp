@@ -50,7 +50,7 @@ export function OptionRow({
           style,
         ]}>
         <View style={styles.text}>
-          <AppText variant="labelLg" color="navy">
+          <AppText variant="labelLg" color="navy" style={styles.title}>
             {title}
           </AppText>
           {description ? (
@@ -96,6 +96,12 @@ const styles = StyleSheet.create({
   text: {
     flex: 1,
     gap: Spacing.xs,
+  },
+  // RTL titles (العربية, עברית) must not right-align inside their flex box —
+  // this keeps the native name on the left like every other row. The string's
+  // own right-to-left glyph order is untouched.
+  title: {
+    textAlign: 'left',
   },
   trailing: {
     letterSpacing: 0,

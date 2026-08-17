@@ -1,7 +1,8 @@
 /**
  * Real auth session, backed by the website's /api/auth endpoints.
  *
- * The JWT lives in SecureStore; the user object is cached alongside it so a
+ * The JWT lives in SecureStore (AsyncStorage on web — see token-store.ts);
+ * the user object is cached alongside it so a
  * launch WITHOUT network still lands on the Dashboard with the cached name
  * (offline questions cover the rest). On every launch with a token we refresh
  * via /api/auth/me in the background: an explicit "not valid" answer signs
@@ -12,7 +13,6 @@
  * (greeting, question pool, study language) reads from there.
  */
 
-import * as SecureStore from 'expo-secure-store';
 import { createContext, useContext, useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import { AppState } from 'react-native';
 
@@ -22,6 +22,7 @@ import { US_STATES } from '@/constants/us-states';
 import { apiMe, type AuthUser } from '@/lib/api';
 import { clearMistakeQueue, flushMistakeQueue } from '@/lib/mistake-queue';
 import { useOnboarding, type OnboardingData } from '@/lib/onboarding-context';
+import { deleteStoredItem, getStoredItem, setStoredItem } from '@/lib/token-store';
 
 const TOKEN_KEY = 'citizenly.token';
 const USER_KEY = 'citizenly.user';
@@ -70,7 +71,7 @@ export function SessionProvider({ children }: { children: ReactNode }) {
 
     (async () => {
       try {
-        const storedToken = await SecureStore.getItemAsync(TOKEN_KEY);
+        const storedToken = await getStoredItem(TOKEN_KEY);
         if (!storedToken) {
           setStatus('signedOut');
           return;
@@ -78,7 +79,7 @@ export function SessionProvider({ children }: { children: ReactNode }) {
 
         // Show the cached user immediately (decision: offline launches still
         // reach the Dashboard) …
-        const cachedRaw = await SecureStore.getItemAsync(USER_KEY);
+        const cachedRaw = await getStoredItem(USER_KEY);
         const cached = cachedRaw ? (JSON.parse(cachedRaw) as AuthUser) : null;
         setToken(storedToken);
         if (cached) {
@@ -94,10 +95,10 @@ export function SessionProvider({ children }: { children: ReactNode }) {
           if (fresh) {
             setUser(fresh);
             update(userToOnboardingPatch(fresh));
-            await SecureStore.setItemAsync(USER_KEY, JSON.stringify(fresh));
+            await setStoredItem(USER_KEY, JSON.stringify(fresh));
           } else {
-            await SecureStore.deleteItemAsync(TOKEN_KEY);
-            await SecureStore.deleteItemAsync(USER_KEY);
+            await deleteStoredItem(TOKEN_KEY);
+            await deleteStoredItem(USER_KEY);
             setToken(null);
             setUser(null);
             setStatus('signedOut');
@@ -130,12 +131,15 @@ export function SessionProvider({ children }: { children: ReactNode }) {
       user,
       token,
       signIn: async (nextUser, nextToken) => {
+        // Persist FIRST: if storage fails, the caller gets the error while
+        // the app is still cleanly signed out, instead of a signed-in UI
+        // whose session evaporates on the next launch.
+        await setStoredItem(TOKEN_KEY, nextToken);
+        await setStoredItem(USER_KEY, JSON.stringify(nextUser));
         setUser(nextUser);
         setToken(nextToken);
         setStatus('signedIn');
         update(userToOnboardingPatch(nextUser));
-        await SecureStore.setItemAsync(TOKEN_KEY, nextToken);
-        await SecureStore.setItemAsync(USER_KEY, JSON.stringify(nextUser));
       },
       signOut: async () => {
         const departingUserId = user?.id;
@@ -143,8 +147,8 @@ export function SessionProvider({ children }: { children: ReactNode }) {
         setToken(null);
         setStatus('signedOut');
         reset();
-        await SecureStore.deleteItemAsync(TOKEN_KEY);
-        await SecureStore.deleteItemAsync(USER_KEY);
+        await deleteStoredItem(TOKEN_KEY);
+        await deleteStoredItem(USER_KEY);
         // Best-effort: push any queued mistake-writes, then drop the queue so
         // a shared device doesn't carry this user's pending data.
         if (departingUserId && token) {
@@ -159,7 +163,7 @@ export function SessionProvider({ children }: { children: ReactNode }) {
         const merged = { ...user, ...patch };
         setUser(merged);
         update(userToOnboardingPatch(merged));
-        await SecureStore.setItemAsync(USER_KEY, JSON.stringify(merged));
+        await setStoredItem(USER_KEY, JSON.stringify(merged));
       },
     }),
     [status, user, token, update, reset],

@@ -25,6 +25,8 @@ import { localize } from '@/lib/i18n';
 import { recordMistake } from '@/lib/mistake-queue';
 import { useOnboarding } from '@/lib/onboarding-context';
 import { useSession } from '@/lib/session-context';
+import { t } from '@/lib/ui-i18n';
+import { useLang } from '@/lib/use-lang';
 import { useQuestionPool } from '@/lib/use-question-pool';
 
 const SWIPE_THRESHOLD = 70;
@@ -249,7 +251,7 @@ export default function FlashcardsScreen() {
             {/* Progress */}
             <View style={styles.progressText}>
               <AppText variant="labelMd" color="muted">
-                Question {index + 1} of {total}
+                {t('questionXofY', lang, { current: index + 1, total })}
               </AppText>
               <View style={styles.progressTrack}>
                 <View
@@ -315,7 +317,7 @@ export default function FlashcardsScreen() {
                       goes to its inner chrome View, not the outer Pressable,
                       so `flex: 1` passed to Button never reaches the row. */}
                   <View style={styles.feedbackButtonWrap}>
-                    <Button label="Got it" onPress={spinToNext} style={styles.feedbackButton} />
+                    <Button label={t('gotIt', lang)} onPress={spinToNext} style={styles.feedbackButton} />
                   </View>
                   <View style={styles.feedbackButtonWrap}>
                     <Button
@@ -351,7 +353,8 @@ export default function FlashcardsScreen() {
 
 /** Placeholder read-aloud control — no real audio yet. */
 function SpeakerButton() {
-  return <IconButton icon="volume-up" label="Read aloud" onPress={() => {}} />;
+  const lang = useLang();
+  return <IconButton icon="volume-up" label={t('readAloud', lang)} onPress={() => {}} />;
 }
 
 function IconButton({

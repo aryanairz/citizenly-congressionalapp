@@ -5,7 +5,7 @@ import { StyleSheet, View } from 'react-native';
 import { AppText, ScreenHeader, StateDistrictPicker, StepDots } from '@/components';
 import type { USPlace } from '@/constants/us-states';
 import { Spacing } from '@/constants/design';
-import { ApiError, apiSignup } from '@/lib/api';
+import { API_CODE_DUPLICATE, ApiError, apiSignup } from '@/lib/api';
 import { useOnboarding } from '@/lib/onboarding-context';
 import { useSession } from '@/lib/session-context';
 
@@ -30,44 +30,59 @@ export default function StateScreen() {
     setSignupError(undefined);
     setSubmitting(true);
     try {
-      const { user: created, token } = await apiSignup({
-        firstName: data.firstName,
-        lastName: data.lastName,
-        email: data.email,
-        pin: data.pin,
-        state: place.code,
-        district: district ?? undefined,
-        lang: data.languageCode ?? 'en',
-        eligibilityRule: data.exemption ?? undefined,
-      });
-      // Signup echoes only id + name; build the full user locally so the
-      // session is complete even if the follow-up /me fetch can't run.
-      await session.signIn(
-        {
-          id: created.id,
-          name: created.name,
+      let created: { id: string; name: string };
+      let token: string;
+      try {
+        ({ user: created, token } = await apiSignup({
           firstName: data.firstName,
           lastName: data.lastName,
           email: data.email,
+          pin: data.pin,
           state: place.code,
           district: district ?? undefined,
-          preferredLang: data.languageCode ?? 'en',
+          lang: data.languageCode ?? 'en',
           eligibilityRule: data.exemption ?? undefined,
-        },
-        token,
-      );
+        }));
+      } catch (error: unknown) {
+        if (error instanceof ApiError && error.code === API_CODE_DUPLICATE) {
+          setSignupError('An account with this email already exists. Please log in instead.');
+        } else if (error instanceof ApiError) {
+          setSignupError(error.message);
+        } else {
+          setSignupError(
+            "We couldn't reach the server. Please check your connection and try again.",
+          );
+        }
+        return;
+      }
+      try {
+        // Signup echoes only id + name; build the full user locally so the
+        // session is complete even if the follow-up /me fetch can't run.
+        await session.signIn(
+          {
+            id: created.id,
+            name: created.name,
+            firstName: data.firstName,
+            lastName: data.lastName,
+            email: data.email,
+            state: place.code,
+            district: district ?? undefined,
+            preferredLang: data.languageCode ?? 'en',
+            eligibilityRule: data.exemption ?? undefined,
+          },
+          token,
+        );
+      } catch {
+        // The account exists on the server; only this device's session
+        // storage failed. Send them to log-in rather than implying signup
+        // failed (retrying would hit the duplicate-email error).
+        setSignupError(
+          "Your account was created, but we couldn't sign you in on this device. Please log in.",
+        );
+        return;
+      }
       // Onboarding is done — replace so the back gesture doesn't reenter the flow.
       router.replace('/dashboard');
-    } catch (error: unknown) {
-      if (error instanceof ApiError && /duplicate/i.test(error.message)) {
-        setSignupError('An account with this email already exists. Please log in instead.');
-      } else if (error instanceof ApiError) {
-        setSignupError(error.message);
-      } else {
-        setSignupError(
-          "We couldn't reach the server. Please check your connection and try again.",
-        );
-      }
     } finally {
       setSubmitting(false);
     }

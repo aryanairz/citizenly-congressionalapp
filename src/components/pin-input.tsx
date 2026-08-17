@@ -9,6 +9,7 @@ import {
 
 import { AppText } from '@/components/app-text';
 import { Colors, FontFamily, Radius, Spacing } from '@/constants/design';
+import { normalizeDigits } from '@/lib/digits';
 
 export interface PinInputProps {
   /** Number of digits. Defaults to 5. */
@@ -35,7 +36,9 @@ export function PinInput({ length = 5, onChange, error }: PinInputProps) {
   };
 
   const handleChange = (index: number, raw: string) => {
-    const digit = raw.replace(/\D/g, '').slice(-1);
+    // normalizeDigits (not \D) so Arabic-Indic/Devanagari/Thai numerals from
+    // localized keyboards count as digits instead of being silently dropped.
+    const digit = normalizeDigits(raw).slice(-1);
     const next = [...digits];
     next[index] = digit;
     commit(next);

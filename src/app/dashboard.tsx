@@ -8,11 +8,18 @@ import { Colors, Radius, Spacing } from '@/constants/design';
 import { apiGetMistakes } from '@/lib/api';
 import { useOnboarding } from '@/lib/onboarding-context';
 import { useSession } from '@/lib/session-context';
+import { t } from '@/lib/ui-i18n';
+import type { UiKey } from '@/lib/ui-strings';
+import { useLang } from '@/lib/use-lang';
 
 const TOTAL_QUESTIONS = 128;
 
 interface Mode {
+  /** Stable identifier — never derive logic or React keys from display text. */
+  id: 'study' | 'flashcards' | 'quiz' | 'review-mistakes' | 'mock-interview';
   icon: keyof typeof MaterialIcons.glyphMap;
+  /** Translation key when the title has one; `title` is the English fallback. */
+  titleKey?: UiKey;
   title: string;
   description: string;
   badge?: string;
@@ -26,30 +33,39 @@ interface Mode {
 // its own fixed 10-question script and skips it).
 const MODES: Mode[] = [
   {
+    id: 'study',
     icon: 'menu-book',
+    titleKey: 'modeStudy',
     title: 'Study Questions',
     description: 'Review the 128 civics questions',
     route: { pathname: '/select-topic', params: { mode: 'study' } } as Href,
   },
   {
+    id: 'flashcards',
     icon: 'style',
+    titleKey: 'modeFlashcards',
     title: 'Flashcards',
     description: 'Practice recall',
     route: { pathname: '/select-topic', params: { mode: 'flashcards' } } as Href,
   },
   {
+    id: 'quiz',
     icon: 'quiz',
+    titleKey: 'modeQuiz',
     title: 'Quiz',
     description: 'Practice with multiple choice',
     route: { pathname: '/select-topic', params: { mode: 'quiz' } } as Href,
   },
   {
+    id: 'review-mistakes',
     icon: 'flag',
+    titleKey: 'modeReviewMistakes',
     title: 'Review Mistakes',
     description: 'Practice what you missed',
     route: '/review-mistakes' as Href,
   },
   {
+    id: 'mock-interview',
     icon: 'mic',
     title: 'Mock Interview',
     description: 'Simulate the real test',
@@ -63,6 +79,7 @@ export default function HomeScreen() {
   const router = useRouter();
   const session = useSession();
   const { data } = useOnboarding();
+  const lang = useLang();
 
   // Live mistake count for the Review Mistakes badge; refreshes every time
   // the Dashboard regains focus (e.g. returning from a review session).
@@ -133,13 +150,13 @@ export default function HomeScreen() {
         {/* Study modes */}
         <View>
           {MODES.map((mode, index) => (
-            <Fragment key={mode.title}>
+            <Fragment key={mode.id}>
               {index > 0 ? <Divider style={styles.divider} /> : null}
               <ListRow
-                title={mode.title}
+                title={mode.titleKey ? t(mode.titleKey, lang) : mode.title}
                 subtitle={mode.description}
                 badge={
-                  mode.title === 'Review Mistakes'
+                  mode.id === 'review-mistakes'
                     ? mistakeCount > 0
                       ? String(mistakeCount)
                       : undefined

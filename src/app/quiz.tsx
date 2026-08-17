@@ -20,6 +20,7 @@ import { Colors, Radius, Spacing } from '@/constants/design';
 import { filterByTopic, parseTopicKey } from '@/constants/topics';
 import { localize } from '@/lib/i18n';
 import { recordMistake } from '@/lib/mistake-queue';
+import { t, tCount } from '@/lib/ui-i18n';
 import { useOnboarding } from '@/lib/onboarding-context';
 import { useSession } from '@/lib/session-context';
 import { useQuestionPool } from '@/lib/use-question-pool';
@@ -139,15 +140,15 @@ export default function QuizScreen() {
         {pool.status === 'ready' && finished ? (
           <View style={styles.centerFill}>
             <AppText variant="headlineLg" color="navy" center>
-              Quiz Complete!
+              {t('quizComplete', lang)}
             </AppText>
             <AppText variant="bodyLg" color="muted" center>
-              You answered {score} of {total} questions correctly.
+              {tCount('quizSummary', total, lang, { score, total })}
             </AppText>
             <View style={styles.summaryActions}>
-              <Button label="Try Again" onPress={restart} />
+              <Button label={t('tryAgain', lang)} onPress={restart} />
               <Button
-                label="Back to Home"
+                label={t('backToHome', lang)}
                 variant="secondary"
                 onPress={() => router.replace('/dashboard')}
               />
@@ -161,7 +162,7 @@ export default function QuizScreen() {
             <View style={styles.progressRow}>
               <View style={styles.progressText}>
                 <AppText variant="labelMd" color="muted">
-                  Question {index + 1} of {total}
+                  {t('questionXofY', lang, { current: index + 1, total })}
                 </AppText>
                 <View style={styles.progressTrack}>
                   <View
@@ -171,7 +172,7 @@ export default function QuizScreen() {
                 {pool.offline ? <OfflineNotice onRetry={pool.reload} /> : null}
               </View>
               {/* Placeholder read-aloud — no real audio yet. */}
-              <IconButton icon="volume-up" label="Read aloud" onPress={() => {}} />
+              <IconButton icon="volume-up" label={t('readAloud', lang)} onPress={() => {}} />
             </View>
 
             <ScrollView
@@ -213,7 +214,7 @@ export default function QuizScreen() {
                 correct={wasCorrect}
                 correctAnswer={correctAnswerText}
                 explanation={localize(question.explanation, lang)}
-                nextLabel={isLast ? 'Finish' : 'Next'}
+                nextLabel={isLast ? 'Finish' : t('next', lang)}
                 onNext={handleNext}
               />
             ) : (

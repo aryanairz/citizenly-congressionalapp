@@ -12,6 +12,8 @@ import Animated, { SlideInDown } from 'react-native-reanimated';
 import { AppText } from '@/components/app-text';
 import { Button } from '@/components/button';
 import { Colors, Radius, Spacing } from '@/constants/design';
+import { t } from '@/lib/ui-i18n';
+import { useLang } from '@/lib/use-lang';
 
 export type OptionVisual = 'default' | 'selected' | 'correct' | 'wrong' | 'dimmed';
 
@@ -118,6 +120,7 @@ export function FeedbackPanel({
   headline?: string;
 }) {
   const color = correct ? Colors.success : Colors.red;
+  const lang = useLang();
 
   return (
     <Animated.View
@@ -132,7 +135,7 @@ export function FeedbackPanel({
       <View style={styles.panelHeader}>
         <MaterialIcons name={correct ? 'check-circle' : 'cancel'} size={28} color={color} />
         <AppText variant="headlineMd" style={{ color }}>
-          {headline ?? (correct ? 'Correct!' : 'Not quite right')}
+          {headline ?? (correct ? t('correctBanner', lang) : t('wrongBanner', lang))}
         </AppText>
       </View>
       {!correct ? (
