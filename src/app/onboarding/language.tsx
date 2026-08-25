@@ -2,8 +2,15 @@ import { useRouter } from 'expo-router';
 import { useState } from 'react';
 import { StyleSheet, View } from 'react-native';
 
-import { AppText, Button, OptionRow, ScreenContainer, ScreenHeader, StepDots } from '@/components';
-import { LANGUAGES, type LanguageCode } from '@/constants/brand';
+import {
+  AppText,
+  Button,
+  LanguagePicker,
+  ScreenContainer,
+  ScreenHeader,
+  StepDots,
+} from '@/components';
+import { type LanguageCode } from '@/constants/brand';
 import { Spacing } from '@/constants/design';
 import { useOnboarding } from '@/lib/onboarding-context';
 
@@ -21,6 +28,7 @@ export default function ChooseLanguageScreen() {
   return (
     <ScreenContainer
       scroll
+      keyboardAvoiding
       footer={<Button label="Continue" onPress={handleContinue} disabled={!selected} />}>
       <ScreenHeader />
       <View style={styles.content}>
@@ -28,18 +36,7 @@ export default function ChooseLanguageScreen() {
         <AppText variant="headlineLg" color="navy">
           Which language do you want to study in?
         </AppText>
-        <View style={styles.list}>
-          {LANGUAGES.map((language) => (
-            <OptionRow
-              key={language.code}
-              title={language.nativeName}
-              trailingLabel={language.name !== language.nativeName ? language.name : undefined}
-              selected={selected === language.code}
-              checkmark={false}
-              onPress={() => setSelected(language.code)}
-            />
-          ))}
-        </View>
+        <LanguagePicker selected={selected} onSelect={setSelected} />
       </View>
     </ScreenContainer>
   );

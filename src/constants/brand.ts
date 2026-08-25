@@ -1,10 +1,9 @@
 /**
  * Citizenly brand constants: colors and supported study languages.
  *
- * These same hex values are wired into Tailwind as the `navy`, `red`, and
- * `white` utility colors (see tailwind.config.js). Import from here when you
- * need the raw values in JS (e.g. StatusBar, native tab tint, non-NativeWind
- * styles); use the Tailwind classes for view styling.
+ * Import from here when you need the raw hex values outside the design-token
+ * pipeline (e.g. StatusBar, native tint colors); screen styling should go
+ * through src/constants/design.ts.
  */
 
 export const BrandColors = {

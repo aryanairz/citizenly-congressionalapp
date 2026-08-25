@@ -5,13 +5,13 @@ import { StyleSheet, View } from 'react-native';
 import { AppText, ScreenHeader, StateDistrictPicker } from '@/components';
 import type { USPlace } from '@/constants/us-states';
 import { Spacing } from '@/constants/design';
-import { ApiError, apiUpdatePlace } from '@/lib/api';
+import { updateAccount } from '@/lib/local-account';
 import { useSession } from '@/lib/session-context';
 
 /**
  * Profile → change state/district. Reuses the exact onboarding picker, saves
- * via PATCH /api/users/place (no PIN), and updates the cached session user so
- * personalized questions re-drive from the new location immediately.
+ * to the local account, and updates the session user so personalized
+ * questions re-drive from the new location immediately.
  */
 export default function EditLocationScreen() {
   const router = useRouter();
@@ -20,23 +20,17 @@ export default function EditLocationScreen() {
   const [serverError, setServerError] = useState<string | undefined>();
 
   const handleSubmit = async (place: USPlace, district: number | null) => {
-    if (saving || !session.token) return;
+    if (saving) return;
     setServerError(undefined);
     setSaving(true);
     try {
-      await apiUpdatePlace(place.code, district, session.token);
-    } catch (e: unknown) {
-      setServerError(
-        e instanceof ApiError
-          ? e.message
-          : "We couldn't save your changes. Please check your connection and try again.",
-      );
+      await updateAccount({ state: place.code, district });
+      await session.updateUser({ state: place.code, district });
+    } catch {
+      setServerError("We couldn't save your changes on this device. Please try again.");
       setSaving(false);
       return;
     }
-    // Server saved and updateUser refreshes in-memory state before it touches
-    // the offline cache — a cache-write failure is not worth blocking on.
-    await session.updateUser({ state: place.code, district: district ?? undefined }).catch(() => {});
     setSaving(false);
     router.back();
   };

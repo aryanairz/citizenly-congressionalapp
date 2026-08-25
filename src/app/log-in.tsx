@@ -1,6 +1,6 @@
 import { useRouter } from 'expo-router';
 import { useState } from 'react';
-import { Pressable, StyleSheet, View } from 'react-native';
+import { Alert, Pressable, StyleSheet, View } from 'react-native';
 
 import {
   AppText,
@@ -11,7 +11,7 @@ import {
   ScreenHeader,
 } from '@/components';
 import { Colors, Spacing } from '@/constants/design';
-import { ApiError, apiLogin } from '@/lib/api';
+import { AccountError, logIn } from '@/lib/local-account';
 import { useSession } from '@/lib/session-context';
 import { t } from '@/lib/ui-i18n';
 import { useLang } from '@/lib/use-lang';
@@ -56,31 +56,32 @@ export default function LogInScreen() {
     setServerError(undefined);
     setSubmitting(true);
     try {
-      let auth: Awaited<ReturnType<typeof apiLogin>>;
-      try {
-        auth = await apiLogin(entered, pin);
-      } catch (error: unknown) {
-        // ApiError = the server answered (wrong PIN, lockout, …) — show its
-        // message. Anything else from the request itself is connectivity.
-        setServerError(
-          error instanceof ApiError
-            ? error.message
-            : "We couldn't reach the server. Please check your connection and try again.",
-        );
-        return;
-      }
-      try {
-        await session.signIn(auth.user, auth.token);
-      } catch {
-        // The server accepted the login but this device couldn't persist the
-        // session — a storage problem, not a connectivity one.
-        setServerError("We couldn't save your session on this device. Please try again.");
-        return;
-      }
+      // Local check against the account saved on this device — no network.
+      const user = await logIn(entered, pin);
+      await session.signIn(user);
       router.replace('/dashboard');
+    } catch (error: unknown) {
+      setServerError(
+        error instanceof AccountError
+          ? error.message
+          : "We couldn't open your account on this device. Please try again.",
+      );
     } finally {
       setSubmitting(false);
     }
+  };
+
+  // No server means no password reset. Offer the only thing that can help:
+  // starting a new account on this device.
+  const handleForgotPin = () => {
+    Alert.alert(
+      'Forgot your PIN?',
+      'Your account is saved only on this phone, so there’s no PIN to email you. You can start a new account instead — your study progress on this device stays.',
+      [
+        { text: 'Never mind', style: 'cancel' },
+        { text: 'Start a new account', onPress: () => router.replace('/sign-up') },
+      ],
+    );
   };
 
   return (
@@ -123,7 +124,7 @@ export default function LogInScreen() {
           <Button label={t('logIn', lang)} onPress={handleLogIn} loading={submitting} />
           <Pressable
             accessibilityRole="link"
-            onPress={() => {}}
+            onPress={handleForgotPin}
             onPressIn={() => setForgotPressed(true)}
             onPressOut={() => setForgotPressed(false)}
             hitSlop={8}>

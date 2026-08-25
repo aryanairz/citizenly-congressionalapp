@@ -1,5 +1,3 @@
-import '@/global.css';
-
 import {
   DMSans_400Regular,
   DMSans_500Medium,
@@ -7,11 +5,10 @@ import {
   DMSans_700Bold,
   useFonts,
 } from '@expo-google-fonts/dm-sans';
-import { DarkTheme, DefaultTheme, ThemeProvider } from '@react-navigation/native';
+import { DefaultTheme, ThemeProvider } from '@react-navigation/native';
 import { Stack } from 'expo-router';
 import * as SplashScreen from 'expo-splash-screen';
 import { useEffect } from 'react';
-import { useColorScheme } from 'react-native';
 
 import { Colors } from '@/constants/design';
 import { OnboardingProvider } from '@/lib/onboarding-context';
@@ -20,8 +17,6 @@ import { SessionProvider } from '@/lib/session-context';
 SplashScreen.preventAutoHideAsync();
 
 export default function RootLayout() {
-  const colorScheme = useColorScheme();
-
   // Load DM Sans (all weights the type scale uses) before revealing the UI so
   // text never flashes in a fallback system font.
   const [fontsLoaded, fontError] = useFonts({
@@ -43,7 +38,9 @@ export default function RootLayout() {
   }
 
   return (
-    <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
+    // The design system is light-only; pin the navigation theme so OS dark
+    // mode can't flip chrome colors out from under the white canvas.
+    <ThemeProvider value={DefaultTheme}>
       <OnboardingProvider>
         <SessionProvider>
           <Stack

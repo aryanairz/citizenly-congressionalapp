@@ -1,6 +1,6 @@
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useEffect, useMemo, useState } from 'react';
-import { ActivityIndicator, ScrollView, StyleSheet, View } from 'react-native';
+import { ScrollView, StyleSheet, View } from 'react-native';
 
 import {
   AppText,
@@ -9,7 +9,6 @@ import {
   FeedbackPanel,
   IconButton,
   LETTERS,
-  OfflineNotice,
   OptionCard,
   ScreenContainer,
   ScreenHeader,
@@ -19,7 +18,7 @@ import {
 import { Colors, Radius, Spacing } from '@/constants/design';
 import { filterByTopic, parseTopicKey } from '@/constants/topics';
 import { localize } from '@/lib/i18n';
-import { recordMistake } from '@/lib/mistake-queue';
+import { addMistake } from '@/lib/local-mistakes';
 import { t, tCount } from '@/lib/ui-i18n';
 import { useOnboarding } from '@/lib/onboarding-context';
 import { useSession } from '@/lib/session-context';
@@ -45,9 +44,9 @@ export default function QuizScreen() {
 
   // Memoized so the array identity is stable across renders — the reset
   // effects below key off it.
-  const poolQuestions = pool.status === 'ready' ? pool.questions : null;
+  const poolQuestions = pool.questions;
   const questions = useMemo(
-    () => (poolQuestions ? filterByTopic(poolQuestions, topic) : []),
+    () => filterByTopic(poolQuestions, topic),
     [poolQuestions, topic],
   );
   const total = questions.length;
@@ -96,10 +95,9 @@ export default function QuizScreen() {
     setChecked(true);
     if (correctSet.has(order[selected])) {
       setScore((s) => s + 1);
-    } else if (session.user?.id && session.token && !question.id.startsWith('mock-')) {
-      // Fire-and-forget: queue locally, flush in the background. Mock ids
-      // (offline fallback set) never reach the server.
-      recordMistake(session.user.id, session.token, question.id);
+    } else if (session.user?.id) {
+      // Enroll it in the local mistake bank; Review Mistakes drains it later.
+      void addMistake(session.user.id, question.id);
     }
   };
 
@@ -120,16 +118,7 @@ export default function QuizScreen() {
       <View style={styles.body}>
         <ScreenHeader />
 
-        {pool.status === 'loading' ? (
-          <View style={styles.centerFill}>
-            <ActivityIndicator size="large" color={Colors.navy} />
-            <AppText variant="bodyLg" color="muted" center>
-              Loading questions…
-            </AppText>
-          </View>
-        ) : null}
-
-        {pool.status === 'ready' && !question && !finished ? (
+        {!question && !finished ? (
           <View style={styles.centerFill}>
             <AppText variant="bodyLg" color="muted" center>
               No questions in this topic yet.
@@ -137,7 +126,7 @@ export default function QuizScreen() {
           </View>
         ) : null}
 
-        {pool.status === 'ready' && finished ? (
+        {finished ? (
           <View style={styles.centerFill}>
             <AppText variant="headlineLg" color="navy" center>
               {t('quizComplete', lang)}
@@ -156,7 +145,7 @@ export default function QuizScreen() {
           </View>
         ) : null}
 
-        {pool.status === 'ready' && !finished && question ? (
+        {!finished && question ? (
           <>
             {/* Progress + read-aloud */}
             <View style={styles.progressRow}>
@@ -169,7 +158,6 @@ export default function QuizScreen() {
                     style={[styles.progressFill, { width: `${((index + 1) / total) * 100}%` }]}
                   />
                 </View>
-                {pool.offline ? <OfflineNotice onRetry={pool.reload} /> : null}
               </View>
               {/* Placeholder read-aloud — no real audio yet. */}
               <IconButton icon="volume-up" label={t('readAloud', lang)} onPress={() => {}} />

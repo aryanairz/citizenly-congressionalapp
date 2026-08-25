@@ -1,18 +1,17 @@
 import { MaterialIcons } from '@expo/vector-icons';
 import { type Href, useFocusEffect, useRouter } from 'expo-router';
-import { Fragment, useCallback, useState } from 'react';
+import { Fragment, useCallback } from 'react';
 import { ScrollView, StyleSheet, View } from 'react-native';
 
 import { AppText, BottomNav, Card, Divider, ListRow, ScreenContainer } from '@/components';
 import { Colors, Radius, Spacing } from '@/constants/design';
-import { apiGetMistakes } from '@/lib/api';
+import { TOTAL_OFFICIAL as TOTAL_QUESTIONS } from '@/data/question-bank';
+import { useMistakes } from '@/lib/local-mistakes';
 import { useOnboarding } from '@/lib/onboarding-context';
 import { useSession } from '@/lib/session-context';
 import { t } from '@/lib/ui-i18n';
 import type { UiKey } from '@/lib/ui-strings';
 import { useLang } from '@/lib/use-lang';
-
-const TOTAL_QUESTIONS = 128;
 
 interface Mode {
   /** Stable identifier — never derive logic or React keys from display text. */
@@ -81,24 +80,14 @@ export default function HomeScreen() {
   const { data } = useOnboarding();
   const lang = useLang();
 
-  // Live mistake count for the Review Mistakes badge; refreshes every time
-  // the Dashboard regains focus (e.g. returning from a review session).
-  // Failure is graceful: no badge.
-  const [mistakeCount, setMistakeCount] = useState<number>(0);
+  // Live mistake count for the Review Mistakes badge. The store notifies on
+  // every change, and refocusing the Dashboard re-reads it too.
+  const { ids: mistakeIds, refresh: refreshMistakes } = useMistakes(session.user?.id);
+  const mistakeCount = mistakeIds.length;
   useFocusEffect(
     useCallback(() => {
-      const token = session.token;
-      if (!token) return;
-      let active = true;
-      apiGetMistakes(token)
-        .then((ids) => {
-          if (active) setMistakeCount(ids.length);
-        })
-        .catch(() => {});
-      return () => {
-        active = false;
-      };
-    }, [session.token]),
+      refreshMistakes();
+    }, [refreshMistakes]),
   );
 
   const firstName = data.firstName.trim();

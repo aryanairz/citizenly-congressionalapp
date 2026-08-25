@@ -15,71 +15,78 @@ designed for elders, set up by their adult children.
 
 > Social-impact project. No ads, no subscriptions, no fees.
 
-This app has **no backend of its own**. It is a client for the Citizenly
-Next.js website (repo: `aryanairz/ourparents`), calling its `/api/*` routes
-for auth, questions, and mistake tracking.
+**The app is entirely self-contained.** There is no server, no API and no
+network call anywhere: all 128 official questions in all 48 languages are
+bundled into the app, accounts live on the device, and every screen works in
+airplane mode.
 
 ---
 
-## Running it (two terminals)
-
-**Terminal 1 — the website/API** (in the `forourparents` repo):
-
-```bash
-npm run dev        # Next.js API + site on http://localhost:3000
-```
-
-**Terminal 2 — this app:**
+## Running it
 
 ```bash
 npm install
-cp .env.example .env   # then edit — see below
-npx expo start         # web on http://localhost:8081, QR code for Expo Go
+npx expo start     # web on http://localhost:8081, QR code for Expo Go
 ```
 
-### `.env` — pointing the app at the API
+No environment variables, no second terminal, nothing to configure.
 
-The only variable is `EXPO_PUBLIC_API_BASE` (inlined into the bundle at
-build/start time; restart with `npx expo start -c` after changing it).
+`npx tsc --noEmit` type-checks; `npm run lint` lints; `npm test` runs the Jest
+suite over the bundled content and the interview logic.
 
-- **Web / simulator on the same machine:** `http://localhost:3000`
-  (Android emulator: `http://10.0.2.2:3000`)
-- **Physical phone via Expo Go:** `localhost` points at the phone itself —
-  use your computer's LAN IP, e.g. `http://192.168.1.42:3000`, with the
-  website running and both devices on the same Wi-Fi. Find the IP with
-  `ipconfig` (Windows, IPv4 Address).
+> Voice input in the Mock Interview needs a **development build**
+> (`npx expo run:ios` / `run:android`) — `expo-speech-recognition` is a native
+> module and isn't in Expo Go. Everywhere else, and in Expo Go, the interview
+> falls back to typed answers.
 
-Cross-origin requests work because the website ships a CORS `proxy.ts` for
-`/api/*` (permissive in dev; production origins come from its
-`CORS_ALLOWED_ORIGINS` env var).
+### Viewing it on the web
 
-`npx tsc --noEmit` type-checks; `npm run lint` lints.
+`http://localhost:8081`. It's a phone app, so open DevTools (F12) and switch on
+device emulation (Ctrl/Cmd+Shift+M) to see it at a real phone width — full
+desktop width leaves large gaps the layout was never designed for.
+
+Since accounts are stored on the device, `localStorage.clear()` in the browser
+console resets you to a first-time user.
 
 ---
 
 ## What works today
 
-- **Auth** — email + 5-digit PIN against the shared backend (JWT in
-  SecureStore on iOS/Android, AsyncStorage on web). Offline-tolerant session
-  restore: cached user shows immediately, background `/api/auth/me` refresh,
-  only an explicit invalid-session answer signs out.
-- **Onboarding** — sign-up → study language → exemption (50/20, 55/15,
-  65/20) → state + congressional district (two-step picker); the account is
-  created in one `/api/signup` call at the end.
+- **Bundled content** — the **128 official USCIS questions** in **all 48
+  languages**, shipped in the app (`src/data/questions.json`, 2.2 MB). Zero
+  empty translations: nothing silently falls back to English. Generated from
+  the website's bank by *executing* its module, because 29 of its 48
+  languages are only applied by merge loops at load time. The website's 23
+  "extra practice" records are deliberately excluded — they have no standing
+  on the real test.
+- **Accounts, on the device** — email + 5-digit PIN stored in AsyncStorage
+  (`src/lib/local-account.ts`). Sign up, log in, change your email or PIN,
+  change your state — all local, all instant, all working offline.
+- **Onboarding** — sign-up → study language (**searchable**, matching native
+  name, English name or code) → exemption (50/20, 55/15, 65/20) → state +
+  congressional district.
 - **Study modes** — Study Questions (browse + expand answers), Flashcards
-  (swipe/flip), and Quiz (multiple choice), all over the live question pool:
-  the official 128-question bank plus state-personalized questions
-  (governor, senators, representative, capital), with a 10-question offline
-  fallback set.
-- **Review Mistakes** — quiz over the server-side mistake set; answering
-  correctly is the only thing that resolves a mistake (mirrors the website).
-  Mistakes recorded offline queue in AsyncStorage per user and flush on
-  reconnect/sign-in/foreground.
+  (swipe/flip), and Quiz (multiple choice). 65/20 users get exactly the 20
+  questions USCIS designates instead of 128; setting a state swaps the
+  generic state questions for ones naming your real governor, senators,
+  representative and capital.
+- **Review Mistakes** — quiz over the device's mistake bank. Every mode
+  enrolls wrong answers; answering correctly here is the only thing that
+  removes one, so the bank drains itself as you improve.
 - **Profile** — email change (PIN-confirmed), PIN change, state/district
   change, log out.
-- **48 languages** — question content renders in the user's study language
-  with per-string English fallback (`src/lib/i18n.ts`); the language list
-  and codes exactly match the website's `Lang` union.
+- **Mock Interview** — a full simulated naturalization interview, entirely
+  offline: an eligibility step routes you to the right test (2008 vs 2025 by
+  age and years as an LPR (50/20, 55/15 and 65/20 special consideration),
+  then a pure state machine (`src/lib/interview-machine.ts`) runs oath →
+  eligibility → reading → writing → civics with the officer stopping the
+  moment the outcome is decided. The officer speaks (expo-speech), answers
+  are transcribed **on-device** (expo-speech-recognition — needs a dev
+  build; typed-answer fallback in Expo Go/web or with mic denied), and
+  scoring is keyword-based (`src/lib/answer-matching.ts`) — pronunciation
+  and accent are never judged. The 128-question bank is bundled
+  (`src/data/civics-2025.ts`) with ids mirroring the website's, so misses
+  land in Review Mistakes.
 - **Partial UI i18n** — the app chrome is being translated via
   `src/lib/ui-strings.ts` (dictionary generated from the website's complete
   48-language `lib/i18n.ts`) + `t()`/`tCount()` (`src/lib/ui-i18n.ts`, with
@@ -97,20 +104,22 @@ Cross-origin requests work because the website ships a CORS `proxy.ts` for
   "Check Answer"/"Finish", the Profile tab, mode descriptions. The i18n
   infrastructure handles them the moment translations are added to
   `ui-strings.ts`.
-- **Mock Interview is a UI mock** — hardcoded questions, no audio recorded
-  or played, results cycle on a fixed pattern. The `PRO` badge has no
-  billing behind it. (A real AI interview prototype exists separately:
-  `aryanairz/citizenlyfeature`.)
-- **No 65/20 reduced question set** — the exemption choice is stored, but
-  study modes always use the full pool; the website's `?set=6520` bank
-  isn't fetched yet.
 - **Read-aloud is a placeholder** — speaker buttons render but play nothing.
-  The website's `/api/tts` covers 45 of 48 languages and is the intended
-  backend.
-- **Dashboard progress is hardcoded to 0** — no progress tracking yet
-  (`/api/quiz-attempts` exists on the website and is unused here).
-- Expo template leftovers (`src/app/explore.tsx`, a few components/hooks)
-  are still present and slated for deletion.
+  `expo-speech` is already installed and working in the Mock Interview; the
+  study screens need wiring to it. Three languages (Hmong, Slovenian, Haitian
+  Creole) have no voice on any platform and should hide the button.
+- **Dashboard progress is hardcoded to 0** — no progress tracking, streaks,
+  or per-topic mastery yet.
+- **No timed test** — the website's exam simulator (20 questions / 10 min /
+  12 to pass, or 10 / 5 / 6 for 65/20) has no app equivalent yet.
+- **Accounts don't sync or transfer.** They live on one device with no
+  recovery, so "Forgot PIN?" offers a fresh start rather than a reset. That
+  is deliberate for a frontend-only app, not an oversight.
+- **Only the current (2025) civics test is bundled.** `interview-machine.ts`
+  models the real filing-date rule — N-400s filed before 2025-10-20 sit the
+  legacy 100-question 2008 test — but that bank isn't shipped, so every mock
+  interview practises the current 128-question test. An early filer still
+  waiting on an interview would be studying slightly the wrong material.
 
 ---
 
@@ -120,17 +129,11 @@ Cross-origin requests work because the website ships a CORS `proxy.ts` for
 |------------|--------------------------------------------------------------|
 | Framework  | Expo SDK 54 (pinned for Expo Go compatibility) · React 19 · RN 0.81 |
 | Routing    | expo-router v6, typed routes                                  |
-| Styling    | StyleSheet + shared design tokens (`src/constants/design-tokens.js` feeds both Tailwind config and typed runtime constants); NativeWind 4 is wired but lightly used |
+| Styling    | StyleSheet + shared design tokens (`src/constants/design-tokens.js` → typed constants in `src/constants/design.ts`) |
 | State      | Two React contexts (session, onboarding) + hooks — no Redux/Query |
-| Storage    | SecureStore (native) / AsyncStorage (web) via `src/lib/token-store.ts` |
-| Type/lint  | TypeScript strict · `expo lint`                               |
-
-### API routes this app depends on (served by the website)
-
-`/api/auth/login` · `/api/auth/me` · `/api/signup` ·
-`/api/questions?set=official|6520` · `/api/personalized-questions` ·
-`/api/mistakes` (GET/POST/DELETE) · `/api/users/email|pin|place` (PATCH) —
-and, once read-aloud is real, `/api/tts`.
+| Data       | Bundled JSON — no network layer at all                        |
+| Storage    | AsyncStorage (account, mistakes) · SecureStore/AsyncStorage via `token-store.ts` |
+| Type/lint  | TypeScript strict · `expo lint` · Jest                        |
 
 ### Layout of `src/`
 
@@ -140,10 +143,31 @@ src/
 │                   select-topic, study-list, flashcards, quiz, review-mistakes,
 │                   mock-interview, profile, edit-location)
 ├── components/     Design-system primitives (Button, Input, PinInput, OptionRow,
-│                   ScreenContainer, quiz UI, state/district picker, …)
+│                   ScreenContainer, quiz UI, language + state pickers, …)
 ├── constants/      design tokens · brand + 48 languages · topics · exemptions ·
-│                   US states · offline mock questions
-└── lib/            api client · session context · question pool · mistake queue ·
-    │               content i18n (localize) · UI i18n (t/tCount, ui-strings) ·
-    └──             token-store · digits · use-lang
+│                   US states
+├── data/           questions.json (128 × 48 languages) · question-bank (pool
+│                   building) · personalized questions + representatives ·
+│                   civics-2025 + english-test (mock interview)
+└── lib/            local-account · local-mistakes · session context · question
+    │               pool · content i18n (localize) · UI i18n (t/tCount) ·
+    └──             answer-matching · interview-machine · interview voice
 ```
+
+### Regenerating the question bank
+
+`src/data/questions.json` is generated from the Citizenly website's
+`data/questions.ts`. **Do not copy that file across.** Only 19 of its 48
+languages are in the array literal; the other 29 are applied by 32 mutation
+loops when the module loads, so a plain copy silently drops them with no type
+error and no runtime error — the app would just quietly serve English.
+
+The regeneration step must *execute* the module and serialize the merged
+result, filtering to `topic !== 'extra'`. `src/data/__tests__/question-bank.test.ts`
+guards the outcome: it asserts 128 questions and a non-empty string for every
+field in every one of the 48 languages, so a bad regeneration fails the suite
+rather than shipping.
+
+The same applies to `personalized-questions.ts`, `representatives.ts` and
+`territories.ts` — those are plain data and *can* be copied, with their import
+paths repointed at `@/data/…`.

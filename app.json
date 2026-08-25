@@ -7,9 +7,6 @@
     "icon": "./assets/images/icon.png",
     "scheme": "citizenlyapp",
     "userInterfaceStyle": "automatic",
-    "ios": {
-      "icon": "./assets/expo.icon"
-    },
     "android": {
       "adaptiveIcon": {
         "backgroundColor": "#E6F4FE",
@@ -33,7 +30,14 @@
           "imageWidth": 76
         }
       ],
-      "expo-secure-store"
+      "expo-secure-store",
+      [
+        "expo-speech-recognition",
+        {
+          "microphonePermission": "Citizenly uses the microphone so you can practice answering interview questions out loud. Your voice never leaves this device.",
+          "speechRecognitionPermission": "Citizenly transcribes your spoken answers on this device so it can check them against the official study answers. Nothing is sent to a server."
+        }
+      ]
     ],
     "experiments": {
       "typedRoutes": true,

@@ -14,7 +14,6 @@ export { OptionRow, type OptionRowProps } from '@/components/option-row';
 export { PinInput, type PinInputProps } from '@/components/pin-input';
 export { BottomNav, type BottomNavProps, type BottomNavTab } from '@/components/bottom-nav';
 export { IconButton, type IconButtonProps } from '@/components/icon-button';
-export { OfflineNotice } from '@/components/offline-notice';
 export {
   OptionCard,
   FeedbackPanel,
@@ -23,3 +22,4 @@ export {
   type OptionVisual,
 } from '@/components/quiz-ui';
 export { StateDistrictPicker } from '@/components/state-district-picker';
+export { LanguagePicker, type LanguagePickerProps } from '@/components/language-picker';

@@ -40,11 +40,10 @@ export interface ButtonProps extends Omit<PressableProps, 'style' | 'children'> 
  * Primary action button. Meets the design system's 56px minimum touch target,
  * 16px radius, and bold 18px label. Flat — no shadow.
  *
- * IMPORTANT: all visual chrome lives on an inner View, NOT on the Pressable.
- * NativeWind's css-interop wraps Pressable app-wide and swallowed function-form
- * `style` there (the navy fill/border silently never rendered on device), so the
- * Pressable is kept as a bare behavior/hit-target wrapper and the pressed state
- * is tracked in React state instead.
+ * All visual chrome lives on an inner View: the Pressable is kept as a bare
+ * behavior/hit-target wrapper and pressed state is tracked in React state.
+ * (Historically function-form `style` on Pressable was swallowed by NativeWind's
+ * css-interop wrapper; NativeWind is gone, but the pattern stays for stability.)
  */
 export function Button({
   label,

@@ -1,20 +1,19 @@
 import { MaterialIcons } from '@expo/vector-icons';
-import { useLocalSearchParams, useRouter } from 'expo-router';
+import { useLocalSearchParams } from 'expo-router';
 import { useMemo, useState } from 'react';
-import { ActivityIndicator, FlatList, Pressable, StyleSheet, View } from 'react-native';
+import { FlatList, Pressable, StyleSheet, View } from 'react-native';
 
 import {
   AppText,
   BottomNav,
   Divider,
   IconButton,
-  OfflineNotice,
   ScreenContainer,
   ScreenHeader,
 } from '@/components';
 import { Colors, Radius, Spacing } from '@/constants/design';
 import { filterByTopic, parseTopicKey, topicLabel } from '@/constants/topics';
-import type { Question } from '@/lib/api';
+import type { Question } from '@/data/question-types';
 import { correctAnswerText, localize } from '@/lib/i18n';
 import { useOnboarding } from '@/lib/onboarding-context';
 import { t } from '@/lib/ui-i18n';
@@ -26,16 +25,15 @@ import { useQuestionPool } from '@/lib/use-question-pool';
  * extra navigation depth, one question open at a time.
  */
 export default function StudyListScreen() {
-  const router = useRouter();
   const { data } = useOnboarding();
   const lang = data.languageCode ?? 'en';
   const params = useLocalSearchParams<{ topic?: string }>();
   const topic = parseTopicKey(params.topic);
 
   const pool = useQuestionPool();
-  const poolQuestions = pool.status === 'ready' ? pool.questions : null;
+  const poolQuestions = pool.questions;
   const questions = useMemo(
-    () => (poolQuestions ? filterByTopic(poolQuestions, topic) : []),
+    () => filterByTopic(poolQuestions, topic),
     [poolQuestions, topic],
   );
 
@@ -49,24 +47,12 @@ export default function StudyListScreen() {
           <AppText variant="headlineLg" color="navy">
             {topicLabel(topic)}
           </AppText>
-          {pool.status === 'ready' ? (
-            <AppText variant="labelMd" color="muted">
-              {questions.length} questions · tap a question to see the answer
-            </AppText>
-          ) : null}
-          {pool.status === 'ready' && pool.offline ? (
-            <OfflineNotice onRetry={pool.reload} />
-          ) : null}
+          <AppText variant="labelMd" color="muted">
+            {questions.length} questions · tap a question to see the answer
+          </AppText>
         </View>
 
-        {pool.status === 'loading' ? (
-          <View style={styles.centerFill}>
-            <ActivityIndicator size="large" color={Colors.navy} />
-            <AppText variant="bodyLg" color="muted" center>
-              Loading questions…
-            </AppText>
-          </View>
-        ) : questions.length === 0 ? (
+        {questions.length === 0 ? (
           <View style={styles.centerFill}>
             <AppText variant="bodyLg" color="muted" center>
               No questions in this topic yet.

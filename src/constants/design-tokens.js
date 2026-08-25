@@ -2,10 +2,9 @@
  * Citizenly design tokens — the SINGLE SOURCE OF TRUTH for colors, spacing,
  * radius, sizing, and the DM Sans type scale.
  *
- * This is plain CommonJS (not TS) on purpose: it is consumed by BOTH
- *   - tailwind.config.js (build-time, Node) via require(), and
- *   - src/constants/design.ts (runtime, typed) via import.
- * Edit values HERE and they flow to both NativeWind classes and JS/StyleSheet.
+ * Plain CommonJS (not TS) so it can be consumed by both Node tooling and the
+ * typed runtime layer (src/constants/design.ts). Edit values HERE and they
+ * flow to every StyleSheet through the `design.ts` exports.
  *
  * Palette is the real Citizenly brand, NOT the drifted Material palette in the
  * Stitch export (design.md frontmatter). Values distilled from the corrected

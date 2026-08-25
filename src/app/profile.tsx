@@ -15,7 +15,7 @@ import {
 } from '@/components';
 import { US_STATES } from '@/constants/us-states';
 import { Colors, Spacing } from '@/constants/design';
-import { ApiError, apiUpdateEmail, apiUpdatePin } from '@/lib/api';
+import { checkPin, updateAccount } from '@/lib/local-account';
 import { useSession } from '@/lib/session-context';
 import { t } from '@/lib/ui-i18n';
 import { useLang } from '@/lib/use-lang';
@@ -200,7 +200,7 @@ function EmailEditor({ onDone }: { onDone: () => void }) {
   const [saving, setSaving] = useState(false);
 
   const handleSave = async () => {
-    if (saving || !session.token) return;
+    if (saving) return;
     const entered = newEmail.trim().toLowerCase();
     if (!/^\S+@\S+\.\S+$/.test(entered)) {
       setError('Please enter a valid email address.');
@@ -212,21 +212,19 @@ function EmailEditor({ onDone }: { onDone: () => void }) {
     }
     setError(undefined);
     setSaving(true);
-    let saved: string;
     try {
-      saved = await apiUpdateEmail(entered, pin, session.token);
-    } catch (e: unknown) {
-      setError(
-        e instanceof ApiError
-          ? e.message
-          : "We couldn't save your changes. Please check your connection and try again.",
-      );
+      if (!(await checkPin(pin))) {
+        setError("That PIN doesn't match your account.");
+        setSaving(false);
+        return;
+      }
+      await updateAccount({ email: entered });
+      await session.updateUser({ email: entered });
+    } catch {
+      setError("We couldn't save your changes on this device. Please try again.");
       setSaving(false);
       return;
     }
-    // Server saved and updateUser refreshes in-memory state before it touches
-    // the offline cache — a cache-write failure is not worth blocking on.
-    await session.updateUser({ email: saved }).catch(() => {});
     setSaving(false);
     onDone();
   };
@@ -260,7 +258,6 @@ function EmailEditor({ onDone }: { onDone: () => void }) {
 
 /** Current PIN + new PIN + confirmation → save. */
 function PinEditor({ onDone }: { onDone: () => void }) {
-  const session = useSession();
   const [currentPin, setCurrentPin] = useState('');
   const [newPin, setNewPin] = useState('');
   const [confirmPin, setConfirmPin] = useState('');
@@ -268,7 +265,7 @@ function PinEditor({ onDone }: { onDone: () => void }) {
   const [saving, setSaving] = useState(false);
 
   const handleSave = async () => {
-    if (saving || !session.token) return;
+    if (saving) return;
     if (currentPin.length !== 5) {
       setError('Please enter your current 5-digit PIN.');
       return;
@@ -284,7 +281,11 @@ function PinEditor({ onDone }: { onDone: () => void }) {
     setError(undefined);
     setSaving(true);
     try {
-      await apiUpdatePin(currentPin, newPin, session.token);
+      if (!(await checkPin(currentPin))) {
+        setError("That PIN doesn't match your account.");
+        return;
+      }
+      await updateAccount({ pin: newPin });
       // RN-web's Alert is a no-op; window.alert gives the same confirmation.
       if (Platform.OS === 'web') {
         window.alert('PIN changed. Use your new PIN the next time you log in.');
@@ -292,12 +293,8 @@ function PinEditor({ onDone }: { onDone: () => void }) {
         Alert.alert('PIN changed', 'Use your new PIN the next time you log in.');
       }
       onDone();
-    } catch (e: unknown) {
-      setError(
-        e instanceof ApiError
-          ? e.message
-          : "We couldn't save your changes. Please check your connection and try again.",
-      );
+    } catch {
+      setError("We couldn't save your changes on this device. Please try again.");
     } finally {
       setSaving(false);
     }

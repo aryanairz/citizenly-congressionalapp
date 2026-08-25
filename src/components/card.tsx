@@ -39,9 +39,8 @@ export interface ListRowProps {
  * when `onPress` is omitted.
  */
 export function ListRow({ title, subtitle, badge, left, right, onPress, style }: ListRowProps) {
-  // Pressed state is tracked here (not via Pressable's render-function children)
-  // because NativeWind's css-interop wrapper around Pressable has proven
-  // unreliable with function-form props — see Button for the same pattern.
+  // Pressed state is tracked here (not via Pressable's render-function
+  // children) — see Button for the same pattern and its history.
   const [pressed, setPressed] = useState(false);
 
   const content = (

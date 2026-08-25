@@ -7,7 +7,7 @@
  */
 
 import type { LanguageCode } from '@/constants/brand';
-import type { LocalizedText, Question } from '@/lib/api';
+import type { LocalizedText, Question } from '@/data/question-types';
 
 /**
  * Return the string for `lang`, falling back to English when that language is

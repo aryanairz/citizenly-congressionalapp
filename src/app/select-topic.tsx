@@ -1,9 +1,9 @@
 import { MaterialIcons } from '@expo/vector-icons';
 import { type Href, useLocalSearchParams, useRouter } from 'expo-router';
 import { useState } from 'react';
-import { ActivityIndicator, Pressable, ScrollView, StyleSheet, View } from 'react-native';
+import { Pressable, ScrollView, StyleSheet, View } from 'react-native';
 
-import { AppText, BottomNav, OfflineNotice, ScreenContainer, ScreenHeader } from '@/components';
+import { AppText, BottomNav, ScreenContainer, ScreenHeader } from '@/components';
 import { Colors, Radius, Sizing, Spacing } from '@/constants/design';
 import { filterByTopic, TOPIC_OPTIONS, type TopicKey } from '@/constants/topics';
 import { t, tCount } from '@/lib/ui-i18n';
@@ -32,7 +32,7 @@ export default function SelectTopicScreen() {
 
   const lang = useLang();
   const pool = useQuestionPool();
-  const questions = pool.status === 'ready' ? pool.questions : [];
+  const questions = pool.questions;
 
   const rows = TOPIC_OPTIONS.map((option) => ({
     ...option,
@@ -54,33 +54,21 @@ export default function SelectTopicScreen() {
           <AppText variant="headlineLg" color="navy">
             {t('selectTopic', lang)}
           </AppText>
-          {pool.status === 'ready' && pool.offline ? (
-            <OfflineNotice onRetry={pool.reload} />
-          ) : null}
         </View>
 
-        {pool.status === 'loading' ? (
-          <View style={styles.centerFill}>
-            <ActivityIndicator size="large" color={Colors.navy} />
-            <AppText variant="bodyLg" color="muted" center>
-              Loading questions…
-            </AppText>
-          </View>
-        ) : (
-          <ScrollView
-            style={styles.scroll}
-            contentContainerStyle={styles.list}
-            showsVerticalScrollIndicator={false}>
-            {rows.map((topic) => (
-              <TopicRow
-                key={topic.key}
-                name={topic.label}
-                count={topic.count}
-                onPress={() => openTopic(topic.key)}
-              />
-            ))}
-          </ScrollView>
-        )}
+        <ScrollView
+          style={styles.scroll}
+          contentContainerStyle={styles.list}
+          showsVerticalScrollIndicator={false}>
+          {rows.map((topic) => (
+            <TopicRow
+              key={topic.key}
+              name={topic.label}
+              count={topic.count}
+              onPress={() => openTopic(topic.key)}
+            />
+          ))}
+        </ScrollView>
       </View>
 
       <BottomNav />

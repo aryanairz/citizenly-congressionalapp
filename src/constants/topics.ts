@@ -7,7 +7,7 @@
  *              per-user with ids like p_gov_CA — so they're matched by id.
  */
 
-import type { Question } from '@/lib/api';
+import type { Question } from '@/data/question-types';
 
 export type TopicKey = 'all' | 'government' | 'rights' | 'history' | 'symbols' | 'state';
 

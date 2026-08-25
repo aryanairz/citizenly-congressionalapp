@@ -1,9 +1,8 @@
 /**
  * Citizenly theme — the typed design-system API used throughout the app.
  *
- * Raw values live in ./design-tokens.js (shared with tailwind.config.js so
- * NativeWind classes and JS styles never drift). This file adds TypeScript
- * types and turns the type scale into ready-to-use React Native TextStyles.
+ * Raw values live in ./design-tokens.js. This file adds TypeScript types and
+ * turns the type scale into ready-to-use React Native TextStyles.
  *
  * Import from here in components:  import { Colors, Spacing, Radius, Typography } from '@/constants/design';
  */

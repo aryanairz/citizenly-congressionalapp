@@ -1,8 +1,7 @@
 import { MaterialIcons } from '@expo/vector-icons';
-import { useLocalSearchParams, useRouter } from 'expo-router';
+import { useLocalSearchParams } from 'expo-router';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import {
-  ActivityIndicator,
   PanResponder,
   Pressable,
   StyleSheet,
@@ -18,11 +17,11 @@ import Animated, {
   withTiming,
 } from 'react-native-reanimated';
 
-import { AppText, BottomNav, Button, OfflineNotice, ScreenContainer, ScreenHeader } from '@/components';
+import { AppText, BottomNav, Button, ScreenContainer, ScreenHeader } from '@/components';
 import { Colors, Radius, Sizing, Spacing } from '@/constants/design';
 import { filterByTopic, parseTopicKey } from '@/constants/topics';
 import { localize } from '@/lib/i18n';
-import { recordMistake } from '@/lib/mistake-queue';
+import { addMistake } from '@/lib/local-mistakes';
 import { useOnboarding } from '@/lib/onboarding-context';
 import { useSession } from '@/lib/session-context';
 import { t } from '@/lib/ui-i18n';
@@ -32,7 +31,6 @@ import { useQuestionPool } from '@/lib/use-question-pool';
 const SWIPE_THRESHOLD = 70;
 
 export default function FlashcardsScreen() {
-  const router = useRouter();
   const session = useSession();
   const { data } = useOnboarding();
   const lang = data.languageCode ?? 'en';
@@ -55,9 +53,9 @@ export default function FlashcardsScreen() {
 
   // Memoized so the array identity is stable across renders — the reset
   // effect below keys off it.
-  const poolQuestions = pool.status === 'ready' ? pool.questions : null;
+  const poolQuestions = pool.questions;
   const questions = useMemo(
-    () => (poolQuestions ? filterByTopic(poolQuestions, topic) : []),
+    () => filterByTopic(poolQuestions, topic),
     [poolQuestions, topic],
   );
   const total = questions.length;
@@ -143,9 +141,8 @@ export default function FlashcardsScreen() {
 
   /** "Review again" = self-reported miss: record it, then advance as usual. */
   const reviewAgain = () => {
-    if (question && session.user?.id && session.token && !question.id.startsWith('mock-')) {
-      // Fire-and-forget: queue locally, flush in the background.
-      recordMistake(session.user.id, session.token, question.id);
+    if (question && session.user?.id) {
+      void addMistake(session.user.id, question.id);
     }
     spinToNext();
   };
@@ -229,16 +226,7 @@ export default function FlashcardsScreen() {
       <View style={styles.body}>
         <ScreenHeader />
 
-        {pool.status === 'loading' ? (
-          <View style={styles.centerFill}>
-            <ActivityIndicator size="large" color={Colors.navy} />
-            <AppText variant="bodyLg" color="muted" center>
-              Loading questions…
-            </AppText>
-          </View>
-        ) : null}
-
-        {pool.status === 'ready' && !question ? (
+        {!question ? (
           <View style={styles.centerFill}>
             <AppText variant="bodyLg" color="muted" center>
               No questions in this topic yet.
@@ -246,7 +234,7 @@ export default function FlashcardsScreen() {
           </View>
         ) : null}
 
-        {pool.status === 'ready' && question ? (
+        {question ? (
           <>
             {/* Progress */}
             <View style={styles.progressText}>
@@ -258,7 +246,6 @@ export default function FlashcardsScreen() {
                   style={[styles.progressFill, { width: `${((index + 1) / total) * 100}%` }]}
                 />
               </View>
-              {pool.offline ? <OfflineNotice onRetry={pool.reload} /> : null}
             </View>
 
             {/* Flip card (tap to flip, swipe to change) */}

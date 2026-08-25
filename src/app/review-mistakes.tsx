@@ -17,7 +17,7 @@ import {
   type OptionVisual,
 } from '@/components';
 import { Colors, Radius, Spacing } from '@/constants/design';
-import { apiClearMistakes, apiGetMistakes, apiRemoveMistake } from '@/lib/api';
+import { clearMistakes, removeMistake, useMistakes } from '@/lib/local-mistakes';
 import { correctAnswerText, localize } from '@/lib/i18n';
 import { useOnboarding } from '@/lib/onboarding-context';
 import { useSession } from '@/lib/session-context';
@@ -25,9 +25,9 @@ import { t } from '@/lib/ui-i18n';
 import { useQuestionPool } from '@/lib/use-question-pool';
 
 /**
- * Review Mistakes: quiz-style review over the user's server-side mistake set.
- * Answering correctly HERE is the only place a mistake resolves (DELETE) —
- * mirroring the website. Wrong answers keep the question in the set.
+ * Review Mistakes: quiz-style review over the device's mistake bank.
+ * Answering correctly HERE is the only place a mistake resolves — wrong
+ * answers keep the question in the set, so the bank drains as you improve.
  */
 export default function ReviewMistakesScreen() {
   const router = useRouter();
@@ -36,8 +36,7 @@ export default function ReviewMistakesScreen() {
   const lang = data.languageCode ?? 'en';
 
   const pool = useQuestionPool();
-  const [mistakeIds, setMistakeIds] = useState<string[] | null>(null);
-  const [fetchFailed, setFetchFailed] = useState(false);
+  const { ids: mistakeIds, loading: mistakesLoading } = useMistakes(session.user?.id);
   const [reloadKey, setReloadKey] = useState(0);
 
   // Review-session state
@@ -48,34 +47,14 @@ export default function ReviewMistakesScreen() {
   const [resolvedIds, setResolvedIds] = useState<Set<string>>(new Set());
   const [finished, setFinished] = useState(false);
 
-  // Load the mistake set.
-  useEffect(() => {
-    if (!session.token) {
-      setFetchFailed(true);
-      return;
-    }
-    let active = true;
-    setFetchFailed(false);
-    setMistakeIds(null);
-    apiGetMistakes(session.token)
-      .then((ids) => {
-        if (active) setMistakeIds(ids);
-      })
-      .catch(() => {
-        if (active) setFetchFailed(true);
-      });
-    return () => {
-      active = false;
-    };
-  }, [session.token, reloadKey]);
-
-  // The review pile: mistake ids resolved against the live question pool.
-  const poolQuestions = pool.status === 'ready' && !pool.offline ? pool.questions : null;
+  // The review pile: mistake ids resolved against the bundled question pool.
+  // `reloadKey` restarts the session over whatever is still unresolved.
+  const poolQuestions = pool.questions;
   const reviewQuestions = useMemo(() => {
-    if (!poolQuestions || !mistakeIds) return null;
     const byId = new Map(poolQuestions.map((q) => [q.id, q]));
     return mistakeIds.map((id) => byId.get(id)).filter((q) => q !== undefined);
-  }, [poolQuestions, mistakeIds]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [poolQuestions, mistakeIds, reloadKey]);
 
   const total = reviewQuestions?.length ?? 0;
   const question = reviewQuestions?.[index];
@@ -106,13 +85,12 @@ export default function ReviewMistakesScreen() {
   const isLast = index === total - 1;
 
   const handleCheck = () => {
-    if (selected === null || checked || !question || !session.token) return;
+    if (selected === null || checked || !question) return;
     setChecked(true);
-    if (correctSet.has(order[selected])) {
-      // Resolved! The only place a mistake is removed. Fire-and-forget — a
-      // failed DELETE just means it reappears next session.
+    if (correctSet.has(order[selected]) && session.user?.id) {
+      // Resolved! The only place a mistake leaves the bank.
       setResolvedIds((prev) => new Set(prev).add(question.id));
-      apiRemoveMistake(question.id, session.token).catch(() => {});
+      void removeMistake(session.user.id, question.id);
     }
   };
 
@@ -131,20 +109,15 @@ export default function ReviewMistakesScreen() {
           text: 'Clear All',
           style: 'destructive',
           onPress: () => {
-            if (!session.token) return;
-            apiClearMistakes(session.token)
-              .then(() => setMistakeIds([]))
-              .catch(() =>
-                Alert.alert("Couldn't clear", 'Please check your connection and try again.'),
-              );
+            if (!session.user?.id) return;
+            void clearMistakes(session.user.id);
           },
         },
       ],
     );
   };
 
-  const loading = pool.status === 'loading' || (mistakeIds === null && !fetchFailed);
-  const needsConnection = fetchFailed || (pool.status === 'ready' && pool.offline);
+  const loading = mistakesLoading;
   const resolvedCount = resolvedIds.size;
   const remaining = total - resolvedCount;
 
@@ -153,36 +126,13 @@ export default function ReviewMistakesScreen() {
       <View style={styles.body}>
         <ScreenHeader />
 
-        {loading && !needsConnection ? (
+        {loading ? (
           <View style={styles.centerFill}>
             <ActivityIndicator size="large" color={Colors.navy} />
-            <AppText variant="bodyLg" color="muted" center>
-              Loading your mistakes…
-            </AppText>
           </View>
         ) : null}
 
-        {needsConnection ? (
-          <View style={styles.centerFill}>
-            <MaterialIcons name="cloud-off" size={44} color={Colors.subtle} />
-            <AppText variant="headlineMd" color="navy" center>
-              We couldn&apos;t load your mistakes
-            </AppText>
-            <AppText variant="bodyLg" color="muted" center>
-              Reviewing mistakes needs a connection. Please try again.
-            </AppText>
-            <Button
-              label={t('tryAgain', lang)}
-              onPress={() => {
-                setReloadKey((k) => k + 1);
-                pool.reload();
-              }}
-              fullWidth={false}
-            />
-          </View>
-        ) : null}
-
-        {!loading && !needsConnection && total === 0 ? (
+        {!loading && total === 0 ? (
           <View style={styles.centerFill}>
             <View style={styles.emptyBadge}>
               <MaterialIcons name="check-circle" size={44} color={Colors.success} />
@@ -198,7 +148,7 @@ export default function ReviewMistakesScreen() {
           </View>
         ) : null}
 
-        {!loading && !needsConnection && total > 0 && finished ? (
+        {!loading && total > 0 && finished ? (
           <View style={styles.centerFill}>
             <AppText variant="headlineLg" color="navy" center>
               Review Complete!
@@ -223,7 +173,7 @@ export default function ReviewMistakesScreen() {
           </View>
         ) : null}
 
-        {!loading && !needsConnection && !finished && question ? (
+        {!loading && !finished && question ? (
           <>
             <View style={styles.progressRow}>
               <View style={styles.progressText}>
