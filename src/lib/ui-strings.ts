@@ -1,13 +1,13 @@
 /**
  * UI-chrome translations. GENERATED from the Citizenly website's
  * forourparents/lib/i18n.ts by scripts (gen-ui-strings.js in the session
- * scratchpad) — the site dictionary is complete in all 48 languages, so every
+ * scratchpad) - the site dictionary is complete in all 48 languages, so every
  * entry here is too. English values are the app's own copy and may differ
  * from the site's ("Not quite right" vs "Incorrect"); the other 47 languages
  * are the site's translations for the equivalent slot.
  *
  * Hand-edits are fine (this file is the source of truth for the app); add new
- * keys with at least { en } — t() falls back to English per string.
+ * keys with at least { en } - t() falls back to English per string.
  */
 
 import type { LanguageCode } from '@/constants/brand';
@@ -1188,13 +1188,28 @@ export const UI_STRINGS = {
     da: "Spørgsmål {current} af {total}",
     fi: "Kysymys {current} / {total}",
   },
+
+  // Read-aloud controls. English-only for now - t() falls back per string,
+  // so these render in English until translations are added.
+  stopReading: {
+    en: "Stop reading",
+  },
+  autoSpeakTitle: {
+    en: "Read answers aloud",
+  },
+  autoSpeakOn: {
+    en: "Answers and explanations are spoken automatically.",
+  },
+  autoSpeakOff: {
+    en: "Tap the speaker button when you want to hear something.",
+  },
 } as const satisfies Record<string, UiEntry>;
 
 export type UiKey = keyof typeof UI_STRINGS;
 
 /**
  * Plural-aware entries: per-language forms keyed by Intl.PluralRules
- * categories. Currently English-only — other languages fall back to English
+ * categories. Currently English-only - other languages fall back to English
  * until translated (same per-string fallback as UI_STRINGS).
  */
 export type UiPluralForms = Partial<Record<Intl.LDMLPluralRule, string>> & { other: string };

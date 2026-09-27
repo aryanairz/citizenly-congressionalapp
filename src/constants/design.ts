@@ -1,5 +1,5 @@
 /**
- * Citizenly theme — the typed design-system API used throughout the app.
+ * Citizenly theme - the typed design-system API used throughout the app.
  *
  * Raw values live in ./design-tokens.js. This file adds TypeScript types and
  * turns the type scale into ready-to-use React Native TextStyles.

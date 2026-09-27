@@ -5,7 +5,7 @@
  * districts so the district field can hide.
  *
  * `districtCount` is derived from the website's representatives data
- * (data/representatives.ts — sums to 435) and caps the district input.
+ * (data/representatives.ts - sums to 435) and caps the district input.
  * Count of 1 = at-large state: the district question is skipped and the
  * at-large key (0) is stored automatically.
  */
@@ -13,7 +13,7 @@
 export interface USPlace {
   name: string;
   code: string;
-  /** Defaults to 'state' — only DC ('district') and territories differ. */
+  /** Defaults to 'state' - only DC ('district') and territories differ. */
   kind?: 'district' | 'territory';
   /** Number of congressional districts; omitted for DC/territories. */
   districtCount?: number;

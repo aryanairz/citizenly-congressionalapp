@@ -3,7 +3,7 @@
  * interview. Composed strictly from the official USCIS reading vocabulary
  * (M-715) and writing vocabulary (M-716) lists, the way real test sentences
  * are. Reading sentences are questions the applicant reads aloud; writing
- * sentences are dictated by the officer and typed by the applicant — the
+ * sentences are dictated by the officer and typed by the applicant - the
  * classic interview pairing (read a question, write its answer).
  *
  * One-of-three rule: the machine allows up to three attempts per portion, so

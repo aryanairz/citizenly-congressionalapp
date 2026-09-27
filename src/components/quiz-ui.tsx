@@ -19,7 +19,7 @@ export type OptionVisual = 'default' | 'selected' | 'correct' | 'wrong' | 'dimme
 
 export const LETTERS = ['A', 'B', 'C', 'D', 'E', 'F'];
 
-/** Fisher–Yates over option indices — the feed stores the correct answer at index 0. */
+/** Fisher–Yates over option indices - the feed stores the correct answer at index 0. */
 export function shuffledIndices(count: number): number[] {
   const indices = Array.from({ length: count }, (_, i) => i);
   for (let i = indices.length - 1; i > 0; i--) {
@@ -74,7 +74,7 @@ export function OptionCard({
         style={[
           styles.option,
           { borderColor, backgroundColor },
-          // After grading, every card fades by the same amount — color alone
+          // After grading, every card fades by the same amount - color alone
           // (green/red vs neutral) does the differentiating.
           (visual === 'correct' || visual === 'wrong' || visual === 'dimmed') &&
             styles.optionDimmed,

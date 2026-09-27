@@ -64,7 +64,7 @@ describe('buildQuestionPool', () => {
     // …replaced by personalized ones naming the user's actual officials.
     expect(ids.some((id) => id.startsWith('p_gov_'))).toBe(true);
     // 4 generic out, 5 personalized in (governor, both senators, rep, capital)
-    // — the generic bank asks about both senators in one combined question.
+    // - the generic bank asks about both senators in one combined question.
     expect(pool).toHaveLength(129);
   });
 

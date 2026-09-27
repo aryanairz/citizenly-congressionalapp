@@ -1,11 +1,11 @@
 /**
- * The bundled civics question bank — the app's only source of study content.
+ * The bundled civics question bank - the app's only source of study content.
  *
  * The 128 official USCIS questions, every field translated into all 48
  * supported languages, shipped inside the app. Nothing here touches the
  * network: the app works completely offline, on a plane, with no account.
  *
- * The website's 23 "extra practice" records are deliberately NOT bundled —
+ * The website's 23 "extra practice" records are deliberately NOT bundled -
  * they carry no standing on the real test, and including them would make the
  * app's "128 questions" claim untrue.
  *
@@ -23,14 +23,14 @@ export type { Question, LocalizedText, Lang, Topic } from '@/data/question-types
 /** The 128 official USCIS civics questions. */
 export const OFFICIAL_QUESTIONS = raw as unknown as Question[];
 
-/** How many questions the study material covers — shown on the dashboard. */
+/** How many questions the study material covers - shown on the dashboard. */
 export const TOTAL_OFFICIAL = OFFICIAL_QUESTIONS.length;
 
 /** The 20 questions USCIS designates for 65/20 special consideration. */
 export const REDUCED_6520_QUESTIONS = OFFICIAL_QUESTIONS.filter((q) => q.is6520 === true);
 
 /**
- * Generic state-specific questions that personalized ones replace — mirrors
+ * Generic state-specific questions that personalized ones replace - mirrors
  * the website's STATE_SPECIFIC_IDS. Kept in the bank so a user with no state
  * set still sees a governor/senator/capital question.
  */
@@ -52,12 +52,12 @@ export interface PoolOptions {
 /**
  * Builds the study pool.
  *
- * 65/20 users get exactly 20 questions instead of 128 — the single biggest
+ * 65/20 users get exactly 20 questions instead of 128 - the single biggest
  * lever in the product. Everyone else gets the official 128.
  *
  * Setting a state swaps the four generic state questions for real ones naming
  * the user's own officials. That's 4 out but 5 in (governor, both senators,
- * representative, capital), so a personalized pool is 129 rather than 128 —
+ * representative, capital), so a personalized pool is 129 rather than 128 -
  * the extra one is the second senator, which the generic bank asks about in a
  * single combined question.
  */

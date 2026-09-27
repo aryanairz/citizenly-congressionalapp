@@ -1,7 +1,7 @@
 import { MaterialIcons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import { useEffect, useMemo, useState } from 'react';
-import { ActivityIndicator, Alert, ScrollView, StyleSheet, View } from 'react-native';
+import { ActivityIndicator, ScrollView, StyleSheet, View } from 'react-native';
 
 import {
   AppText,
@@ -17,6 +17,7 @@ import {
   type OptionVisual,
 } from '@/components';
 import { Colors, Radius, Spacing } from '@/constants/design';
+import { confirmAction } from '@/lib/confirm';
 import { clearMistakes, removeMistake, useMistakes } from '@/lib/local-mistakes';
 import { correctAnswerText, localize } from '@/lib/i18n';
 import { useOnboarding } from '@/lib/onboarding-context';
@@ -26,7 +27,7 @@ import { useQuestionPool } from '@/lib/use-question-pool';
 
 /**
  * Review Mistakes: quiz-style review over the device's mistake bank.
- * Answering correctly HERE is the only place a mistake resolves — wrong
+ * Answering correctly HERE is the only place a mistake resolves - wrong
  * answers keep the question in the set, so the bank drains as you improve.
  */
 export default function ReviewMistakesScreen() {
@@ -100,21 +101,16 @@ export default function ReviewMistakesScreen() {
   };
 
   const handleClearAll = () => {
-    Alert.alert(
-      'Clear all mistakes?',
-      `This removes all ${total} question${total === 1 ? '' : 's'} from your review list. This cannot be undone.`,
-      [
-        { text: 'Cancel', style: 'cancel' },
-        {
-          text: 'Clear All',
-          style: 'destructive',
-          onPress: () => {
-            if (!session.user?.id) return;
-            void clearMistakes(session.user.id);
-          },
-        },
-      ],
-    );
+    void confirmAction({
+      title: 'Clear all mistakes?',
+      message: `This removes all ${total} question${total === 1 ? '' : 's'} from your review list. This cannot be undone.`,
+      confirmLabel: 'Clear All',
+      destructive: true,
+    }).then((confirmed) => {
+      if (confirmed && session.user?.id) {
+        void clearMistakes(session.user.id);
+      }
+    });
   };
 
   const loading = mistakesLoading;

@@ -14,7 +14,7 @@ export interface LanguagePickerProps {
 
 /**
  * Strips accents so someone typing on an English keyboard can still find
- * "Español" or "Français" — the whole point of the search box is that you
+ * "Español" or "Français" - the whole point of the search box is that you
  * don't need the other language's keyboard to reach your language.
  */
 function fold(text: string): string {

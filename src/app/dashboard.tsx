@@ -14,7 +14,7 @@ import type { UiKey } from '@/lib/ui-strings';
 import { useLang } from '@/lib/use-lang';
 
 interface Mode {
-  /** Stable identifier — never derive logic or React keys from display text. */
+  /** Stable identifier - never derive logic or React keys from display text. */
   id: 'study' | 'flashcards' | 'quiz' | 'review-mistakes' | 'mock-interview';
   icon: keyof typeof MaterialIcons.glyphMap;
   /** Translation key when the title has one; `title` is the English fallback. */
@@ -96,7 +96,7 @@ export default function HomeScreen() {
   const progress = Math.round((mastered / TOTAL_QUESTIONS) * 100);
   const encouragement =
     mastered === 0
-      ? 'Ready when you are — let’s begin!'
+      ? 'Ready when you are. Let’s begin!'
       : `You’re doing great! ${TOTAL_QUESTIONS - mastered} more to go.`;
 
   return (
@@ -115,7 +115,7 @@ export default function HomeScreen() {
           </AppText>
         </View>
 
-        {/* Progress card — always framed against the 128-question total */}
+        {/* Progress card - always framed against the 128-question total */}
         <Card surface="muted" style={styles.progressCard}>
           <View style={styles.progressHeader}>
             <AppText variant="labelLg" color="navy">

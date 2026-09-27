@@ -1,5 +1,5 @@
 /**
- * The 2025 USCIS civics test bank — 128 questions, applies to N-400s filed on
+ * The 2025 USCIS civics test bank - 128 questions, applies to N-400s filed on
  * or after 2025-10-20 (see TEST_2025_CUTOFF in src/lib/interview-machine.ts).
  *
  * Ids and prompts mirror the Citizenly website's official question bank
@@ -237,7 +237,7 @@ export const CIVICS_2025: CivicsQuestion[] = [
   },
   {
     // State-dependent (website replaces this with a personalized question);
-    // excluded from interview draws — see INTERVIEW_POOLS.
+    // excluded from interview draws - see INTERVIEW_POOLS.
     id: 'g030',
     prompt: "Who is one of your state's U.S. senators now?",
     acceptableAnswers: ['Answers will vary by state'],
@@ -274,7 +274,7 @@ export const CIVICS_2025: CivicsQuestion[] = [
     ],
   },
   {
-    // State-dependent; excluded from interview draws — see INTERVIEW_POOLS.
+    // State-dependent; excluded from interview draws - see INTERVIEW_POOLS.
     id: 'g035',
     prompt: 'Name your U.S. representative.',
     acceptableAnswers: ['Answers will vary by district'],
@@ -436,14 +436,14 @@ export const CIVICS_2025: CivicsQuestion[] = [
     dynamic: true,
   },
   {
-    // State-dependent; excluded from interview draws — see INTERVIEW_POOLS.
+    // State-dependent; excluded from interview draws - see INTERVIEW_POOLS.
     id: 'g054',
     prompt: 'Who is the governor of your state now?',
     acceptableAnswers: ['Answers will vary by state'],
     dynamic: true,
   },
   {
-    // State-dependent; excluded from interview draws — see INTERVIEW_POOLS.
+    // State-dependent; excluded from interview draws - see INTERVIEW_POOLS.
     id: 'g055',
     prompt: 'What is the capital of your state?',
     acceptableAnswers: ['Answers will vary by state'],
@@ -1195,7 +1195,7 @@ export const CIVICS_2025: CivicsQuestion[] = [
 
 /**
  * The 20 questions USCIS designates for 65/20 special consideration on the
- * 2025 test — mirrors the website's SIXTY_FIVE_TWENTY_IDS exactly.
+ * 2025 test - mirrors the website's SIXTY_FIVE_TWENTY_IDS exactly.
  */
 export const REDUCED_2025_IDS: string[] = [
   'g001',

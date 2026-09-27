@@ -1,13 +1,13 @@
 /**
- * The signed-in session — entirely local to this device.
+ * The signed-in session - entirely local to this device.
  *
  * There is no server: the account lives in AsyncStorage (src/lib/local-account.ts)
  * and this context just holds whichever profile is currently active. Restoring
  * a session is a single local read, so launching offline works exactly like
- * launching online — because they're the same thing.
+ * launching online - because they're the same thing.
  *
  * On sign-in/restore the user is mirrored into the onboarding context (name,
- * language, exemption, state, district) — every consumer (greeting, question
+ * language, exemption, state, district) - every consumer (greeting, question
  * pool, study language) reads from there.
  */
 

@@ -1,5 +1,5 @@
 /**
- * The local account store — this app has no backend.
+ * The local account store - this app has no backend.
  *
  * Everything the "account" screens do (sign up, log in, change your email or
  * PIN, change your state) happens here, in the app, against AsyncStorage. No
@@ -8,7 +8,7 @@
  *
  * Accounts are local to the install. Signing up stores one profile; logging in
  * checks the PIN against it. There is no account recovery because there is
- * nowhere to recover from — "Forgot PIN?" offers a fresh start instead.
+ * nowhere to recover from - "Forgot PIN?" offers a fresh start instead.
  */
 
 import AsyncStorage from '@react-native-async-storage/async-storage';
@@ -99,7 +99,7 @@ export async function logIn(email: string, pin: string): Promise<LocalUser> {
   const account = await readAccount();
   if (!account) {
     throw new AccountError(
-      "There's no account on this device yet. Tap Get Started to make one — it only takes a moment.",
+      "There's no account on this device yet. Tap Get Started to make one - it only takes a moment.",
     );
   }
   const matchesEmail = account.email.toLowerCase() === email.trim().toLowerCase();
@@ -119,7 +119,7 @@ export async function updateAccount(patch: Partial<LocalUser>): Promise<LocalUse
   return merged;
 }
 
-/** Verify the current PIN — used to confirm sensitive profile changes. */
+/** Verify the current PIN - used to confirm sensitive profile changes. */
 export async function checkPin(pin: string): Promise<boolean> {
   const account = await readAccount();
   return account ? account.pin === pin : false;
@@ -130,6 +130,6 @@ export async function deleteAccount(): Promise<void> {
   try {
     await AsyncStorage.removeItem(ACCOUNT_KEY);
   } catch {
-    // Storage unavailable — nothing else to do.
+    // Storage unavailable - nothing else to do.
   }
 }

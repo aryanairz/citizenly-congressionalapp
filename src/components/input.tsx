@@ -14,7 +14,7 @@ export interface InputProps extends TextInputProps {
 
 /**
  * Text field with a permanent bold label and a large 64px tap target. Border is
- * neutral by default, navy on focus, red on error — and errors are announced in
+ * neutral by default, navy on focus, red on error - and errors are announced in
  * text (not color alone).
  */
 export function Input({ label, error, containerStyle, onFocus, onBlur, style, ...rest }: InputProps) {

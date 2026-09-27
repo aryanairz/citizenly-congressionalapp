@@ -42,7 +42,7 @@ export default function StateScreen() {
         eligibilityRule: data.exemption ?? null,
       });
       await session.signIn(user);
-      // Onboarding is done — replace so the back gesture doesn't reenter the flow.
+      // Onboarding is done - replace so the back gesture doesn't reenter the flow.
       router.replace('/dashboard');
     } catch {
       setSignupError("We couldn't save your account on this device. Please try again.");

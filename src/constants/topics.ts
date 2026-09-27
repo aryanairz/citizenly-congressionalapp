@@ -4,7 +4,7 @@
  *  - 'all'   → no filter
  *  - 'state' → the personalized questions (governor/senators/rep/capital),
  *              which carry topic "government" in the feed but are generated
- *              per-user with ids like p_gov_CA — so they're matched by id.
+ *              per-user with ids like p_gov_CA - so they're matched by id.
  */
 
 import type { Question } from '@/data/question-types';

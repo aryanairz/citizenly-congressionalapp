@@ -46,7 +46,7 @@ export function BottomNav({ active }: BottomNavProps) {
       {TABS.map((tab) => (
         <NavItem
           key={tab.key}
-          // 'Profile' has no website translation yet — stays English for now.
+          // 'Profile' has no website translation yet - stays English for now.
           label={tab.key === 'home' ? t('home', lang) : tab.label}
           tab={tab}
           active={tab.key === active}

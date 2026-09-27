@@ -5,7 +5,7 @@
  * Mirrors the website's approach: a flat dictionary + a tiny accessor with
  * per-string English fallback, so untranslated strings simply stay English.
  * Adds what the website never needed: named interpolation ("{count}") and
- * plural selection via Intl.PluralRules — English "+ 's'" logic is wrong in
+ * plural selection via Intl.PluralRules - English "+ 's'" logic is wrong in
  * a dozen of the supported languages (Slavic few/many, Arabic's six forms).
  */
 

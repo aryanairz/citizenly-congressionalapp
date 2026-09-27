@@ -22,7 +22,7 @@ export interface PinInputProps {
 
 /**
  * A PIN field rendered as large separate digit boxes. Typing auto-advances,
- * backspace on an empty box steps back. Digits stay visible (deliberate — this
+ * backspace on an empty box steps back. Digits stay visible (deliberate - this
  * is a low-stakes PIN and visible entry is easier for older users).
  */
 export function PinInput({ length = 5, onChange, error }: PinInputProps) {

@@ -7,9 +7,9 @@ import {
   BottomNav,
   Button,
   FeedbackPanel,
-  IconButton,
   LETTERS,
   OptionCard,
+  ReadAloudButton,
   ScreenContainer,
   ScreenHeader,
   shuffledIndices,
@@ -19,6 +19,7 @@ import { Colors, Radius, Spacing } from '@/constants/design';
 import { filterByTopic, parseTopicKey } from '@/constants/topics';
 import { localize } from '@/lib/i18n';
 import { addMistake } from '@/lib/local-mistakes';
+import { speakAuto, stopSpeaking } from '@/lib/speech';
 import { t, tCount } from '@/lib/ui-i18n';
 import { useOnboarding } from '@/lib/onboarding-context';
 import { useSession } from '@/lib/session-context';
@@ -42,7 +43,7 @@ export default function QuizScreen() {
   const [score, setScore] = useState(0);
   const [finished, setFinished] = useState(false);
 
-  // Memoized so the array identity is stable across renders — the reset
+  // Memoized so the array identity is stable across renders - the reset
   // effects below key off it.
   const poolQuestions = pool.questions;
   const questions = useMemo(
@@ -58,6 +59,9 @@ export default function QuizScreen() {
     setScore(0);
     setFinished(false);
   }, [questions]);
+
+  // Never let a voice keep talking after the user has left the screen.
+  useEffect(() => stopSpeaking, []);
 
   // Reshuffle + clear the selection whenever a new question is shown.
   useEffect(() => {
@@ -93,15 +97,27 @@ export default function QuizScreen() {
   const handleCheck = () => {
     if (selected === null || checked || !question) return;
     setChecked(true);
-    if (correctSet.has(order[selected])) {
+    const right = correctSet.has(order[selected]);
+    if (right) {
       setScore((s) => s + 1);
     } else if (session.user?.id) {
       // Enroll it in the local mistake bank; Review Mistakes drains it later.
       void addMistake(session.user.id, question.id);
     }
+    // Speak the verdict and the reason, so someone who can't read the
+    // feedback panel still gets it. Silent if auto-speak is turned off.
+    speakAuto(
+      [
+        t(right ? 'correctBanner' : 'wrongBanner', lang),
+        correctAnswerText,
+        localize(question.explanation, lang),
+      ].join('. '),
+      lang,
+    );
   };
 
   const handleNext = () => {
+    stopSpeaking();
     if (isLast) setFinished(true);
     else setIndex((i) => i + 1);
   };
@@ -159,8 +175,14 @@ export default function QuizScreen() {
                   />
                 </View>
               </View>
-              {/* Placeholder read-aloud — no real audio yet. */}
-              <IconButton icon="volume-up" label={t('readAloud', lang)} onPress={() => {}} />
+              {/* Reads the question and every option, so the whole screen is
+                  usable without reading it. */}
+              <ReadAloudButton
+                text={[
+                  localize(question.question, lang),
+                  ...order.map((i) => localize(question.options[i], lang)),
+                ].join('. ')}
+              />
             </View>
 
             <ScrollView

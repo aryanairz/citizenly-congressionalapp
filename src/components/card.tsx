@@ -13,7 +13,7 @@ export interface CardProps {
   style?: StyleProp<ViewStyle>;
 }
 
-/** A flat, rounded content bucket — 16px radius, 1px hairline border, roomy padding. */
+/** A flat, rounded content bucket - 16px radius, 1px hairline border, roomy padding. */
 export function Card({ children, surface = 'white', style }: CardProps) {
   return (
     <View style={[styles.card, surface === 'muted' && styles.cardMuted, style]}>{children}</View>
@@ -40,7 +40,7 @@ export interface ListRowProps {
  */
 export function ListRow({ title, subtitle, badge, left, right, onPress, style }: ListRowProps) {
   // Pressed state is tracked here (not via Pressable's render-function
-  // children) — see Button for the same pattern and its history.
+  // children) - see Button for the same pattern and its history.
   const [pressed, setPressed] = useState(false);
 
   const content = (

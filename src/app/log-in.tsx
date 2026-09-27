@@ -1,6 +1,6 @@
 import { useRouter } from 'expo-router';
 import { useState } from 'react';
-import { Alert, Pressable, StyleSheet, View } from 'react-native';
+import { Pressable, StyleSheet, View } from 'react-native';
 
 import {
   AppText,
@@ -11,6 +11,7 @@ import {
   ScreenHeader,
 } from '@/components';
 import { Colors, Spacing } from '@/constants/design';
+import { confirmAction } from '@/lib/confirm';
 import { AccountError, logIn } from '@/lib/local-account';
 import { useSession } from '@/lib/session-context';
 import { t } from '@/lib/ui-i18n';
@@ -56,7 +57,7 @@ export default function LogInScreen() {
     setServerError(undefined);
     setSubmitting(true);
     try {
-      // Local check against the account saved on this device — no network.
+      // Local check against the account saved on this device - no network.
       const user = await logIn(entered, pin);
       await session.signIn(user);
       router.replace('/dashboard');
@@ -74,14 +75,15 @@ export default function LogInScreen() {
   // No server means no password reset. Offer the only thing that can help:
   // starting a new account on this device.
   const handleForgotPin = () => {
-    Alert.alert(
-      'Forgot your PIN?',
-      'Your account is saved only on this phone, so there’s no PIN to email you. You can start a new account instead — your study progress on this device stays.',
-      [
-        { text: 'Never mind', style: 'cancel' },
-        { text: 'Start a new account', onPress: () => router.replace('/sign-up') },
-      ],
-    );
+    void confirmAction({
+      title: 'Forgot your PIN?',
+      message:
+        'Your account is saved only on this phone, so there’s no PIN to email you. You can start a new account instead - your study progress on this device stays.',
+      confirmLabel: 'Start a new account',
+      cancelLabel: 'Never mind',
+    }).then((confirmed) => {
+      if (confirmed) router.replace('/sign-up');
+    });
   };
 
   return (

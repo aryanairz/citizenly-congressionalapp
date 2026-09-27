@@ -16,7 +16,7 @@ export type BrandColor = keyof typeof BrandColors;
 
 /**
  * Language codes used across the app and shared backend to key content.
- * Must exactly match the website's `Lang` union (data/questions.ts) — note the
+ * Must exactly match the website's `Lang` union (data/questions.ts) - note the
  * non-ISO ones: `zht` (Traditional Chinese), `ptpt` (European Portuguese),
  * `hmn` (Hmong).
  */

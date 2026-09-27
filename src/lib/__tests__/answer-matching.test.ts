@@ -16,7 +16,7 @@ const q = (partial: Partial<CivicsQuestion> & Pick<CivicsQuestion, 'acceptableAn
 
 describe('normalize', () => {
   it('lowercases, strips punctuation, expands contractions', () => {
-    // "it's" expands to "it is", which is then stripped as a leading hedge —
+    // "it's" expands to "it is", which is then stripped as a leading hedge -
     // but stopwords like "the" survive normalize (they only drop in
     // contentTokens).
     expect(normalize("It's the Constitution!")).toBe('the constitution');

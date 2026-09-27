@@ -85,7 +85,7 @@ describe('the officer stops the moment the outcome is decided (2025 track)', () 
     expect(s.civics.outcome).toBe('passed');
     expect(s.outcome).toBe('passed');
     expect(s.civics.history).toHaveLength(12); // not one question more
-    // Further answers are ignored — the interview is over.
+    // Further answers are ignored - the interview is over.
     const after = reduce(s, { type: 'CIVICS_ANSWER', correct: false });
     expect(after.civics.history).toHaveLength(12);
   });
@@ -107,7 +107,7 @@ describe('the officer stops the moment the outcome is decided (2025 track)', () 
 
   it('a mixed session still ends exactly on the deciding answer', () => {
     let s = toCivics(createInterview(profile(), pools, 3));
-    // 12 correct answers interleaved with 3 wrong ones — the 15th answer is
+    // 12 correct answers interleaved with 3 wrong ones - the 15th answer is
     // the 12th correct and must be the one that ends the test.
     const answers = [true, false, true, true, false, true, true, true, false, true, true, true, true, true, true];
     for (const correct of answers.slice(0, -1)) {

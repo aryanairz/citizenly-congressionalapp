@@ -6,7 +6,7 @@ import { Colors, Radius } from '@/constants/design';
 
 export interface IconButtonProps {
   icon: keyof typeof MaterialIcons.glyphMap;
-  /** Accessibility label — required; icon-only buttons say nothing otherwise. */
+  /** Accessibility label - required; icon-only buttons say nothing otherwise. */
   label: string;
   onPress: () => void;
   disabled?: boolean;

@@ -35,9 +35,9 @@ export interface StateDistrictPickerProps {
 /**
  * The shared state + congressional-district picker, as a two-step flow:
  *
- *   1. "state" — the caller's header, a search field, and the full-height
+ *   1. "state" - the caller's header, a search field, and the full-height
  *      state list. Tapping a state advances immediately.
- *   2. "district" — its own page: back arrow (returns to the list), the
+ *   2. "district" - its own page: back arrow (returns to the list), the
  *      chosen state (tap to change), the district question when the state
  *      has one, and the submit button.
  *
@@ -102,7 +102,7 @@ export function StateDistrictPicker({
       }
       district = parsed;
     }
-    // At-large states have one statewide representative stored at district 0 —
+    // At-large states have one statewide representative stored at district 0 -
     // record it automatically so their representative question still appears.
     if (districtCap === 1) district = 0;
 

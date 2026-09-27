@@ -1,6 +1,7 @@
+import { MaterialIcons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import { useState } from 'react';
-import { Alert, Platform, ScrollView, StyleSheet, View } from 'react-native';
+import { Pressable, ScrollView, StyleSheet, View } from 'react-native';
 
 import {
   AppText,
@@ -15,8 +16,10 @@ import {
 } from '@/components';
 import { US_STATES } from '@/constants/us-states';
 import { Colors, Spacing } from '@/constants/design';
+import { confirmAction, notify } from '@/lib/confirm';
 import { checkPin, updateAccount } from '@/lib/local-account';
 import { useSession } from '@/lib/session-context';
+import { canSpeak, useAutoSpeak } from '@/lib/speech';
 import { t } from '@/lib/ui-i18n';
 import { useLang } from '@/lib/use-lang';
 
@@ -36,7 +39,7 @@ export default function ProfileScreen() {
   const [open, setOpen] = useState<OpenSection>('none');
 
   if (!user) {
-    // Session expired/logged out while here — nothing to show.
+    // Session expired/logged out while here - nothing to show.
     return (
       <ScreenContainer>
         <ScreenHeader />
@@ -60,18 +63,14 @@ export default function ProfileScreen() {
   };
 
   const handleLogout = () => {
-    // RN-web's Alert.alert is a silent no-op, so the button would do nothing
-    // on web — use the browser's own confirm dialog there.
-    if (Platform.OS === 'web') {
-      if (window.confirm('Log out? You will need your email and PIN to log back in.')) {
-        void confirmedLogout();
-      }
-      return;
-    }
-    Alert.alert('Log out?', 'You will need your email and PIN to log back in.', [
-      { text: 'Cancel', style: 'cancel' },
-      { text: 'Log Out', style: 'destructive', onPress: () => void confirmedLogout() },
-    ]);
+    void confirmAction({
+      title: 'Log out?',
+      message: 'You will need your email and PIN to log back in.',
+      confirmLabel: 'Log Out',
+      destructive: true,
+    }).then((confirmed) => {
+      if (confirmed) void confirmedLogout();
+    });
   };
 
   return (
@@ -92,17 +91,17 @@ export default function ProfileScreen() {
             <ReadOnlyRow label="Name" value={user.name} />
             <Divider />
 
-            {/* Email — editable, PIN-confirmed */}
+            {/* Email - editable, PIN-confirmed */}
             <EditableRow
               label="Email"
-              value={user.email ?? '—'}
+              value={user.email ?? 'Not set'}
               editing={open === 'email'}
               onToggle={() => setOpen(open === 'email' ? 'none' : 'email')}>
               <EmailEditor onDone={() => setOpen('none')} />
             </EditableRow>
             <Divider />
 
-            {/* PIN — separate change flow */}
+            {/* PIN - separate change flow */}
             <EditableRow
               label="PIN"
               value="•••••"
@@ -113,13 +112,17 @@ export default function ProfileScreen() {
             </EditableRow>
             <Divider />
 
-            {/* Location — no PIN; reuses the onboarding picker on its own screen */}
+            {/* Location - no PIN; reuses the onboarding picker on its own screen */}
             <EditableRow
               label="State & District"
               value={locationValue}
               editing={false}
               onToggle={() => router.push('/edit-location')}
             />
+          </Card>
+
+          <Card style={styles.card}>
+            <AutoSpeakRow />
           </Card>
 
           <Button
@@ -134,6 +137,47 @@ export default function ProfileScreen() {
 
       <BottomNav active="profile" />
     </ScreenContainer>
+  );
+}
+
+/**
+ * Auto-speak toggle. Hearing the answer read out is the reason a non-reader
+ * can use the app unaided, so it ships on - but it wears thin for someone who
+ * reads fine, and this is the one tap that stops it. Manual speaker buttons
+ * keep working either way.
+ */
+function AutoSpeakRow() {
+  const lang = useLang();
+  const { autoSpeak, setAutoSpeak } = useAutoSpeak();
+  const [pressed, setPressed] = useState(false);
+
+  // Nothing to configure in a language with no voice at all.
+  if (!canSpeak(lang)) return null;
+
+  return (
+    <Pressable
+      accessibilityRole="switch"
+      accessibilityState={{ checked: autoSpeak }}
+      accessibilityLabel={t('autoSpeakTitle', lang)}
+      onPress={() => setAutoSpeak(!autoSpeak)}
+      onPressIn={() => setPressed(true)}
+      onPressOut={() => setPressed(false)}>
+      <View style={[styles.speakRow, pressed && styles.speakRowPressed]}>
+        <View style={styles.speakCopy}>
+          <AppText variant="labelLg" color="navy">
+            {t('autoSpeakTitle', lang)}
+          </AppText>
+          <AppText variant="bodyMd" color="muted">
+            {t(autoSpeak ? 'autoSpeakOn' : 'autoSpeakOff', lang)}
+          </AppText>
+        </View>
+        <MaterialIcons
+          name={autoSpeak ? 'volume-up' : 'volume-off'}
+          size={28}
+          color={autoSpeak ? Colors.navy : Colors.subtle}
+        />
+      </View>
+    </Pressable>
   );
 }
 
@@ -286,12 +330,7 @@ function PinEditor({ onDone }: { onDone: () => void }) {
         return;
       }
       await updateAccount({ pin: newPin });
-      // RN-web's Alert is a no-op; window.alert gives the same confirmation.
-      if (Platform.OS === 'web') {
-        window.alert('PIN changed. Use your new PIN the next time you log in.');
-      } else {
-        Alert.alert('PIN changed', 'Use your new PIN the next time you log in.');
-      }
+      notify('PIN changed', 'Use your new PIN the next time you log in.');
       onDone();
     } catch {
       setError("We couldn't save your changes on this device. Please try again.");
@@ -351,6 +390,20 @@ const styles = StyleSheet.create({
   },
   card: {
     gap: Spacing.md,
+  },
+  speakRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: Spacing.md,
+    // Matches the 72px list-row target used elsewhere.
+    minHeight: 72 - Spacing.lg * 2,
+  },
+  speakRowPressed: {
+    opacity: 0.6,
+  },
+  speakCopy: {
+    flex: 1,
+    gap: Spacing.xs,
   },
   row: {
     flexDirection: 'row',

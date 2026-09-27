@@ -7,7 +7,7 @@ import { AppText } from '@/components/app-text';
 import { Colors, Radius, Spacing } from '@/constants/design';
 
 export interface ScreenHeaderProps {
-  /** Defaults to router.back(). */
+  /** Defaults to going back, or to the dashboard when there's no history. */
   onBack?: () => void;
   /** Optional centered title. */
   title?: string;
@@ -15,18 +15,28 @@ export interface ScreenHeaderProps {
 
 /**
  * Minimal screen header: a large back target on the left, optional centered
- * title. Flat, white, no border — hierarchy comes from the content below.
+ * title. Flat, white, no border - hierarchy comes from the content below.
  */
 export function ScreenHeader({ onBack, title }: ScreenHeaderProps) {
   const router = useRouter();
   const [pressed, setPressed] = useState(false);
+
+  /**
+   * `router.back()` does nothing when there is no history to pop - which is
+   * exactly what happens after a web reload or a deep link straight into a
+   * screen. Fall back to the dashboard so the arrow always goes somewhere.
+   */
+  const goBack = () => {
+    if (router.canGoBack()) router.back();
+    else router.replace('/dashboard');
+  };
 
   return (
     <View style={styles.bar}>
       <Pressable
         accessibilityRole="button"
         accessibilityLabel="Go back"
-        onPress={onBack ?? (() => router.back())}
+        onPress={onBack ?? goBack}
         onPressIn={() => setPressed(true)}
         onPressOut={() => setPressed(false)}
         hitSlop={8}>

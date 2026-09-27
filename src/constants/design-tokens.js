@@ -1,5 +1,5 @@
 /**
- * Citizenly design tokens — the SINGLE SOURCE OF TRUTH for colors, spacing,
+ * Citizenly design tokens - the SINGLE SOURCE OF TRUTH for colors, spacing,
  * radius, sizing, and the DM Sans type scale.
  *
  * Plain CommonJS (not TS) so it can be consumed by both Node tooling and the
@@ -61,7 +61,7 @@ const sizing = {
   hairline: 1,
 };
 
-/** DM Sans family names — must match the keys loaded via useFonts(). */
+/** DM Sans family names - must match the keys loaded via useFonts(). */
 const fontFamily = {
   regular: 'DMSans_400Regular',
   medium: 'DMSans_500Medium',

@@ -1,7 +1,7 @@
 /**
  * The bundled civics question bank for the mock USCIS interview.
  *
- * Everything here is local and hardcoded — this feature works fully offline
+ * Everything here is local and hardcoded - this feature works fully offline
  * and never calls the /api/* routes.
  *
  * Only the CURRENT (2025) test is bundled: 128 questions, applying to N-400s
@@ -9,7 +9,7 @@
  * (g###/h###/r###/s###), so a miss recorded here is a real server mistake and
  * shows up in Review Mistakes.
  *
- * The legacy 2008 test is deliberately NOT shipped — see README "Known gaps".
+ * The legacy 2008 test is deliberately NOT shipped - see README "Known gaps".
  * src/lib/interview-machine.ts still models the filing-date rule correctly, so
  * the pools below simply point every track at the current bank rather than
  * leaving an empty queue.
@@ -46,7 +46,7 @@ const dropStateDependent = (ids: string[]): string[] =>
  * grade would be worse than not asking it.
  *
  * The 2008 fields are required by QuestionPools and point at the current
- * bank — the setup screen never routes anyone to that track.
+ * bank - the setup screen never routes anyone to that track.
  */
 const pool2025 = dropStateDependent(CIVICS_2025.map((q) => q.id));
 const reduced2025 = dropStateDependent(REDUCED_2025_IDS);
@@ -62,7 +62,7 @@ export const INTERVIEW_POOLS: QuestionPools = {
  * Whether an interview question also exists in the study bank.
  *
  * Interview misses go into the same mistake bank every other mode writes to,
- * and Review Mistakes renders them from the study bank — so an id that isn't
+ * and Review Mistakes renders them from the study bank - so an id that isn't
  * in there would show up as an invisible entry. The two banks share ids by
  * construction; this is the guard that keeps it that way.
  */

@@ -23,14 +23,14 @@ export interface ScreenContainerProps {
   edges?: Edge[];
   /** Pinned to the bottom, outside the scroll area (e.g. a primary CTA). */
   footer?: ReactNode;
-  /** Keep content (incl. footer) above the keyboard — use on screens with inputs. */
+  /** Keep content (incl. footer) above the keyboard - use on screens with inputs. */
   keyboardAvoiding?: boolean;
   style?: StyleProp<ViewStyle>;
   contentContainerStyle?: StyleProp<ViewStyle>;
 }
 
 /**
- * Full-screen white canvas for every screen — safe-area aware and edge-to-edge
+ * Full-screen white canvas for every screen - safe-area aware and edge-to-edge
  * (NOT a floating card on a dark background). Content sits within 24px side
  * margins; the status bar area stays white with dark icons.
  */
@@ -94,7 +94,7 @@ const styles = StyleSheet.create({
   footer: {
     paddingTop: Spacing.md,
     // Per the design system, sticky footers mark their boundary with a subtle
-    // top border (never a shadow) — it also signals that content scrolls under.
+    // top border (never a shadow) - it also signals that content scrolls under.
     borderTopWidth: StyleSheet.hairlineWidth,
     borderTopColor: Colors.border,
   },

@@ -7,7 +7,7 @@
  *  - state:     Governor, two Senators, district Representative, Capital.
  *  - territory: Governor + Capital (real), but "no U.S. Senators" and
  *               "no voting U.S. Representative" answers.
- *  - district:  D.C. — "no Governor / no Senators / no capital / no voting Rep".
+ *  - district:  D.C. - "no Governor / no Senators / no capital / no voting Rep".
  */
 
 import { Question, BilingualText, Lang } from "@/data/question-types";
@@ -160,11 +160,11 @@ function governorQuestion(name: string, governor: string, stateCode: string): Qu
       es: `${governor} es el actual Gobernador de ${name}.`,
       hmn: `${governor} yog Tus Kav Xeev tam sim no ntawm ${name}.`,
       ko: `${governor}이(가) ${name}의 현재 주지사입니다.`,
-      ru: `${governor} — действующий губернатор штата ${name}.`,
+      ru: `${governor} - действующий губернатор штата ${name}.`,
       hi: `${governor} ${name} के वर्तमान गवर्नर हैं।`,
       no: `${governor} er den nåværende guvernøren i ${name}.`,
       fr: `${governor} est l'actuel gouverneur de ${name}.`,
-      uk: `${governor} — чинний губернатор штату ${name}.`,
+      uk: `${governor} - чинний губернатор штату ${name}.`,
       de: `${governor} ist derzeit Gouverneur von ${name}.`,
       pt: `${governor} é o atual governador de ${name}.`,
       it: `${governor} è l'attuale governatore di ${name}.`,
@@ -215,11 +215,11 @@ function senatorQuestion(name: string, senators: [string, string], si: number, s
       es: `${senators[0]} y ${senators[1]} son los Senadores de EE. UU. de ${name}.`,
       hmn: `${senators[0]} thiab ${senators[1]} yog cov Senator Meskas los ntawm ${name}.`,
       ko: `${senators[0]}와(과) ${senators[1]}이(가) ${name}의 미국 상원의원입니다.`,
-      ru: `${senators[0]} и ${senators[1]} — сенаторы США от штата ${name}.`,
+      ru: `${senators[0]} и ${senators[1]} - сенаторы США от штата ${name}.`,
       hi: `${senators[0]} और ${senators[1]} ${name} से अमेरिकी सीनेटर हैं।`,
       no: `${senators[0]} og ${senators[1]} er de amerikanske senatorene fra ${name}.`,
       fr: `${senators[0]} et ${senators[1]} sont les sénateurs américains de ${name}.`,
-      uk: `${senators[0]} і ${senators[1]} — сенатори США від штату ${name}.`,
+      uk: `${senators[0]} і ${senators[1]} - сенатори США від штату ${name}.`,
       de: `${senators[0]} und ${senators[1]} sind die US-Senatoren von ${name}.`,
       pt: `${senators[0]} e ${senators[1]} são os senadores dos EUA por ${name}.`,
       it: `${senators[0]} e ${senators[1]} sono i senatori degli Stati Uniti di ${name}.`,
@@ -269,11 +269,11 @@ function repQuestion(name: string, rep: string, stateCode: string, district: num
       es: `${rep} es el Representante ante el Congreso de EE. UU. por ${name}, ${dl.es}.`,
       hmn: `${rep} yog Tus Sawv Cev Meskas rau ${name} ${dl.hmn}.`,
       ko: `${rep}이(가) ${name} ${dl.ko}의 미국 하원의원입니다.`,
-      ru: `${rep} — представитель США от штата ${name}, ${dl.ru}.`,
+      ru: `${rep} - представитель США от штата ${name}, ${dl.ru}.`,
       hi: `${rep} ${name}, ${dl.hi} के अमेरिकी प्रतिनिधि हैं।`,
       no: `${rep} er representanten i Kongressen for ${name} ${dl.no}.`,
       fr: `${rep} est le représentant américain de ${name}, ${dl.fr}.`,
-      uk: `${rep} — представник у Палаті представників США від ${name} ${dl.en}.`,
+      uk: `${rep} - представник у Палаті представників США від ${name} ${dl.en}.`,
       de: `${rep} ist der US-Abgeordnete für ${name}, ${dl.de}.`,
       pt: `${rep} é o representante dos EUA por ${name}, ${dl.pt}.`,
       it: `${rep} è il rappresentante degli Stati Uniti di ${name}, ${dl.it}.`,
@@ -322,11 +322,11 @@ function capitalQuestion(name: string, capital: string, stateCode: string): Ques
       es: `${capital} es la capital de ${name}.`,
       hmn: `${capital} yog lub peev nroog ntawm ${name}.`,
       ko: `${capital}이(가) ${name}의 주도입니다.`,
-      ru: `${capital} — столица штата ${name}.`,
+      ru: `${capital} - столица штата ${name}.`,
       hi: `${capital} ${name} की राजधानी है।`,
       no: `${capital} er hovedstaden i ${name}.`,
       fr: `${capital} est la capitale de ${name}.`,
-      uk: `${capital} — столиця штату ${name}.`,
+      uk: `${capital} - столиця штату ${name}.`,
       de: `${capital} ist die Hauptstadt von ${name}.`,
       pt: `${capital} é a capital de ${name}.`,
       it: `${capital} è la capitale di ${name}.`,
@@ -501,7 +501,7 @@ function noSenatorQuestion(state: StateData, stateCode: string): Question {
         es: `${name} es un territorio de EE. UU., no un estado, por lo que no tiene Senadores de EE. UU.`,
         hmn: `${name} yog ib cheeb tsam ntawm Asmeskas, tsis yog ib lub xeev, yog li nws tsis muaj U.S. Senators.`,
         ko: `${name}은(는) 주가 아니라 미국 영토이므로 미국 상원의원이 없습니다.`,
-        ru: `${name} — это территория США, а не штат, поэтому там нет сенаторов США.`,
+        ru: `${name} - это территория США, а не штат, поэтому там нет сенаторов США.`,
         hi: `${name} एक यू.एस. क्षेत्र है, राज्य नहीं, इसलिए इसमें यू.एस. सीनेटर नहीं हैं।`,
         no: `${name} er et amerikansk territorium, ikke en delstat, så det har ingen amerikanske senatorer.`,
         fr: `${name} est un territoire américain, pas un État, donc il n'a pas de sénateurs américains.`,
@@ -626,7 +626,7 @@ function noRepQuestion(state: StateData, stateCode: string): Question {
         es: `${name} es un territorio de EE. UU., por lo que no tiene Representante con derecho a voto en el Congreso.`,
         hmn: `${name} yog ib cheeb tsam ntawm Asmeskas, yog li nws tsis muaj Tus Sawv Cev Meskas uas muaj cai pov npav hauv Congress.`,
         ko: `${name}은(는) 미국 영토이므로 의회에 투표권을 가진 미국 하원의원이 없습니다.`,
-        ru: `${name} — это территория США, поэтому в Конгрессе нет её представителя с правом голоса.`,
+        ru: `${name} - это территория США, поэтому в Конгрессе нет её представителя с правом голоса.`,
         hi: `${name} एक यू.एस. क्षेत्र है, इसलिए कांग्रेस में इसका मतदान अधिकार वाला यू.एस. प्रतिनिधि नहीं है।`,
         no: `${name} er et amerikansk territorium, så det har ingen stemmeberettiget representant i Kongressen.`,
         fr: `${name} est un territoire américain, donc il n'a pas de représentant américain avec droit de vote au Congrès.`,
@@ -730,7 +730,7 @@ function noCapitalQuestion(name: string, stateCode: string): Question {
       es: "Washington, D.C. es un distrito federal, no un estado, por lo que no tiene capital estatal.",
       hmn: "Washington, D.C. yog ib cheeb tsam federal, tsis yog ib lub xeev, yog li nws tsis muaj lub peev nroog xeev.",
       ko: "워싱턴 D.C.는 주가 아니라 연방 특별구이므로 주도가 없습니다.",
-      ru: "Вашингтон (округ Колумбия) — это федеральный округ, а не штат, поэтому у него нет столицы штата.",
+      ru: "Вашингтон (округ Колумбия) - это федеральный округ, а не штат, поэтому у него нет столицы штата.",
       hi: "वॉशिंगटन, डी.सी. एक संघीय जिला है, राज्य नहीं, इसलिए इसकी कोई राज्य राजधानी नहीं है।",
       no: "Washington, D.C. er et føderalt distrikt, ikke en delstat, så den har ingen delstatshovedstad.",
       fr: "Washington, D.C. est un district fédéral, pas un État, donc il n'a pas de capitale d'État.",
@@ -890,7 +890,7 @@ const otherCapitals: Record<string, string[]> = {
   default: ["Springfield", "Columbus", "Richmond", "Trenton", "Harrisburg", "Lansing", "Madison", "Frankfort", "Nashville", "Raleigh", "Phoenix", "Tallahassee"],
 };
 
-/** Proper nouns don't translate — use the roman-script name across all languages. */
+/** Proper nouns don't translate - use the roman-script name across all languages. */
 function nameOption(name: string): BilingualText {
   return { en: name, ml: name, gu: name, vi: name, tl: name, es: name, hmn: name, ko: name, ru: name, hi: name, no: name, fr: name, uk: name, de: name, pt: name, it: name, zh: name, pl: name, el: name, id: name, ro: name, sv: name, da: name, nl: name, fi: name, sr: name, bs: name, hr: name, bg: name, cs: name, hu: name, sk: name, sl: name, ja: name, th: name, km: name, zht: name, tr: name, lt: name, lv: name, et: name, ptpt: name, ca: name, ta: name, ht: name, ar: name, he: name, sq: name };
 }

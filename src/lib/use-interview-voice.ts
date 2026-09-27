@@ -2,14 +2,14 @@
  * Voice I/O for the mock interview: officer speech (expo-speech TTS) and
  * applicant answers (expo-speech-recognition, on-device only).
  *
- * Privacy: recognition runs with requiresOnDeviceRecognition — audio is never
+ * Privacy: recognition runs with requiresOnDeviceRecognition - audio is never
  * sent over the network, there are no API keys and no server. If a device
  * cannot recognize on-device (or the native module is absent, e.g. Expo Go or
  * a browser without the Web Speech API), `micStatus` reports it and screens
  * fall back to typed answers instead of dead-ending.
  *
  * This module never scores audio. It only produces transcripts; matching is
- * keyword-based in src/lib/answer-matching.ts by design — pronunciation and
+ * keyword-based in src/lib/answer-matching.ts by design - pronunciation and
  * accent are never judged.
  */
 
@@ -37,7 +37,7 @@ export type MicStatus =
   /** No usable recognizer on this device or build. */
   | 'unavailable';
 
-/** Slightly slower than default — the audience is elderly and often stressed. */
+/** Slightly slower than default - the audience is elderly and often stressed. */
 const OFFICER_SPEECH_RATE = 0.9;
 const SPEECH_LANGUAGE = 'en-US';
 
@@ -56,7 +56,7 @@ export interface InterviewVoice {
   stopSpeaking: () => void;
   /**
    * Start capturing one answer. `bias` phrases are passed to the recognizer
-   * (iOS contextualStrings) — with the acceptable answers known in advance,
+   * (iOS contextualStrings) - with the acceptable answers known in advance,
    * this is the biggest accuracy lever for accented speech.
    */
   startListening: (bias: string[]) => void;
@@ -107,7 +107,7 @@ export function useInterviewVoice(
           event.error === 'service-not-allowed' ||
           event.error === 'language-not-supported'
         ) {
-          // No on-device recognizer — flip the whole session to typed input.
+          // No on-device recognizer - flip the whole session to typed input.
           setMicStatus('unavailable');
         }
         // 'no-speech' and friends: finish with whatever we heard (usually

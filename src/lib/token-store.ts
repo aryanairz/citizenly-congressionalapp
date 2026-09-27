@@ -2,7 +2,7 @@
  * Platform storage for the session token and cached user.
  *
  * SecureStore is hardware-backed on iOS/Android, but it has NO web
- * implementation — its web module is an empty object, so every call throws a
+ * implementation - its web module is an empty object, so every call throws a
  * TypeError. On web we use AsyncStorage (localStorage under the hood): not
  * hardware-secure, but the Expo web build is a dev/preview surface; the
  * production website has its own httpOnly-cookie session.

@@ -17,15 +17,22 @@ import Animated, {
   withTiming,
 } from 'react-native-reanimated';
 
-import { AppText, BottomNav, Button, ScreenContainer, ScreenHeader } from '@/components';
+import {
+  AppText,
+  BottomNav,
+  Button,
+  ReadAloudButton,
+  ScreenContainer,
+  ScreenHeader,
+} from '@/components';
 import { Colors, Radius, Sizing, Spacing } from '@/constants/design';
 import { filterByTopic, parseTopicKey } from '@/constants/topics';
 import { localize } from '@/lib/i18n';
 import { addMistake } from '@/lib/local-mistakes';
 import { useOnboarding } from '@/lib/onboarding-context';
 import { useSession } from '@/lib/session-context';
+import { stopSpeaking } from '@/lib/speech';
 import { t } from '@/lib/ui-i18n';
-import { useLang } from '@/lib/use-lang';
 import { useQuestionPool } from '@/lib/use-question-pool';
 
 const SWIPE_THRESHOLD = 70;
@@ -51,7 +58,7 @@ export default function FlashcardsScreen() {
   // Fly a little past the edge so the card border never lingers on screen.
   const offscreen = width * 1.1;
 
-  // Memoized so the array identity is stable across renders — the reset
+  // Memoized so the array identity is stable across renders - the reset
   // effect below keys off it.
   const poolQuestions = pool.questions;
   const questions = useMemo(
@@ -68,10 +75,15 @@ export default function FlashcardsScreen() {
     flip.value = 0;
   }, [questions, flip]);
 
+  // Never let a voice keep talking after the user has left the screen.
+  useEffect(() => stopSpeaking, []);
+
   const canPrev = index > 0;
   const canNext = index < total - 1;
 
   const setCard = (nextIndex: number) => {
+    // A card that is on its way off screen should stop talking.
+    stopSpeaking();
     setIndex(nextIndex);
     setFlipped(false);
     flip.value = 0; // new card always starts on the question side
@@ -262,7 +274,7 @@ export default function FlashcardsScreen() {
                     style={[styles.face, frontStyle]}
                     pointerEvents={flipped ? 'none' : 'auto'}>
                     <View style={styles.faceTopRow}>
-                      <SpeakerButton />
+                      <ReadAloudButton text={localize(question.question, lang)} />
                     </View>
                     <View style={styles.faceCenter}>
                       <AppText variant="questionText" color="ink" center>
@@ -278,7 +290,9 @@ export default function FlashcardsScreen() {
                     style={[styles.face, backStyle]}
                     pointerEvents={flipped ? 'auto' : 'none'}>
                     <View style={styles.faceTopRow}>
-                      <SpeakerButton />
+                      <ReadAloudButton
+                        text={[answerText, localize(question.explanation, lang)].join('. ')}
+                      />
                     </View>
                     <View style={styles.faceCenter}>
                       <AppText variant="labelMd" color="muted" center style={styles.answerOverline}>
@@ -296,7 +310,7 @@ export default function FlashcardsScreen() {
               </Pressable>
             </Animated.View>
 
-            {/* Row 1 — feedback (after flip); both advance to the next card */}
+            {/* Row 1 - feedback (after flip); both advance to the next card */}
             <View style={styles.feedbackArea}>
               {flipped ? (
                 <View style={styles.feedbackRow}>
@@ -319,12 +333,12 @@ export default function FlashcardsScreen() {
               ) : null}
             </View>
 
-            {/* Row 2 — hint */}
+            {/* Row 2 - hint */}
             <AppText variant="labelMd" color="subtle" center style={styles.hint}>
               Swipe or tap the arrows
             </AppText>
 
-            {/* Row 3 — Back / Next arrows */}
+            {/* Row 3 - Back / Next arrows */}
             <View style={styles.navRow}>
               <IconButton icon="chevron-left" label="Previous card" onPress={tryPrev} disabled={!canPrev} large />
               <IconButton icon="chevron-right" label="Next card" onPress={tryNext} disabled={!canNext} large />
@@ -336,12 +350,6 @@ export default function FlashcardsScreen() {
       <BottomNav />
     </ScreenContainer>
   );
-}
-
-/** Placeholder read-aloud control — no real audio yet. */
-function SpeakerButton() {
-  const lang = useLang();
-  return <IconButton icon="volume-up" label={t('readAloud', lang)} onPress={() => {}} />;
 }
 
 function IconButton({
@@ -410,7 +418,7 @@ const styles = StyleSheet.create({
   },
   cardArea: {
     flex: 1,
-    // Never collapse under large font settings — the absolute-positioned card
+    // Never collapse under large font settings - the absolute-positioned card
     // faces have no intrinsic height, so a collapsed card spills its content.
     minHeight: 240,
   },
@@ -447,7 +455,7 @@ const styles = StyleSheet.create({
     paddingTop: Spacing.sm,
   },
   // minHeight (never a fixed height): with large device font settings the
-  // labels can wrap and the buttons grow — the row must grow with them and
+  // labels can wrap and the buttons grow - the row must grow with them and
   // push the rows below down, instead of overflowing onto the arrows.
   feedbackArea: {
     minHeight: Sizing.buttonMin,

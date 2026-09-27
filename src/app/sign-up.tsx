@@ -65,7 +65,7 @@ export default function SignUpScreen() {
 
     if (!valid) return;
 
-    // PIN is kept in memory only so log-in can validate locally — placeholder
+    // PIN is kept in memory only so log-in can validate locally - placeholder
     // until real backend auth exists (see OnboardingData.pin).
     update({ firstName: firstName.trim(), lastName: lastName.trim(), email: email.trim(), pin });
     router.push('/onboarding/language');

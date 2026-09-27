@@ -8,7 +8,7 @@
  */
 export interface StateData {
   name: string;
-  /** Defaults to "state" when omitted — all 50 states leave this unset. */
+  /** Defaults to "state" when omitted - all 50 states leave this unset. */
   kind?: "state" | "district" | "territory";
   /** Omit for D.C. (not a state → no capital). Territories DO have capitals. */
   capital?: string;

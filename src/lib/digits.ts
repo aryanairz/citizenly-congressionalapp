@@ -25,7 +25,7 @@ const DIGIT_ZEROS = [
 
 /**
  * Keep only decimal digits from `text`, converted to ASCII 0-9. Everything
- * else (letters, separators, unknown-script digits) is dropped — the same
+ * else (letters, separators, unknown-script digits) is dropped - the same
  * contract as the old `replace(/\D/g, '')`, minus the ASCII-only bias.
  */
 export function normalizeDigits(text: string): string {

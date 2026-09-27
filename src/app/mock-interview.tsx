@@ -8,7 +8,7 @@ import {
   type ComponentProps,
   type ReactNode,
 } from 'react';
-import { Alert, Pressable, ScrollView, StyleSheet, View } from 'react-native';
+import { Pressable, ScrollView, StyleSheet, View } from 'react-native';
 import Animated, {
   cancelAnimation,
   Easing,
@@ -43,6 +43,7 @@ import {
   type CivicsQuestion,
   type MatchResult,
 } from '@/lib/answer-matching';
+import { confirmAction } from '@/lib/confirm';
 import { normalizeDigits } from '@/lib/digits';
 import {
   civicsProgress,
@@ -61,17 +62,17 @@ import { useInterviewVoice, type InterviewVoice } from '@/lib/use-interview-voic
 import { useLang } from '@/lib/use-lang';
 
 /**
- * Mock Interview — a full simulated USCIS naturalization interview.
+ * Mock Interview - a full simulated USCIS naturalization interview.
  *
  * The flow is driven entirely by the pure reducer in
  * src/lib/interview-machine.ts (oath → eligibility → reading → writing →
  * civics → result, with the officer stopping the moment the outcome is
- * decided). This component only renders state and dispatches events — it
+ * decided). This component only renders state and dispatches events - it
  * never re-implements scoring or stop rules.
  *
  * Fully offline: questions come from the bundled banks in src/data, the
  * officer speaks through on-device TTS, and answers are transcribed
- * on-device. Nothing is sent anywhere, and pronunciation is never scored —
+ * on-device. Nothing is sent anywhere, and pronunciation is never scored -
  * matching is keyword-based (src/lib/answer-matching.ts).
  */
 
@@ -80,7 +81,7 @@ const DEMO_SEED = 20250620;
 
 /**
  * Every practice session runs the current (2025) civics test. The machine
- * still routes by N-400 filing date — this is simply a date on the current
+ * still routes by N-400 filing date - this is simply a date on the current
  * side of the 2025-10-20 cutoff, since the legacy test isn't bundled.
  */
 const CURRENT_TEST_FILING_DATE = '2026-01-15';
@@ -220,7 +221,7 @@ export default function MockInterviewScreen() {
           text:
             itv.outcome === 'passed'
               ? 'Congratulations. You passed this practice interview.'
-              : 'This practice interview is over. Keep practicing — you can try again any time.',
+              : 'This practice interview is over. Keep practicing, and try again any time.',
         };
       default:
         return null;
@@ -230,7 +231,7 @@ export default function MockInterviewScreen() {
   const speechKey = speech?.key;
   useEffect(() => {
     if (speech && !voice.listening) voice.speak(speech.text);
-    // Speak once per moment — not on every re-render of the same moment.
+    // Speak once per moment - not on every re-render of the same moment.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [speechKey]);
 
@@ -275,7 +276,7 @@ export default function MockInterviewScreen() {
         ageYears: age,
         lprYears: lpr,
         // Only the current (2025) test is bundled, so every practice session
-        // routes to it — see src/data/civics-questions.ts.
+        // routes to it - see src/data/civics-questions.ts.
         n400FiledOn: CURRENT_TEST_FILING_DATE,
         preferredLanguage: lang,
       },
@@ -314,28 +315,33 @@ export default function MockInterviewScreen() {
   const interviewActive =
     stage === 'interview' && itv !== null && itv.phase !== 'result';
 
+  /** Leave the screen, falling back to the dashboard when there's no history
+   *  to pop - a reload or a deep link straight to /mock-interview would
+   *  otherwise leave the back button doing nothing. */
+  const leave = () => {
+    voice.stopSpeaking();
+    if (router.canGoBack()) router.back();
+    else router.replace('/dashboard');
+  };
+
   const handleBack = () => {
     if (stage === 'confirm') {
       setStage('setup');
       return;
     }
     if (interviewActive) {
-      Alert.alert(
-        'End this practice interview?',
-        'You will see a result for the questions answered so far.',
-        [
-          { text: 'Keep going', style: 'cancel' },
-          {
-            text: 'End interview',
-            style: 'destructive',
-            onPress: () => dispatch({ type: 'ABORT' }),
-          },
-        ],
-      );
+      void confirmAction({
+        title: 'End this practice interview?',
+        message: 'You will see a result for the questions answered so far.',
+        confirmLabel: 'End interview',
+        cancelLabel: 'Keep going',
+        destructive: true,
+      }).then((confirmed) => {
+        if (confirmed) dispatch({ type: 'ABORT' });
+      });
       return;
     }
-    voice.stopSpeaking();
-    router.back();
+    leave();
   };
 
   const micReady = voice.micStatus === 'ready';
@@ -372,7 +378,7 @@ export default function MockInterviewScreen() {
           </View>
         ) : interviewActive ? (
           <View style={styles.footerPad}>
-            {/* Applicants may always ask the officer to repeat — teach it. */}
+            {/* Applicants may always ask the officer to repeat - teach it. */}
             <Button label="Say that again" variant="secondary" onPress={sayThatAgain} />
           </View>
         ) : undefined
@@ -500,7 +506,7 @@ export default function MockInterviewScreen() {
 }
 
 // ---------------------------------------------------------------------------
-// Speakable text — every question, answer and label can be tapped to hear it.
+// Speakable text - every question, answer and label can be tapped to hear it.
 // ---------------------------------------------------------------------------
 
 function Speakable({
@@ -557,7 +563,7 @@ function SetupStage({
       keyboardShouldPersistTaps="handled"
       showsVerticalScrollIndicator={false}>
       <Speakable
-        text="A few questions first. Your answers decide which test the officer gives you — just like a real interview."
+        text="A few questions first. Your answers decide which test the officer gives you - just like a real interview."
         speak={speak}
         variant="bodyLg"
         color="muted"
@@ -703,7 +709,7 @@ function EligibilityPhase({
             color="navy"
           />
           <Speakable
-            text="Be honest — in a real interview the officer only needs to see that you understand and respond."
+            text="Be honest - in a real interview the officer only needs to see that you understand and respond."
             speak={speak}
             variant="bodyMd"
             color="muted"
@@ -734,7 +740,7 @@ function EligibilityPhase({
           color="navy"
         />
         <Speakable
-          text="Answer out loud in your own words. This part is about understanding, not right answers — nothing is recorded."
+          text="Answer out loud in your own words. This part is about understanding, not right answers - nothing is recorded."
           speak={speak}
           variant="bodyMd"
           color="muted"
@@ -802,12 +808,12 @@ function ReadingPhase({
       ) : (
         <View style={styles.actionStack}>
           <AppText variant="bodyMd" color="muted" center>
-            Without the microphone the app can’t hear your reading — read it
+            Without the microphone the app can’t hear your reading. Read it
             out loud, then tell us how it went.
           </AppText>
           <Button label="I read it out loud" onPress={() => onSelfReport(true)} />
           <Button
-            label="This one is hard — try another"
+            label="This one is hard - try another"
             variant="secondary"
             onPress={() => onSelfReport(false)}
           />
@@ -945,7 +951,7 @@ function CivicsPhase({
 
       {useMic ? (
         <View style={styles.actionStack}>
-          {/* The acceptable answers are known in advance — hand them to the
+          {/* The acceptable answers are known in advance - hand them to the
               recognizer as contextual hints (the accuracy lever for accented
               speech). */}
           <MicCluster voice={voice} bias={biasStringsFor(question)} />
@@ -962,7 +968,7 @@ function CivicsPhase({
         <View style={styles.actionStack}>
           {!micReady ? (
             <AppText variant="bodyMd" color="muted" center>
-              Microphone is off — you can type your answer.
+              Microphone is off. You can type your answer.
             </AppText>
           ) : null}
           <Input
@@ -1003,7 +1009,7 @@ function ResultPhase({
     .filter((q): q is CivicsQuestion => q !== undefined);
 
   const portionLabel = (value: boolean | null) =>
-    value === true ? 'Passed' : value === false ? 'Not passed' : '—';
+    value === true ? 'Passed' : value === false ? 'Not passed' : 'Not taken';
 
   return (
     <ScrollView
@@ -1067,7 +1073,7 @@ function ResultPhase({
           <Speakable
             text={`You asked the officer to repeat ${summary.repeatRequests} ${
               summary.repeatRequests === 1 ? 'time' : 'times'
-            } — that is always allowed in a real interview.`}
+            } - that is always allowed in a real interview.`}
             speak={speak}
             variant="bodyMd"
             color="muted"

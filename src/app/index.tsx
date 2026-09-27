@@ -85,7 +85,7 @@ function LanguageMarquee() {
   const reduceMotion = useReducedMotion();
   const offset = useSharedValue(0);
   // Width of ONE copy of the name set (incl. trailing gap); the loop translates
-  // by exactly this amount, so copy 2 lands where copy 1 started — seamless.
+  // by exactly this amount, so copy 2 lands where copy 1 started - seamless.
   const [setWidth, setSetWidth] = useState(0);
 
   useEffect(() => {

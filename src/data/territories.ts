@@ -3,7 +3,7 @@ import type { StateData } from "@/data/state-data-types";
 /**
  * Washington, D.C. and the 5 U.S. territories.
  *
- * HAND-MAINTAINED — NOT touched by scripts/update-representatives.js (that
+ * HAND-MAINTAINED - NOT touched by scripts/update-representatives.js (that
  * generator only rewrites the 50 states in representatives.ts). Territory/D.C.
  * residents can naturalize, and USCIS has specific civics answers for them.
  *

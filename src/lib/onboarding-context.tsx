@@ -1,7 +1,7 @@
 /**
  * Local app state for the sign-up → onboarding flow. Holds the user's choices
  * (name, study language, exemption, state) so later screens can use them.
- * Purely in-memory for now — nothing is submitted to the backend and nothing
+ * Purely in-memory for now - nothing is submitted to the backend and nothing
  * persists across app restarts yet.
  */
 
@@ -25,7 +25,7 @@ export interface OnboardingData {
   exemption: ExemptionChoice | null;
   /** Full state name, e.g. "California" (display). */
   usState: string | null;
-  /** 2-letter place code, e.g. "CA" — what the personalized-questions API takes. */
+  /** 2-letter place code, e.g. "CA" - what the personalized-questions API takes. */
   usStateCode: string | null;
   /** Congressional district (optional; null when skipped or not applicable). */
   district: number | null;

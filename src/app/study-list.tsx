@@ -7,7 +7,7 @@ import {
   AppText,
   BottomNav,
   Divider,
-  IconButton,
+  ReadAloudButton,
   ScreenContainer,
   ScreenHeader,
 } from '@/components';
@@ -16,12 +16,11 @@ import { filterByTopic, parseTopicKey, topicLabel } from '@/constants/topics';
 import type { Question } from '@/data/question-types';
 import { correctAnswerText, localize } from '@/lib/i18n';
 import { useOnboarding } from '@/lib/onboarding-context';
-import { t } from '@/lib/ui-i18n';
 import { useQuestionPool } from '@/lib/use-question-pool';
 
 /**
  * Study Questions browser: every question in the chosen topic as a large card;
- * tapping a card expands it inline to show the answer and explanation — no
+ * tapping a card expands it inline to show the answer and explanation - no
  * extra navigation depth, one question open at a time.
  */
 export default function StudyListScreen() {
@@ -130,8 +129,14 @@ function QuestionCard({
               <AppText variant="labelMd" color="muted" style={styles.answerOverline}>
                 Answer
               </AppText>
-              {/* Placeholder read-aloud — no real audio yet. */}
-              <IconButton icon="volume-up" label={t('readAloud', lang)} onPress={() => {}} />
+              {/* Reads the question, its answer and the explanation as one pass. */}
+              <ReadAloudButton
+                text={[
+                  localize(question.question, lang),
+                  correctAnswerText(question, lang),
+                  localize(question.explanation, lang),
+                ].join('. ')}
+              />
             </View>
             <AppText variant="labelLg" color="navy">
               {correctAnswerText(question, lang)}

@@ -30,7 +30,7 @@ export interface ButtonProps extends Omit<PressableProps, 'style' | 'children'> 
   /**
    * Applied to the visual container (the inner View), NOT the outer Pressable.
    * Use for chrome (colors, borders, padding). Layout styles like `flex: 1`
-   * will NOT size the button within a row — wrap the Button in a View that
+   * will NOT size the button within a row - wrap the Button in a View that
    * carries the flex instead.
    */
   style?: StyleProp<ViewStyle>;
@@ -38,7 +38,7 @@ export interface ButtonProps extends Omit<PressableProps, 'style' | 'children'> 
 
 /**
  * Primary action button. Meets the design system's 56px minimum touch target,
- * 16px radius, and bold 18px label. Flat — no shadow.
+ * 16px radius, and bold 18px label. Flat - no shadow.
  *
  * All visual chrome lives on an inner View: the Pressable is kept as a bare
  * behavior/hit-target wrapper and pressed state is tracked in React state.

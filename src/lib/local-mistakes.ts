@@ -1,5 +1,5 @@
 /**
- * The mistake bank — stored on the device, no server involved.
+ * The mistake bank - stored on the device, no server involved.
  *
  * Every study mode enrolls a question here when it's answered wrong, and
  * Review Mistakes removes it when it's finally answered right, so the bank
@@ -42,7 +42,7 @@ async function write(userId: string, ids: string[]): Promise<void> {
     }
     notify();
   } catch {
-    // Storage unavailable — the in-session UI still reflects the change.
+    // Storage unavailable - the in-session UI still reflects the change.
   }
 }
 
@@ -53,7 +53,7 @@ export async function addMistake(userId: string, questionId: string): Promise<vo
   await write(userId, [...current, questionId]);
 }
 
-/** Remove one question — called when it's finally answered correctly. */
+/** Remove one question - called when it's finally answered correctly. */
 export async function removeMistake(userId: string, questionId: string): Promise<void> {
   const current = await getMistakes(userId);
   if (!current.includes(questionId)) return;

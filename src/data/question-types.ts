@@ -3,7 +3,7 @@
  *
  * These mirror the Citizenly website's `data/questions.ts` shapes exactly, so
  * the bundled bank and the personalized-question generator port across
- * unchanged. `Lang` is the app's own 48-code union (src/constants/brand.ts) —
+ * unchanged. `Lang` is the app's own 48-code union (src/constants/brand.ts) -
  * the two lists are identical and must stay that way.
  */
 
