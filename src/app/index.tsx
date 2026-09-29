@@ -41,12 +41,9 @@ export default function WelcomeScreen() {
 
   return (
     <ScreenContainer>
-      {/* Brand + value proposition, anchored to the top. Each block arrives a
-          beat after the one above it, so the screen introduces itself in
-          reading order rather than all at once. */}
       {/* Wordmark, claim and proof read as one block, centred together in the
-          space above the actions. Centring them as a group avoids the two
-          separate voids that centring each piece on its own would create. */}
+          space above the actions. Each part arrives a beat after the one above
+          it, so the screen introduces itself in reading order. */}
       <View style={styles.main}>
         <Animated.View style={styles.hero} entering={FadeIn.duration(400)}>
           <Image
@@ -55,18 +52,25 @@ export default function WelcomeScreen() {
             contentFit="contain"
             accessibilityLabel="Citizenly"
           />
-          <Animated.View style={styles.copy} entering={FadeInDown.delay(120).duration(420)}>
-            <AppText variant="display" color="navy" center>
-              Practice the US Citizenship Test in your language
-            </AppText>
-            <AppText variant="bodyLg" color="muted" center>
+          <Animated.View entering={FadeInDown.delay(120).duration(420)}>
+            {/* Held to a single line. Measured: at the display size (30px) this
+                sentence is 523px wide and the usable width on a 375pt phone is
+                327px, so one line forces it down to 18px. `adjustsFontSizeToFit`
+                shrinks it further on anything narrower rather than truncating. */}
+            <AppText
+              variant="display"
+              color="navy"
+              center
+              numberOfLines={1}
+              adjustsFontSizeToFit
+              style={styles.heroTitle}>
               Your path to citizenship starts here.
             </AppText>
           </Animated.View>
         </Animated.View>
 
-        {/* The claim is "in your language", so the proof of it sits directly
-            beneath the claim rather than stranded at the bottom edge. */}
+        {/* The languages are the proof of the promise above, so they sit
+            directly under it rather than stranded at the bottom edge. */}
         <Animated.View style={styles.proof} entering={FadeIn.delay(360).duration(500)}>
           <LanguageMarquee />
           <AppText variant="bodyMd" color="subtle" center>
@@ -161,19 +165,24 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     gap: Spacing.lg,
   },
+  heroTitle: {
+    fontSize: 18,
+    lineHeight: 26,
+    letterSpacing: -0.2,
+  },
   wordmark: {
     width: '100%',
     maxWidth: 320,
     aspectRatio: 1600 / 630,
   },
-  copy: {
-    gap: Spacing.sm,
-  },
-  // Takes the leftover height so the message block centres as a unit.
+  // Takes the leftover height so the message block centres as a unit. The
+  // generous internal gap is deliberate: letting the block breathe makes it
+  // occupy the screen rather than huddling in the middle of it, which is what
+  // removes the sense of empty space above and below.
   main: {
     flex: 1,
     justifyContent: 'center',
-    gap: Spacing.xl,
+    gap: Spacing.xxl,
   },
   proof: {
     gap: Spacing.md,

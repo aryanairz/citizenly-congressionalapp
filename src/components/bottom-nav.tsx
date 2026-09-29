@@ -10,6 +10,7 @@ import Animated, {
 
 import { AppText } from '@/components/app-text';
 import { PressableSurface } from '@/components/pressable-surface';
+import { ScrollEdge } from '@/components/scroll-edge';
 import { Colors, Elevation, Radius, Spacing } from '@/constants/design';
 import { SPRING } from '@/constants/motion';
 import { t } from '@/lib/ui-i18n';
@@ -50,6 +51,8 @@ export function BottomNav({ active }: BottomNavProps) {
 
   return (
     <View style={styles.bar}>
+      {/* Content dissolves into the bar rather than being cut off by a rule. */}
+      <ScrollEdge direction="up" />
       {TABS.map((tab) => (
         <NavItem
           key={tab.key}

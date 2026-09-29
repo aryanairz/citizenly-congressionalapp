@@ -64,20 +64,20 @@ const sizing = {
 /**
  * Family names - must match the keys loaded via useFonts().
  *
- * Two faces, paired on purpose: DM Serif Display is DM Sans's companion from
- * the same type family, so they share proportions and skeleton instead of
- * merely being placed near each other.
+ * One family, DM Sans, across the whole app. Hierarchy comes from weight,
+ * size and leading rather than from a second typeface: mixing a display face
+ * in made screens read as two different products stitched together, which is
+ * worse than a quieter scale that holds together everywhere.
  *
- * The serif is for display sizes only - a screen title, a hero, a verdict.
- * Anything read at length, and anything the user must parse quickly in a
- * second language, stays in DM Sans.
+ * The 500 Medium face is deliberately absent. It failed to resolve at runtime
+ * and fell through to the browser's serif default, which is what turned every
+ * question into Times New Roman. 400/600/700 all render correctly, and three
+ * weights are enough to build hierarchy with.
  */
 const fontFamily = {
   regular: 'DMSans_400Regular',
-  medium: 'DMSans_500Medium',
   semibold: 'DMSans_600SemiBold',
   bold: 'DMSans_700Bold',
-  display: 'DMSerifDisplay_400Regular',
 };
 
 /**
@@ -95,13 +95,12 @@ const fontFamily = {
  * below come from (32 * -0.02 = -0.64).
  */
 const typography = {
-  // Display sizes carry the serif. At 32px its contrast reads as intent
-  // rather than decoration, and the negative tracking keeps it from
-  // sprawling the way large type does.
-  display: { size: 34, lineHeight: 40, letterSpacing: -0.5, weight: '400', family: 'display' },
-  headlineLg: { size: 32, lineHeight: 38, letterSpacing: -0.64, weight: '700', family: 'bold' },
+  // Screen titles. Larger and tighter than headlineLg so a title still has
+  // presence without reaching for a second typeface.
+  display: { size: 30, lineHeight: 36, letterSpacing: -0.7, weight: '700', family: 'bold' },
+  headlineLg: { size: 28, lineHeight: 34, letterSpacing: -0.56, weight: '700', family: 'bold' },
   headlineMd: { size: 24, lineHeight: 30, letterSpacing: -0.36, weight: '700', family: 'bold' },
-  questionText: { size: 22, lineHeight: 31, letterSpacing: -0.22, weight: '500', family: 'medium' },
+  questionText: { size: 22, lineHeight: 31, letterSpacing: -0.22, weight: '600', family: 'semibold' },
   bodyLg: { size: 18, lineHeight: 28, letterSpacing: 0, weight: '400', family: 'regular' },
   bodyMd: { size: 16, lineHeight: 24, letterSpacing: 0, weight: '400', family: 'regular' },
   labelLg: { size: 18, lineHeight: 24, letterSpacing: -0.18, weight: '700', family: 'bold' },

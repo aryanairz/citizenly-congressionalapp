@@ -1,3 +1,4 @@
+import { LinearGradient } from 'expo-linear-gradient';
 import type { ReactNode } from 'react';
 import {
   ActivityIndicator,
@@ -74,10 +75,22 @@ export function Button({
         style={[
           styles.base,
           isPrimary ? styles.primary : styles.secondary,
-          isPrimary && !isDisabled && Elevation.card,
+          isPrimary && !isDisabled && Elevation.raised,
           isDisabled && styles.disabled,
           style,
         ]}>
+        {/* A barely-there vertical sheen. Light falls from above, so the top
+            of a real surface is fractionally brighter than its bottom; the
+            navy stops reading as a flat swatch and starts reading as a lit
+            object. Two percent is enough - any more and it looks like a
+            gradient rather than like light. */}
+        {isPrimary ? (
+          <LinearGradient
+            colors={['rgba(255,255,255,0.14)', 'rgba(255,255,255,0)']}
+            style={styles.sheen}
+            pointerEvents="none"
+          />
+        ) : null}
         {loading ? (
           <ActivityIndicator color={Colors[contentColor]} />
         ) : (
@@ -95,9 +108,16 @@ export function Button({
 }
 
 const styles = StyleSheet.create({
+  sheen: {
+    ...StyleSheet.absoluteFillObject,
+    borderRadius: Radius.lg,
+    // Only the upper half catches the light.
+    bottom: '50%',
+  },
   base: {
     minHeight: Sizing.buttonMin,
     borderRadius: Radius.lg,
+    overflow: 'hidden',
     paddingHorizontal: Spacing.lg,
     alignItems: 'center',
     justifyContent: 'center',

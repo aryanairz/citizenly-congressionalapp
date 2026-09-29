@@ -17,6 +17,7 @@ export { IconButton, type IconButtonProps } from '@/components/icon-button';
 export { ReadAloudButton, type ReadAloudButtonProps } from '@/components/read-aloud-button';
 export { PressableSurface, type PressableSurfaceProps } from '@/components/pressable-surface';
 export { ProgressBar, type ProgressBarProps } from '@/components/progress-bar';
+export { ScrollEdge, type ScrollEdgeProps } from '@/components/scroll-edge';
 export {
   OptionCard,
   FeedbackPanel,

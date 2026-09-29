@@ -11,6 +11,8 @@ import {
 import { SafeAreaView, type Edge } from 'react-native-safe-area-context';
 import { StatusBar } from 'expo-status-bar';
 
+import { ScrollEdge } from '@/components/scroll-edge';
+
 import { Colors, Spacing } from '@/constants/design';
 
 export interface ScreenContainerProps {
@@ -60,7 +62,13 @@ export function ScreenContainer({
       ) : (
         <View style={[styles.flex, pad, contentContainerStyle]}>{children}</View>
       )}
-      {footer ? <View style={[styles.footer, pad]}>{footer}</View> : null}
+      {footer ? (
+        <View style={[styles.footer, pad]}>
+          {/* Content fades into the footer instead of being cut by a rule. */}
+          <ScrollEdge direction="up" />
+          {footer}
+        </View>
+      ) : null}
     </>
   );
 
@@ -93,9 +101,6 @@ const styles = StyleSheet.create({
   },
   footer: {
     paddingTop: Spacing.md,
-    // Per the design system, sticky footers mark their boundary with a subtle
-    // top border (never a shadow) - it also signals that content scrolls under.
-    borderTopWidth: StyleSheet.hairlineWidth,
-    borderTopColor: Colors.border,
+    backgroundColor: Colors.white,
   },
 });
