@@ -25,6 +25,7 @@
 import {
   LinearTransition,
   ReduceMotion,
+  SlideInDown,
   type WithSpringConfig,
   type WithTimingConfig,
 } from 'react-native-reanimated';
@@ -77,7 +78,19 @@ export const SPRING_SHEET: WithSpringConfig = {
  * a single frame while the neighbour animates in, and the two read as
  * unrelated events instead of one.
  */
-export const LAYOUT = LinearTransition.springify(400)
+export const LAYOUT = LinearTransition.springify(200)
+  .dampingRatio(1)
+  .reduceMotion(ReduceMotion.System);
+
+/**
+ * A panel arriving in place below content: the quiz feedback panel, a banner.
+ *
+ * Critically damped, and that is the point. An underdamped spring here
+ * overshoots and settles back, and because this panel resizes its neighbour,
+ * that settle drags the whole question list down again after it has moved up.
+ * One arrival should be one movement.
+ */
+export const ENTER_PANEL = SlideInDown.springify(260)
   .dampingRatio(1)
   .reduceMotion(ReduceMotion.System);
 

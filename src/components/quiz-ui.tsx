@@ -6,12 +6,13 @@
 
 import { MaterialIcons } from '@expo/vector-icons';
 import { StyleSheet, View } from 'react-native';
-import Animated, { SlideInDown, ZoomIn } from 'react-native-reanimated';
+import Animated, { ZoomIn } from 'react-native-reanimated';
 
 import { AppText } from '@/components/app-text';
 import { Button } from '@/components/button';
 import { PressableSurface } from '@/components/pressable-surface';
 import { Colors, Elevation, Radius, Spacing } from '@/constants/design';
+import { ENTER_PANEL } from '@/constants/motion';
 import { t } from '@/lib/ui-i18n';
 import { useLang } from '@/lib/use-lang';
 
@@ -130,8 +131,10 @@ export function FeedbackPanel({
 
   return (
     <Animated.View
-      // Gentle spring: eases in and settles instead of snapping into place.
-      entering={SlideInDown.springify().damping(22).stiffness(190).mass(0.9)}
+      // Critically damped, so it arrives once. The old spring worked out to a
+      // damping ratio of 0.84, which overshot and settled back, pulling the
+      // question list down again after it had moved up.
+      entering={ENTER_PANEL}
       accessible
       accessibilityLiveRegion="polite"
       style={[
@@ -144,11 +147,13 @@ export function FeedbackPanel({
           {headline ?? (correct ? t('correctBanner', lang) : t('wrongBanner', lang))}
         </AppText>
       </View>
-      {!correct ? (
-        <AppText variant="labelLg" color="navy">
-          Correct answer: {correctAnswer}
-        </AppText>
-      ) : null}
+      {/* Shown either way. The graded option card can sit entirely behind this
+          panel when the list is taller than what is left of the scroll area,
+          and telling someone they are correct without ever naming the answer
+          is useless to a person studying for the real test. */}
+      <AppText variant="labelLg" color="navy">
+        {correct ? correctAnswer : `Correct answer: ${correctAnswer}`}
+      </AppText>
       <AppText variant="bodyMd" color="ink">
         {explanation}
       </AppText>
