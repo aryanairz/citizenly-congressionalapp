@@ -91,7 +91,7 @@ export default function LogInScreen() {
       <ScreenHeader />
       <View style={styles.content}>
         <View style={styles.headingGroup}>
-          <AppText variant="headlineLg" color="navy">
+          <AppText variant="display" color="navy">
             {t('logIn', lang)}
           </AppText>
           <AppText variant="bodyLg" color="muted">

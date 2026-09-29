@@ -116,7 +116,7 @@ export default function HomeScreen() {
         showsVerticalScrollIndicator={false}>
         {/* Greeting */}
         <View style={styles.greeting}>
-          <AppText variant="headlineLg" color="navy">
+          <AppText variant="display" color="navy">
             {firstName ? `Hello, ${firstName}.` : 'Hello.'}
           </AppText>
           <AppText variant="bodyLg" color="muted">

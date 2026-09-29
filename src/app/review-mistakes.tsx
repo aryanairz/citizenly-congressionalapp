@@ -147,7 +147,7 @@ export default function ReviewMistakesScreen() {
 
         {!loading && total > 0 && finished ? (
           <View style={styles.centerFill}>
-            <AppText variant="headlineLg" color="navy" center>
+            <AppText variant="display" color="navy" center>
               Review Complete!
             </AppText>
             <AppText variant="bodyLg" color="muted" center>

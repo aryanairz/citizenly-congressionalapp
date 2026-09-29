@@ -26,7 +26,7 @@ export default function ExemptionScreen() {
       <View style={styles.content}>
         <StepDots total={3} current={1} />
         <View style={styles.headingGroup}>
-          <AppText variant="headlineLg" color="navy">
+          <AppText variant="display" color="navy">
             Do you qualify for a language exemption?
           </AppText>
           <AppText variant="bodyMd" color="muted">

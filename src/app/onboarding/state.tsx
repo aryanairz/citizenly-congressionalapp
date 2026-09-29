@@ -58,7 +58,7 @@ export default function StateScreen() {
           <ScreenHeader />
           <View style={styles.top}>
             <StepDots total={3} current={2} />
-            <AppText variant="headlineLg" color="navy">
+            <AppText variant="display" color="navy">
               What state do you live in?
             </AppText>
           </View>

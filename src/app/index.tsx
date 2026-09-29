@@ -56,7 +56,7 @@ export default function WelcomeScreen() {
             accessibilityLabel="Citizenly"
           />
           <Animated.View style={styles.copy} entering={FadeInDown.delay(120).duration(420)}>
-            <AppText variant="headlineLg" color="navy" center>
+            <AppText variant="display" color="navy" center>
               Practice the US Citizenship Test in your language
             </AppText>
             <AppText variant="bodyLg" color="muted" center>
@@ -69,8 +69,8 @@ export default function WelcomeScreen() {
             beneath the claim rather than stranded at the bottom edge. */}
         <Animated.View style={styles.proof} entering={FadeIn.delay(360).duration(500)}>
           <LanguageMarquee />
-          <AppText variant="labelMd" color="subtle" center style={styles.proofLabel}>
-            {`${MARQUEE_LANGUAGE_NAMES.length} languages, all free`}
+          <AppText variant="bodyMd" color="subtle" center>
+            {`Available in ${MARQUEE_LANGUAGE_NAMES.length} languages`}
           </AppText>
         </Animated.View>
       </View>
@@ -177,9 +177,6 @@ const styles = StyleSheet.create({
   },
   proof: {
     gap: Spacing.md,
-  },
-  proofLabel: {
-    textTransform: 'uppercase',
   },
   actions: {
     gap: Spacing.md,

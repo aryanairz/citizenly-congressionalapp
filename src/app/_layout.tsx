@@ -5,6 +5,7 @@ import {
   DMSans_700Bold,
   useFonts,
 } from '@expo-google-fonts/dm-sans';
+import { DMSerifDisplay_400Regular } from '@expo-google-fonts/dm-serif-display';
 import { DefaultTheme, ThemeProvider } from '@react-navigation/native';
 import { Stack } from 'expo-router';
 import * as SplashScreen from 'expo-splash-screen';
@@ -17,13 +18,16 @@ import { SessionProvider } from '@/lib/session-context';
 SplashScreen.preventAutoHideAsync();
 
 export default function RootLayout() {
-  // Load DM Sans (all weights the type scale uses) before revealing the UI so
-  // text never flashes in a fallback system font.
+  // Load the type system before revealing the UI so text never flashes in a
+  // fallback system font. DM Serif Display is DM Sans's companion face from
+  // the same family, so the two share proportions and sit together rather
+  // than merely coexisting.
   const [fontsLoaded, fontError] = useFonts({
     DMSans_400Regular,
     DMSans_500Medium,
     DMSans_600SemiBold,
     DMSans_700Bold,
+    DMSerifDisplay_400Regular,
   });
 
   useEffect(() => {

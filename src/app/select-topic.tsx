@@ -51,7 +51,7 @@ export default function SelectTopicScreen() {
           <AppText variant="labelMd" color="muted" style={styles.modeLabel}>
             {t(MODE_META[mode].labelKey, lang)}
           </AppText>
-          <AppText variant="headlineLg" color="navy">
+          <AppText variant="display" color="navy">
             {t('selectTopic', lang)}
           </AppText>
         </View>

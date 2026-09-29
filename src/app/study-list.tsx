@@ -43,7 +43,7 @@ export default function StudyListScreen() {
       <View style={styles.body}>
         <ScreenHeader />
         <View style={styles.headingGroup}>
-          <AppText variant="headlineLg" color="navy">
+          <AppText variant="display" color="navy">
             {topicLabel(topic)}
           </AppText>
           <AppText variant="labelMd" color="muted">

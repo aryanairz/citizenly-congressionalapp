@@ -82,7 +82,7 @@ export default function SignUpScreen() {
       footer={<FooterActions onSubmit={handleCreateAccount} onLogIn={handleGoToLogIn} />}>
       <ScreenHeader />
       <View style={styles.content}>
-        <AppText variant="headlineLg" color="navy">
+        <AppText variant="display" color="navy">
           Create your account
         </AppText>
 

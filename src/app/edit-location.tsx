@@ -41,7 +41,7 @@ export default function EditLocationScreen() {
         <>
           <ScreenHeader />
           <View style={styles.top}>
-            <AppText variant="headlineLg" color="navy">
+            <AppText variant="display" color="navy">
               Update your state
             </AppText>
             <AppText variant="bodyMd" color="muted">

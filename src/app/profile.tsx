@@ -83,7 +83,7 @@ export default function ProfileScreen() {
           keyboardShouldPersistTaps="handled"
           keyboardDismissMode="on-drag"
           showsVerticalScrollIndicator={false}>
-          <AppText variant="headlineLg" color="navy">
+          <AppText variant="display" color="navy">
             Profile
           </AppText>
 

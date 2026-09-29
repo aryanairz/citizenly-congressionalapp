@@ -1,6 +1,7 @@
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useEffect, useMemo, useState } from 'react';
 import { ScrollView, StyleSheet, View } from 'react-native';
+import Animated, { FadeIn } from 'react-native-reanimated';
 
 import {
   AppText,
@@ -16,7 +17,7 @@ import {
   type OptionVisual,
   ProgressBar,
 } from '@/components';
-import { Colors, Spacing } from '@/constants/design';
+import { Spacing } from '@/constants/design';
 import { filterByTopic, parseTopicKey } from '@/constants/topics';
 import { localize } from '@/lib/i18n';
 import { addMistake } from '@/lib/local-mistakes';
@@ -145,7 +146,7 @@ export default function QuizScreen() {
 
         {finished ? (
           <View style={styles.centerFill}>
-            <AppText variant="headlineLg" color="navy" center>
+            <AppText variant="display" color="navy" center>
               {t('quizComplete', lang)}
             </AppText>
             <AppText variant="bodyLg" color="muted" center>
@@ -164,10 +165,11 @@ export default function QuizScreen() {
 
         {!finished && question ? (
           <>
-            {/* Progress + read-aloud */}
+            {/* Position first, then the question. Knowing where you are in the
+                set is orienting; it belongs above the question, quietly. */}
             <View style={styles.progressRow}>
               <View style={styles.progressText}>
-                <AppText variant="labelMd" color="muted">
+                <AppText variant="labelMd" color="subtle" style={styles.counter}>
                   {t('questionXofY', lang, { current: index + 1, total })}
                 </AppText>
                 <ProgressBar percent={((index + 1) / total) * 100} />
@@ -186,9 +188,15 @@ export default function QuizScreen() {
               style={styles.scroll}
               contentContainerStyle={styles.scrollContent}
               showsVerticalScrollIndicator={false}>
-              <AppText variant="questionText" color="navy" center style={styles.question}>
-                {localize(question.question, lang)}
-              </AppText>
+              {/* Left-aligned, not centred: centred text makes every line start
+                  in a different place, which is exactly the wrong thing to ask
+                  of someone reading a second language. The question changes on
+                  every card, so it fades in rather than swapping. */}
+              <Animated.View key={question.id} entering={FadeIn.duration(220)}>
+                <AppText variant="headlineMd" color="navy" style={styles.question}>
+                  {localize(question.question, lang)}
+                </AppText>
+              </Animated.View>
 
               <View style={styles.options}>
                 {order.map((originalIndex, displayIndex) => {
@@ -259,29 +267,37 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: Spacing.md,
-    paddingBottom: Spacing.sm,
+    paddingBottom: Spacing.md,
   },
   progressText: {
     flex: 1,
     gap: Spacing.sm,
   },
+  counter: {
+    textTransform: 'uppercase',
+  },
   scroll: {
     flex: 1,
   },
+  // flexGrow + centred: with four short options the screen used to pack
+  // everything against the top and leave a void above the footer. Letting the
+  // group find the middle of its own space removes the void without pinning
+  // anything, and long questions still scroll normally.
   scrollContent: {
-    paddingVertical: Spacing.md,
-    gap: Spacing.lg,
+    flexGrow: 1,
+    justifyContent: 'center',
+    paddingVertical: Spacing.lg,
+    gap: Spacing.xl,
   },
   question: {
-    paddingHorizontal: Spacing.sm,
+    // Room for the question to breathe; it is the thing being asked.
+    paddingRight: Spacing.md,
   },
   options: {
     gap: Spacing.md,
   },
   nextArea: {
-    paddingTop: Spacing.sm,
+    paddingTop: Spacing.md,
     paddingBottom: Spacing.md,
-    borderTopWidth: StyleSheet.hairlineWidth,
-    borderTopColor: Colors.border,
   },
 });

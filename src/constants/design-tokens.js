@@ -61,12 +61,23 @@ const sizing = {
   hairline: 1,
 };
 
-/** DM Sans family names - must match the keys loaded via useFonts(). */
+/**
+ * Family names - must match the keys loaded via useFonts().
+ *
+ * Two faces, paired on purpose: DM Serif Display is DM Sans's companion from
+ * the same type family, so they share proportions and skeleton instead of
+ * merely being placed near each other.
+ *
+ * The serif is for display sizes only - a screen title, a hero, a verdict.
+ * Anything read at length, and anything the user must parse quickly in a
+ * second language, stays in DM Sans.
+ */
 const fontFamily = {
   regular: 'DMSans_400Regular',
   medium: 'DMSans_500Medium',
   semibold: 'DMSans_600SemiBold',
   bold: 'DMSans_700Bold',
+  display: 'DMSerifDisplay_400Regular',
 };
 
 /**
@@ -84,6 +95,10 @@ const fontFamily = {
  * below come from (32 * -0.02 = -0.64).
  */
 const typography = {
+  // Display sizes carry the serif. At 32px its contrast reads as intent
+  // rather than decoration, and the negative tracking keeps it from
+  // sprawling the way large type does.
+  display: { size: 34, lineHeight: 40, letterSpacing: -0.5, weight: '400', family: 'display' },
   headlineLg: { size: 32, lineHeight: 38, letterSpacing: -0.64, weight: '700', family: 'bold' },
   headlineMd: { size: 24, lineHeight: 30, letterSpacing: -0.36, weight: '700', family: 'bold' },
   questionText: { size: 22, lineHeight: 31, letterSpacing: -0.22, weight: '500', family: 'medium' },

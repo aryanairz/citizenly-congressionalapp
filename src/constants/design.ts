@@ -32,13 +32,24 @@ export type RadiusKey = keyof typeof Radius;
 /** Every text style in the system, keyed by role. */
 export type TypographyVariant = keyof typeof tokens.typography;
 
+/**
+ * Deliberately emits NO `fontWeight`.
+ *
+ * DM Sans is loaded as four separately named faces (DMSans_400Regular,
+ * DMSans_500Medium, ...), each registered at CSS weight `normal`. The family
+ * name already carries the weight, so also asking for `fontWeight: 500` tells
+ * the browser to find a 500 face inside a family that declares none. Where it
+ * cannot synthesize one it drops the family entirely and lands on the serif
+ * default, which is what turned every `questionText` into Times New Roman.
+ *
+ * Weight lives in `spec.weight` purely as documentation of which face is which.
+ */
 function toTextStyle(spec: (typeof tokens.typography)[TypographyVariant]): TextStyle {
   return {
     fontFamily: FontFamily[spec.family as keyof typeof FontFamily],
     fontSize: spec.size,
     lineHeight: spec.lineHeight,
     letterSpacing: spec.letterSpacing,
-    fontWeight: spec.weight as TextStyle['fontWeight'],
   };
 }
 

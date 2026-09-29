@@ -33,7 +33,7 @@ export default function ChooseLanguageScreen() {
       <ScreenHeader />
       <View style={styles.content}>
         <StepDots total={3} current={0} />
-        <AppText variant="headlineLg" color="navy">
+        <AppText variant="display" color="navy">
           Which language do you want to study in?
         </AppText>
         <LanguagePicker selected={selected} onSelect={setSelected} />
