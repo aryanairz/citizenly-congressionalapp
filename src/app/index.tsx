@@ -2,8 +2,8 @@ import { MaterialIcons } from '@expo/vector-icons';
 import { Image } from 'expo-image';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Redirect, useRouter } from 'expo-router';
-import { useEffect, useMemo, useState } from 'react';
-import { ScrollView, StyleSheet, useWindowDimensions, View } from 'react-native';
+import { useEffect, useState } from 'react';
+import { ScrollView, StyleSheet, View } from 'react-native';
 import Animated, {
   cancelAnimation,
   Easing,
@@ -35,27 +35,16 @@ const wordmark = require('@/assets/images/citizenly-wordmark.png');
 // is a nested Text and would otherwise fall back to the body size.
 const TITLE_FACE = {
   fontFamily: FontFamily.bold,
-  fontSize: 46,
-  lineHeight: 50,
-  letterSpacing: -1.8,
+  fontSize: 38,
+  lineHeight: 43,
+  letterSpacing: -1.3,
 } as const;
 
+// Split so the two rows never show the same name side by side. px per second.
+const MARQUEE_SPLIT = Math.ceil(MARQUEE_LANGUAGE_NAMES.length / 2);
+const NAMES_TOP = MARQUEE_LANGUAGE_NAMES.slice(0, MARQUEE_SPLIT);
+const NAMES_BOTTOM = MARQUEE_LANGUAGE_NAMES.slice(MARQUEE_SPLIT);
 const MARQUEE_SPEED = 26;
-
-/**
- * Deals the language names into `rows` bands, so no two rows ever show the
- * same name side by side.
- *
- * The row count is not fixed. A block of languages filling the lower screen
- * is the whole visual, but five rows push the button off a 640pt device, and
- * the button losing its place matters more than the texture does.
- */
-function splitNames(rows: number): string[][] {
-  const band = Math.ceil(MARQUEE_LANGUAGE_NAMES.length / rows);
-  return Array.from({ length: rows }, (_, row) =>
-    MARQUEE_LANGUAGE_NAMES.slice(row * band, (row + 1) * band),
-  );
-}
 
 /**
  * Welcome.
@@ -70,11 +59,6 @@ export default function WelcomeScreen() {
   const router = useRouter();
   const session = useSession();
   const lang = useLang();
-
-  // Five rows of languages fill a modern phone; a 640pt device gets three, so
-  // the button never falls below the fold.
-  const { height } = useWindowDimensions();
-  const nameRows = useMemo(() => splitNames(height >= 760 ? 5 : 3), [height]);
 
   // Hold while the stored session restores; skip Welcome when signed in.
   if (session.status === 'restoring') {
@@ -127,14 +111,8 @@ export default function WelcomeScreen() {
             entering={FadeIn.delay(260).duration(600)}
             accessible
             accessibilityLabel={`Available in ${MARQUEE_LANGUAGE_NAMES.length} languages`}>
-            {nameRows.map((names, row) => (
-              <MarqueeRow
-                key={names[0]}
-                names={names}
-                // Alternating, so neighbouring rows always oppose each other.
-                direction={row % 2 === 0 ? 'left' : 'right'}
-              />
-            ))}
+            <MarqueeRow names={NAMES_TOP} direction="left" />
+            <MarqueeRow names={NAMES_BOTTOM} direction="right" />
           </Animated.View>
         </View>
 
@@ -340,14 +318,11 @@ const styles = StyleSheet.create({
   marqueeStaticPad: {
     paddingLeft: Spacing.screenX,
   },
-  // Wide enough that a chip is fully dissolved before the container clips it.
-  // A chip is a bounded object, so a sliced one reads as broken in a way a
-  // half-word never did.
   marqueeEdge: {
     position: 'absolute',
     top: 0,
     bottom: 0,
-    width: 88,
+    width: 64,
   },
   marqueeEdgeLeft: {
     left: 0,
