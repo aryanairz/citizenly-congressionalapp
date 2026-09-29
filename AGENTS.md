@@ -40,6 +40,30 @@ StyleSheet only, against the tokens in `src/constants/design.ts`. NativeWind and
 Tailwind were removed - do not reintroduce class names. Honor the existing
 touch-target sizes (56–72px); the audience is elderly and often low-vision.
 
+Depth comes from `Elevation.card | raised | chrome`, never from ad-hoc shadows.
+Type comes from the `Typography` variants; tracking is size-specific there
+(negative on display sizes, positive on small labels) so do not add a blanket
+`letterSpacing`.
+
+# Motion
+
+Springs, not timed transitions, for anything a person touches. Use the presets
+in `src/constants/motion.ts` rather than hand-rolling configs:
+
+- `SPRING` / `SPRING_SNAPPY` - critically damped. The default for everything.
+- `SPRING_MOMENTUM` / `SPRING_SHEET` - the only places overshoot is allowed,
+  and only because the user's own flick or drag put the element in motion.
+- `FADE` / `FADE_OUT` - mirrored curves, so a reversible transition retraces
+  its own path.
+
+Every preset carries `ReduceMotion.System`, so the OS setting is handled
+without call sites knowing. Press feedback belongs to `PressableSurface`: it
+responds on press-*down*, not on release, and scales rather than dimming
+because a dip is invisible on the navy fill.
+
+Calm is the brief. Bouncing UI is harder to track for the audience this app is
+for, so a spring that overshoots needs a reason a user could name.
+
 # Before claiming work is done
 
 `npx tsc --noEmit` and `npm test` must both pass.

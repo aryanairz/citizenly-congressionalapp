@@ -1,8 +1,6 @@
 import type { ReactNode } from 'react';
-import { useState } from 'react';
 import {
   ActivityIndicator,
-  Pressable,
   type PressableProps,
   type StyleProp,
   StyleSheet,
@@ -11,7 +9,8 @@ import {
 } from 'react-native';
 
 import { AppText } from '@/components/app-text';
-import { Colors, Radius, Sizing, Spacing, type ColorName } from '@/constants/design';
+import { PressableSurface } from '@/components/pressable-surface';
+import { Colors, Elevation, Radius, Sizing, Spacing, type ColorName } from '@/constants/design';
 
 type ButtonVariant = 'primary' | 'secondary';
 
@@ -37,13 +36,15 @@ export interface ButtonProps extends Omit<PressableProps, 'style' | 'children'> 
 }
 
 /**
- * Primary action button. Meets the design system's 56px minimum touch target,
- * 16px radius, and bold 18px label. Flat - no shadow.
+ * Primary action button. 56px minimum target, 16px radius, bold 18px label.
  *
- * All visual chrome lives on an inner View: the Pressable is kept as a bare
- * behavior/hit-target wrapper and pressed state is tracked in React state.
- * (Historically function-form `style` on Pressable was swallowed by NativeWind's
- * css-interop wrapper; NativeWind is gone, but the pattern stays for stability.)
+ * The press is a spring-driven scale rather than an opacity dip, because a
+ * navy fill barely registers a dip but reads a 3% shrink clearly. Primary
+ * buttons carry a soft navy-tinted shadow so the main action on a screen sits
+ * slightly above the page rather than being painted onto it.
+ *
+ * Visual chrome lives on an inner View, never on the Pressable itself, so
+ * layout and behaviour stay separable.
  */
 export function Button({
   label,
@@ -55,35 +56,25 @@ export function Button({
   rightIcon,
   labelColor,
   style,
-  onPressIn,
-  onPressOut,
   ...rest
 }: ButtonProps) {
-  const [pressed, setPressed] = useState(false);
   const isPrimary = variant === 'primary';
   const isDisabled = disabled || loading;
   const contentColor = labelColor ?? (isPrimary ? 'onNavy' : 'navy');
 
   return (
-    <Pressable
+    <PressableSurface
       accessibilityRole="button"
       accessibilityState={{ disabled: isDisabled, busy: loading }}
       disabled={isDisabled}
-      onPressIn={(e) => {
-        setPressed(true);
-        onPressIn?.(e);
-      }}
-      onPressOut={(e) => {
-        setPressed(false);
-        onPressOut?.(e);
-      }}
+      weight="control"
+      style={!fullWidth ? styles.hugContent : undefined}
       {...rest}>
       <View
         style={[
           styles.base,
           isPrimary ? styles.primary : styles.secondary,
-          !fullWidth && styles.hugContent,
-          pressed && !isDisabled && styles.pressed,
+          isPrimary && !isDisabled && Elevation.card,
           isDisabled && styles.disabled,
           style,
         ]}>
@@ -99,7 +90,7 @@ export function Button({
           </View>
         )}
       </View>
-    </Pressable>
+    </PressableSurface>
   );
 }
 
@@ -127,9 +118,6 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     gap: Spacing.sm,
-  },
-  pressed: {
-    opacity: 0.85,
   },
   disabled: {
     opacity: 0.4,

@@ -1,7 +1,7 @@
 import { MaterialIcons } from '@expo/vector-icons';
-import { useState } from 'react';
-import { Pressable, StyleSheet, View } from 'react-native';
+import { StyleSheet, View } from 'react-native';
 
+import { PressableSurface } from '@/components/pressable-surface';
 import { Colors, Radius } from '@/constants/design';
 
 export interface IconButtonProps {
@@ -14,29 +14,25 @@ export interface IconButtonProps {
   large?: boolean;
 }
 
-/** Square/circular icon-only button following the safe Pressable pattern. */
+/**
+ * Square/circular icon-only button. Hit slop pads the target past its visual
+ * bounds, so the thing you can hit is larger than the thing you can see - the
+ * icon stays quiet without the target getting hard to land on.
+ */
 export function IconButton({ icon, label, onPress, disabled = false, large = false }: IconButtonProps) {
-  const [pressed, setPressed] = useState(false);
   return (
-    <Pressable
+    <PressableSurface
       accessibilityRole="button"
       accessibilityLabel={label}
       accessibilityState={{ disabled }}
       disabled={disabled}
       onPress={onPress}
-      onPressIn={() => setPressed(true)}
-      onPressOut={() => setPressed(false)}
-      hitSlop={4}>
-      <View
-        style={[
-          styles.base,
-          large && styles.large,
-          pressed && !disabled && styles.pressed,
-          disabled && styles.disabled,
-        ]}>
+      weight="control"
+      hitSlop={10}>
+      <View style={[styles.base, large && styles.large, disabled && styles.disabled]}>
         <MaterialIcons name={icon} size={large ? 30 : 24} color={Colors.navy} />
       </View>
-    </Pressable>
+    </PressableSurface>
   );
 }
 
@@ -57,9 +53,6 @@ const styles = StyleSheet.create({
     borderRadius: Radius.full,
     borderWidth: 2,
     borderColor: Colors.navy,
-  },
-  pressed: {
-    backgroundColor: Colors.surfaceMuted,
   },
   disabled: {
     opacity: 0.35,

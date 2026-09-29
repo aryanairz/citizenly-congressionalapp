@@ -1,10 +1,17 @@
 import { MaterialIcons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
-import { useState } from 'react';
-import { Pressable, StyleSheet, View } from 'react-native';
+import { useEffect } from 'react';
+import { StyleSheet, View } from 'react-native';
+import Animated, {
+  useAnimatedStyle,
+  useSharedValue,
+  withSpring,
+} from 'react-native-reanimated';
 
 import { AppText } from '@/components/app-text';
-import { Colors, Radius, Spacing } from '@/constants/design';
+import { PressableSurface } from '@/components/pressable-surface';
+import { Colors, Elevation, Radius, Spacing } from '@/constants/design';
+import { SPRING } from '@/constants/motion';
 import { t } from '@/lib/ui-i18n';
 import { useLang } from '@/lib/use-lang';
 
@@ -57,6 +64,10 @@ export function BottomNav({ active }: BottomNavProps) {
   );
 }
 
+/**
+ * The pill behind the active tab grows into place rather than blinking on, so
+ * switching tabs reads as one object moving instead of two states swapping.
+ */
 function NavItem({
   tab,
   label,
@@ -68,24 +79,33 @@ function NavItem({
   active: boolean;
   onPress: () => void;
 }) {
-  const [pressed, setPressed] = useState(false);
   const color = active ? Colors.navy : Colors.muted;
+  const fill = useSharedValue(active ? 1 : 0);
+
+  useEffect(() => {
+    fill.value = withSpring(active ? 1 : 0, SPRING);
+  }, [active, fill]);
+
+  const pillStyle = useAnimatedStyle(() => ({
+    opacity: fill.value,
+    transform: [{ scale: 0.9 + fill.value * 0.1 }],
+  }));
 
   return (
-    <Pressable
+    <PressableSurface
       accessibilityRole="tab"
       accessibilityState={{ selected: active }}
       accessibilityLabel={label}
       onPress={onPress}
-      onPressIn={() => setPressed(true)}
-      onPressOut={() => setPressed(false)}>
-      <View style={[styles.item, active && styles.itemActive, pressed && styles.pressed]}>
+      weight="control">
+      <View style={styles.item}>
+        <Animated.View style={[styles.pill, pillStyle]} />
         <MaterialIcons name={tab.icon} size={26} color={color} />
         <AppText variant="labelMd" style={[styles.label, { color }]}>
           {label}
         </AppText>
       </View>
-    </Pressable>
+    </PressableSurface>
   );
 }
 
@@ -95,25 +115,25 @@ const styles = StyleSheet.create({
     justifyContent: 'space-around',
     alignItems: 'center',
     backgroundColor: Colors.white,
-    borderTopWidth: StyleSheet.hairlineWidth,
-    borderTopColor: Colors.border,
     paddingTop: Spacing.sm,
     paddingBottom: Spacing.sm,
     paddingHorizontal: Spacing.md,
+    // Depth instead of a hairline rule: the bar reads as floating above the
+    // content rather than being fenced off from it by a line.
+    ...Elevation.chrome,
   },
   item: {
     alignItems: 'center',
+    justifyContent: 'center',
     gap: 2,
     minWidth: 68,
     paddingVertical: Spacing.xs,
     paddingHorizontal: Spacing.md,
-    borderRadius: Radius.lg,
   },
-  itemActive: {
+  pill: {
+    ...StyleSheet.absoluteFillObject,
     backgroundColor: Colors.navyTint,
-  },
-  pressed: {
-    opacity: 0.6,
+    borderRadius: Radius.lg,
   },
   label: {
     fontSize: 12,

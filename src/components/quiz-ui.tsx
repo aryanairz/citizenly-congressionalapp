@@ -5,13 +5,13 @@
  */
 
 import { MaterialIcons } from '@expo/vector-icons';
-import { useState } from 'react';
-import { Pressable, StyleSheet, View } from 'react-native';
-import Animated, { SlideInDown } from 'react-native-reanimated';
+import { StyleSheet, View } from 'react-native';
+import Animated, { SlideInDown, ZoomIn } from 'react-native-reanimated';
 
 import { AppText } from '@/components/app-text';
 import { Button } from '@/components/button';
-import { Colors, Radius, Spacing } from '@/constants/design';
+import { PressableSurface } from '@/components/pressable-surface';
+import { Colors, Elevation, Radius, Spacing } from '@/constants/design';
 import { t } from '@/lib/ui-i18n';
 import { useLang } from '@/lib/use-lang';
 
@@ -42,8 +42,6 @@ export function OptionCard({
   disabled: boolean;
   onPress: () => void;
 }) {
-  const [pressed, setPressed] = useState(false);
-
   const borderColor =
     visual === 'correct'
       ? Colors.success
@@ -61,24 +59,26 @@ export function OptionCard({
           ? Colors.navyTint
           : Colors.white;
 
+  const graded = visual === 'correct' || visual === 'wrong';
+
   return (
-    <Pressable
+    <PressableSurface
       accessibilityRole="button"
       accessibilityLabel={`Answer ${letter}: ${text}`}
       accessibilityState={{ disabled, selected: visual === 'selected' }}
       disabled={disabled}
       onPress={onPress}
-      onPressIn={() => setPressed(true)}
-      onPressOut={() => setPressed(false)}>
+      weight="surface">
       <View
         style={[
           styles.option,
           { borderColor, backgroundColor },
-          // After grading, every card fades by the same amount - color alone
-          // (green/red vs neutral) does the differentiating.
-          (visual === 'correct' || visual === 'wrong' || visual === 'dimmed') &&
-            styles.optionDimmed,
-          pressed && !disabled && styles.optionPressed,
+          // Dimming the cards that are no longer in play lets the graded
+          // answer hold the eye without shouting.
+          visual === 'dimmed' && styles.optionDimmed,
+          // The graded card lifts off the page. Depth reads before colour
+          // does, which matters when the reader is low-vision or colourblind.
+          graded && Elevation.raised,
         ]}>
         <View style={styles.letterChip}>
           <AppText variant="labelLg" color="navy">
@@ -88,14 +88,20 @@ export function OptionCard({
         <AppText variant="bodyLg" color="ink" style={styles.optionText}>
           {text}
         </AppText>
+        {/* The verdict icon scales in with a little overshoot: the one place
+            bounce is earned, because it lands on the user's own answer. */}
         {visual === 'correct' ? (
-          <MaterialIcons name="check-circle" size={26} color={Colors.success} />
+          <Animated.View entering={ZoomIn.springify().damping(11).stiffness(200)}>
+            <MaterialIcons name="check-circle" size={26} color={Colors.success} />
+          </Animated.View>
         ) : null}
         {visual === 'wrong' ? (
-          <MaterialIcons name="cancel" size={26} color={Colors.red} />
+          <Animated.View entering={ZoomIn.springify().damping(11).stiffness(200)}>
+            <MaterialIcons name="cancel" size={26} color={Colors.red} />
+          </Animated.View>
         ) : null}
       </View>
-    </Pressable>
+    </PressableSurface>
   );
 }
 
@@ -167,10 +173,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: Spacing.md,
   },
   optionDimmed: {
-    opacity: 0.55,
-  },
-  optionPressed: {
-    backgroundColor: Colors.surfaceMuted,
+    opacity: 0.45,
   },
   letterChip: {
     width: 40,

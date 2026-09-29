@@ -1,9 +1,18 @@
 import { MaterialIcons } from '@expo/vector-icons';
-import { useState } from 'react';
-import { Pressable, type StyleProp, StyleSheet, View, type ViewStyle } from 'react-native';
+import { useEffect } from 'react';
+import { type StyleProp, StyleSheet, View, type ViewStyle } from 'react-native';
+import Animated, {
+  interpolateColor,
+  useAnimatedStyle,
+  useSharedValue,
+  withSpring,
+  ZoomIn,
+} from 'react-native-reanimated';
 
 import { AppText } from '@/components/app-text';
-import { Colors, Radius, Sizing, Spacing } from '@/constants/design';
+import { PressableSurface } from '@/components/pressable-surface';
+import { Colors, Elevation, Radius, Sizing, Spacing } from '@/constants/design';
+import { SPRING } from '@/constants/motion';
 
 export interface OptionRowProps {
   title: string;
@@ -20,9 +29,14 @@ export interface OptionRowProps {
 }
 
 /**
- * A large tappable selection row/card: 72px minimum target, 16px radius,
- * constant 2px border (neutral → navy + faint navy tint when selected) plus a
- * check icon so selection is never shown by color alone.
+ * A large tappable selection row: 72px minimum target, 16px radius, constant
+ * 2px border so selecting never shifts the layout.
+ *
+ * Selecting is the one moment on these screens that deserves real motion. The
+ * border and fill cross-fade on a spring rather than snapping, and the
+ * checkmark scales in with a little overshoot - the one place bounce is
+ * earned, because the user's tap is what threw it there. Selection is still
+ * carried by three signals at once (border, fill, icon), never colour alone.
  */
 export function OptionRow({
   title,
@@ -33,22 +47,27 @@ export function OptionRow({
   onPress,
   style,
 }: OptionRowProps) {
-  const [pressed, setPressed] = useState(false);
+  // 0 = unselected, 1 = selected. Drives border and fill together so they
+  // can never disagree mid-transition.
+  const progress = useSharedValue(selected ? 1 : 0);
+
+  useEffect(() => {
+    progress.value = withSpring(selected ? 1 : 0, SPRING);
+  }, [selected, progress]);
+
+  const animatedStyle = useAnimatedStyle(() => ({
+    borderColor: interpolateColor(progress.value, [0, 1], [Colors.border, Colors.navy]),
+    backgroundColor: interpolateColor(progress.value, [0, 1], [Colors.white, Colors.navyTint]),
+  }));
 
   return (
-    <Pressable
+    <PressableSurface
       accessibilityRole="button"
       accessibilityState={{ selected }}
       onPress={onPress}
-      onPressIn={() => setPressed(true)}
-      onPressOut={() => setPressed(false)}>
-      <View
-        style={[
-          styles.row,
-          selected && styles.selected,
-          pressed && styles.pressed,
-          style,
-        ]}>
+      weight="surface">
+      <Animated.View
+        style={[styles.row, animatedStyle, selected && Elevation.card, style]}>
         <View style={styles.text}>
           <AppText variant="labelLg" color="navy" style={styles.title}>
             {title}
@@ -65,10 +84,12 @@ export function OptionRow({
           </AppText>
         ) : null}
         {selected && checkmark ? (
-          <MaterialIcons name="check-circle" size={26} color={Colors.navy} />
+          <Animated.View entering={ZoomIn.springify().damping(12).stiffness(220)}>
+            <MaterialIcons name="check-circle" size={26} color={Colors.navy} />
+          </Animated.View>
         ) : null}
-      </View>
-    </Pressable>
+      </Animated.View>
+    </PressableSurface>
   );
 }
 
@@ -82,16 +103,7 @@ const styles = StyleSheet.create({
     paddingVertical: Spacing.md,
     // Constant 2px border so selecting never shifts the layout.
     borderWidth: 2,
-    borderColor: Colors.border,
     borderRadius: Radius.lg,
-    backgroundColor: Colors.white,
-  },
-  selected: {
-    borderColor: Colors.navy,
-    backgroundColor: Colors.navyTint,
-  },
-  pressed: {
-    opacity: 0.7,
   },
   text: {
     flex: 1,

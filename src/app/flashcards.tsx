@@ -24,6 +24,7 @@ import {
   ReadAloudButton,
   ScreenContainer,
   ScreenHeader,
+  ProgressBar,
 } from '@/components';
 import { Colors, Radius, Sizing, Spacing } from '@/constants/design';
 import { filterByTopic, parseTopicKey } from '@/constants/topics';
@@ -253,11 +254,7 @@ export default function FlashcardsScreen() {
               <AppText variant="labelMd" color="muted">
                 {t('questionXofY', lang, { current: index + 1, total })}
               </AppText>
-              <View style={styles.progressTrack}>
-                <View
-                  style={[styles.progressFill, { width: `${((index + 1) / total) * 100}%` }]}
-                />
-              </View>
+              <ProgressBar percent={((index + 1) / total) * 100} />
             </View>
 
             {/* Flip card (tap to flip, swipe to change) */}
@@ -404,17 +401,6 @@ const styles = StyleSheet.create({
   progressText: {
     gap: Spacing.sm,
     paddingBottom: Spacing.md,
-  },
-  progressTrack: {
-    height: 6,
-    borderRadius: Radius.full,
-    backgroundColor: Colors.border,
-    overflow: 'hidden',
-  },
-  progressFill: {
-    height: '100%',
-    borderRadius: Radius.full,
-    backgroundColor: Colors.navy,
   },
   cardArea: {
     flex: 1,

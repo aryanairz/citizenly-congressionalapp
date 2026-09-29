@@ -15,6 +15,7 @@ import {
   ScreenHeader,
   shuffledIndices,
   type OptionVisual,
+  ProgressBar,
 } from '@/components';
 import { Colors, Radius, Spacing } from '@/constants/design';
 import { confirmAction } from '@/lib/confirm';
@@ -176,11 +177,7 @@ export default function ReviewMistakesScreen() {
                 <AppText variant="labelMd" color="muted">
                   Reviewing {index + 1} of {total} · {resolvedCount} resolved
                 </AppText>
-                <View style={styles.progressTrack}>
-                  <View
-                    style={[styles.progressFill, { width: `${((index + 1) / total) * 100}%` }]}
-                  />
-                </View>
+                <ProgressBar percent={((index + 1) / total) * 100} />
               </View>
               <IconButton icon="delete-outline" label="Clear all mistakes" onPress={handleClearAll} />
             </View>
@@ -277,17 +274,6 @@ const styles = StyleSheet.create({
   progressText: {
     flex: 1,
     gap: Spacing.sm,
-  },
-  progressTrack: {
-    height: 6,
-    borderRadius: Radius.full,
-    backgroundColor: Colors.border,
-    overflow: 'hidden',
-  },
-  progressFill: {
-    height: '100%',
-    borderRadius: Radius.full,
-    backgroundColor: Colors.navy,
   },
   scroll: {
     flex: 1,

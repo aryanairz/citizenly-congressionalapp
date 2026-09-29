@@ -6,6 +6,8 @@ import { ScrollView, StyleSheet, View } from 'react-native';
 import Animated, {
   cancelAnimation,
   Easing,
+  FadeIn,
+  FadeInDown,
   useAnimatedStyle,
   useReducedMotion,
   useSharedValue,
@@ -39,28 +41,41 @@ export default function WelcomeScreen() {
 
   return (
     <ScreenContainer>
-      {/* Brand + value proposition, anchored to the top */}
-      <View style={styles.hero}>
-        <Image
-          source={wordmark}
-          style={styles.wordmark}
-          contentFit="contain"
-          accessibilityLabel="Citizenly"
-        />
-        <View style={styles.copy}>
-          <AppText variant="headlineLg" color="navy" center>
-            Practice the US Citizenship Test in your language
+      {/* Brand + value proposition, anchored to the top. Each block arrives a
+          beat after the one above it, so the screen introduces itself in
+          reading order rather than all at once. */}
+      {/* Wordmark, claim and proof read as one block, centred together in the
+          space above the actions. Centring them as a group avoids the two
+          separate voids that centring each piece on its own would create. */}
+      <View style={styles.main}>
+        <Animated.View style={styles.hero} entering={FadeIn.duration(400)}>
+          <Image
+            source={wordmark}
+            style={styles.wordmark}
+            contentFit="contain"
+            accessibilityLabel="Citizenly"
+          />
+          <Animated.View style={styles.copy} entering={FadeInDown.delay(120).duration(420)}>
+            <AppText variant="headlineLg" color="navy" center>
+              Practice the US Citizenship Test in your language
+            </AppText>
+            <AppText variant="bodyLg" color="muted" center>
+              Your path to citizenship starts here.
+            </AppText>
+          </Animated.View>
+        </Animated.View>
+
+        {/* The claim is "in your language", so the proof of it sits directly
+            beneath the claim rather than stranded at the bottom edge. */}
+        <Animated.View style={styles.proof} entering={FadeIn.delay(360).duration(500)}>
+          <LanguageMarquee />
+          <AppText variant="labelMd" color="subtle" center style={styles.proofLabel}>
+            {`${MARQUEE_LANGUAGE_NAMES.length} languages, all free`}
           </AppText>
-          <AppText variant="bodyLg" color="muted" center>
-            Your path to citizenship starts here.
-          </AppText>
-        </View>
+        </Animated.View>
       </View>
 
-      {/* Flexible spacers position the actions in the lower-middle of the screen */}
-      <View style={styles.spacerAboveActions} />
-
-      <View style={styles.actions}>
+      <Animated.View style={styles.actions} entering={FadeInDown.delay(240).duration(420)}>
         <Button
           label={t('getStarted', lang)}
           onPress={() => router.push('/sign-up')}
@@ -71,11 +86,7 @@ export default function WelcomeScreen() {
           variant="secondary"
           onPress={() => router.push('/log-in')}
         />
-      </View>
-
-      <View style={styles.spacerBelowActions} />
-
-      <LanguageMarquee />
+      </Animated.View>
     </ScreenContainer>
   );
 }
@@ -149,7 +160,6 @@ const styles = StyleSheet.create({
   hero: {
     alignItems: 'center',
     gap: Spacing.lg,
-    paddingTop: Spacing.xl,
   },
   wordmark: {
     width: '100%',
@@ -159,17 +169,21 @@ const styles = StyleSheet.create({
   copy: {
     gap: Spacing.sm,
   },
-  // 2:1 flex ratio puts the actions below center, comfortably above the marquee.
-  spacerAboveActions: {
-    flex: 2,
-    minHeight: Spacing.xl,
-  },
-  spacerBelowActions: {
+  // Takes the leftover height so the message block centres as a unit.
+  main: {
     flex: 1,
-    minHeight: Spacing.lg,
+    justifyContent: 'center',
+    gap: Spacing.xl,
+  },
+  proof: {
+    gap: Spacing.md,
+  },
+  proofLabel: {
+    textTransform: 'uppercase',
   },
   actions: {
     gap: Spacing.md,
+    paddingBottom: Spacing.sm,
   },
   // Bleed past the container's 24px side padding so the loop runs edge-to-edge.
   marquee: {

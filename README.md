@@ -133,7 +133,8 @@ console resets you to a first-time user.
 |------------|--------------------------------------------------------------|
 | Framework  | Expo SDK 54 (pinned for Expo Go compatibility) · React 19 · RN 0.81 |
 | Routing    | expo-router v6, typed routes                                  |
-| Styling    | StyleSheet + shared design tokens (`src/constants/design-tokens.js` → typed constants in `src/constants/design.ts`) |
+| Styling    | StyleSheet + shared design tokens (`src/constants/design-tokens.js` → typed constants in `src/constants/design.ts`), incl. depth and a size-specific type scale |
+| Motion     | Reanimated 4 springs from `src/constants/motion.ts`, described by damping ratio + response; reduced-motion handled in the presets |
 | State      | Two React contexts (session, onboarding) + hooks - no Redux/Query |
 | Data       | Bundled JSON - no network layer at all                        |
 | Storage    | AsyncStorage (account, mistakes) · SecureStore/AsyncStorage via `token-store.ts` |

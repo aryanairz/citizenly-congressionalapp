@@ -71,17 +71,62 @@ const fontFamily = {
 
 /**
  * The type scale. `family` keys into fontFamily; `letterSpacing`/`lineHeight`
- * are in px (RN points). Weight is kept alongside the explicit family so text
- * renders correctly whether or not synthetic weighting is applied.
+ * are in px (RN points).
+ *
+ * Tracking is size-specific, never one value for everything. Letters read as
+ * drifting apart the larger they get, so display sizes take negative tracking;
+ * small text takes slightly positive tracking to stay legible. Leading moves
+ * the opposite way: tight on headlines, generous on body copy, and generous
+ * again here because the reader is often elderly and reading a second
+ * language.
+ *
+ * -0.02em is the target for display sizes, which is where the pixel values
+ * below come from (32 * -0.02 = -0.64).
  */
 const typography = {
-  headlineLg: { size: 32, lineHeight: 40, letterSpacing: -0.6, weight: '700', family: 'bold' },
-  headlineMd: { size: 24, lineHeight: 32, letterSpacing: -0.24, weight: '700', family: 'bold' },
-  questionText: { size: 22, lineHeight: 30, letterSpacing: 0, weight: '500', family: 'medium' },
+  headlineLg: { size: 32, lineHeight: 38, letterSpacing: -0.64, weight: '700', family: 'bold' },
+  headlineMd: { size: 24, lineHeight: 30, letterSpacing: -0.36, weight: '700', family: 'bold' },
+  questionText: { size: 22, lineHeight: 31, letterSpacing: -0.22, weight: '500', family: 'medium' },
   bodyLg: { size: 18, lineHeight: 28, letterSpacing: 0, weight: '400', family: 'regular' },
   bodyMd: { size: 16, lineHeight: 24, letterSpacing: 0, weight: '400', family: 'regular' },
-  labelLg: { size: 18, lineHeight: 24, letterSpacing: 0, weight: '700', family: 'bold' },
+  labelLg: { size: 18, lineHeight: 24, letterSpacing: -0.18, weight: '700', family: 'bold' },
   labelMd: { size: 14, lineHeight: 18, letterSpacing: 0.7, weight: '600', family: 'semibold' },
 };
 
-module.exports = { colors, spacing, radius, sizing, fontFamily, typography };
+/**
+ * Depth. Bigger surfaces read as thicker: a floating bar sits further off the
+ * page than a resting card, so it gets a wider, softer shadow rather than a
+ * darker one. Shadows stay low-opacity and navy-tinted rather than black,
+ * which keeps them from muddying the white ground.
+ *
+ * `elevation` is the Android channel; iOS reads the shadow* keys. Both are
+ * provided so depth survives the platform gap.
+ */
+const elevation = {
+  /** Resting surfaces: cards, option rows. Barely there, but not flat. */
+  card: {
+    shadowColor: '#1B2A4A',
+    shadowOpacity: 0.05,
+    shadowRadius: 10,
+    shadowOffset: { width: 0, height: 2 },
+    elevation: 2,
+  },
+  /** Lifted while pressed or selected. */
+  raised: {
+    shadowColor: '#1B2A4A',
+    shadowOpacity: 0.1,
+    shadowRadius: 18,
+    shadowOffset: { width: 0, height: 6 },
+    elevation: 6,
+  },
+  /** Floating chrome that content scrolls beneath: bottom nav, sticky footers. */
+  chrome: {
+    shadowColor: '#1B2A4A',
+    shadowOpacity: 0.08,
+    shadowRadius: 24,
+    shadowOffset: { width: 0, height: -4 },
+    elevation: 12,
+  },
+};
+
+module.exports = { colors, spacing, radius, sizing, fontFamily, typography, elevation };

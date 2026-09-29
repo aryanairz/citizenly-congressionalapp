@@ -7,7 +7,7 @@
  * Import from here in components:  import { Colors, Spacing, Radius, Typography } from '@/constants/design';
  */
 
-import type { TextStyle } from 'react-native';
+import type { TextStyle, ViewStyle } from 'react-native';
 
 import tokens from '@/constants/design-tokens';
 
@@ -16,6 +16,14 @@ export const Spacing = tokens.spacing;
 export const Radius = tokens.radius;
 export const Sizing = tokens.sizing;
 export const FontFamily = tokens.fontFamily;
+
+/** Depth presets: Elevation.card, Elevation.raised, Elevation.chrome. */
+export const Elevation = tokens.elevation as Record<
+  keyof typeof tokens.elevation,
+  ViewStyle
+>;
+
+export type ElevationName = keyof typeof tokens.elevation;
 
 export type ColorName = keyof typeof Colors;
 export type SpacingKey = keyof typeof Spacing;
@@ -54,6 +62,7 @@ export const theme = {
   sizing: Sizing,
   fontFamily: FontFamily,
   typography: Typography,
+  elevation: Elevation,
 } as const;
 
 export default theme;

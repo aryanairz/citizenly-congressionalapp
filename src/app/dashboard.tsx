@@ -2,8 +2,17 @@ import { MaterialIcons } from '@expo/vector-icons';
 import { type Href, useFocusEffect, useRouter } from 'expo-router';
 import { Fragment, useCallback } from 'react';
 import { ScrollView, StyleSheet, View } from 'react-native';
+import Animated, { FadeInDown } from 'react-native-reanimated';
 
-import { AppText, BottomNav, Card, Divider, ListRow, ScreenContainer } from '@/components';
+import {
+  AppText,
+  BottomNav,
+  Card,
+  Divider,
+  ListRow,
+  ProgressBar,
+  ScreenContainer,
+} from '@/components';
 import { Colors, Radius, Spacing } from '@/constants/design';
 import { TOTAL_OFFICIAL as TOTAL_QUESTIONS } from '@/data/question-bank';
 import { useMistakes } from '@/lib/local-mistakes';
@@ -128,19 +137,19 @@ export default function HomeScreen() {
               </AppText>
             </AppText>
           </View>
-          <View style={styles.progressTrack}>
-            <View style={[styles.progressFill, { width: `${progress}%` }]} />
-          </View>
+          <ProgressBar percent={progress} />
           <AppText variant="labelMd" color="muted">
             {encouragement}
           </AppText>
         </Card>
 
-        {/* Study modes */}
+        {/* Study modes. Each row arrives just after the one above it, so the
+            list assembles in reading order instead of appearing all at once. */}
         <View>
           {MODES.map((mode, index) => (
             <Fragment key={mode.id}>
               {index > 0 ? <Divider style={styles.divider} /> : null}
+              <Animated.View entering={FadeInDown.delay(index * 45).duration(260)}>
               <ListRow
                 title={mode.titleKey ? t(mode.titleKey, lang) : mode.title}
                 subtitle={mode.description}
@@ -154,6 +163,7 @@ export default function HomeScreen() {
                 left={<ModeIcon icon={mode.icon} emphasized={mode.emphasized} />}
                 onPress={mode.route ? () => router.push(mode.route!) : () => {}}
               />
+              </Animated.View>
             </Fragment>
           ))}
         </View>
@@ -199,17 +209,6 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     alignItems: 'flex-end',
     gap: Spacing.md,
-  },
-  progressTrack: {
-    height: 6,
-    borderRadius: Radius.full,
-    backgroundColor: Colors.border,
-    overflow: 'hidden',
-  },
-  progressFill: {
-    height: '100%',
-    borderRadius: Radius.full,
-    backgroundColor: Colors.navy,
   },
   divider: {
     marginVertical: Spacing.xs,

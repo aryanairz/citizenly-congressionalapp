@@ -15,6 +15,8 @@ export { PinInput, type PinInputProps } from '@/components/pin-input';
 export { BottomNav, type BottomNavProps, type BottomNavTab } from '@/components/bottom-nav';
 export { IconButton, type IconButtonProps } from '@/components/icon-button';
 export { ReadAloudButton, type ReadAloudButtonProps } from '@/components/read-aloud-button';
+export { PressableSurface, type PressableSurfaceProps } from '@/components/pressable-surface';
+export { ProgressBar, type ProgressBarProps } from '@/components/progress-bar';
 export {
   OptionCard,
   FeedbackPanel,
