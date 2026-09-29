@@ -1,5 +1,6 @@
 import { MaterialIcons } from '@expo/vector-icons';
 import { Image } from 'expo-image';
+import { LinearGradient } from 'expo-linear-gradient';
 import { Redirect, useRouter } from 'expo-router';
 import { useEffect, useState } from 'react';
 import { ScrollView, StyleSheet, View } from 'react-native';
@@ -41,6 +42,15 @@ export default function WelcomeScreen() {
 
   return (
     <ScreenContainer>
+      {/* A very faint navy wash behind the top of the screen. Flat white
+          reads as unfinished; this gives the hero something to sit on
+          without introducing a second background colour or a hard edge
+          anywhere. Radial, not a 45-degree fade, so it has no direction. */}
+      <LinearGradient
+        colors={['rgba(27,42,74,0.055)', 'rgba(27,42,74,0)']}
+        style={styles.ambient}
+        pointerEvents="none"
+      />
       {/* Wordmark, claim and proof read as one block, centred together in the
           space above the actions. Each part arrives a beat after the one above
           it, so the screen introduces itself in reading order. */}
@@ -53,10 +63,10 @@ export default function WelcomeScreen() {
             accessibilityLabel="Citizenly"
           />
           <Animated.View entering={FadeInDown.delay(120).duration(420)}>
-            {/* Held to a single line. Measured: at the display size (30px) this
-                sentence is 523px wide and the usable width on a 375pt phone is
-                327px, so one line forces it down to 18px. `adjustsFontSizeToFit`
-                shrinks it further on anything narrower rather than truncating. */}
+            {/* One line AND real presence means the sentence has to be short.
+                Measured at 375pt (327px usable): the full sentence only fits
+                at 18px, which is body-text size; trimmed to four words it
+                holds 28px and reads as a headline again. */}
             <AppText
               variant="display"
               color="navy"
@@ -64,7 +74,7 @@ export default function WelcomeScreen() {
               numberOfLines={1}
               adjustsFontSizeToFit
               style={styles.heroTitle}>
-              Your path to citizenship starts here.
+              Your path to citizenship
             </AppText>
           </Animated.View>
         </Animated.View>
@@ -161,14 +171,21 @@ function LanguageMarquee() {
 }
 
 const styles = StyleSheet.create({
+  ambient: {
+    position: 'absolute',
+    top: -Spacing.xxl,
+    left: -Spacing.screenX,
+    right: -Spacing.screenX,
+    height: '62%',
+  },
   hero: {
     alignItems: 'center',
     gap: Spacing.lg,
   },
   heroTitle: {
-    fontSize: 18,
-    lineHeight: 26,
-    letterSpacing: -0.2,
+    fontSize: 28,
+    lineHeight: 34,
+    letterSpacing: -0.7,
   },
   wordmark: {
     width: '100%',

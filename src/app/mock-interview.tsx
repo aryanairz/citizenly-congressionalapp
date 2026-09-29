@@ -1030,7 +1030,7 @@ function ResultPhase({
           color={passed ? Colors.success : Colors.red}
         />
         <Speakable
-          text={passed ? 'You passed!' : 'Not this time'}
+          text={passed ? 'You passed' : 'Not this time'}
           speak={speak}
           variant="headlineMd"
           color={passed ? 'success' : 'red'}

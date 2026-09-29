@@ -680,7 +680,7 @@ export const UI_STRINGS = {
   },
   // site key "correct"
   correctBanner: {
-    en: "Correct!",
+    en: "Correct",
     es: "¡Correcto!",
     zh: "正确！",
     tl: "Tama!",
@@ -782,7 +782,7 @@ export const UI_STRINGS = {
   },
   // site key "quizComplete"
   quizComplete: {
-    en: "Quiz Complete!",
+    en: "Quiz complete",
     es: "¡Examen completado!",
     zh: "测验完成！",
     tl: "Tapos na ang Pagsusulit!",

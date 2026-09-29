@@ -103,7 +103,7 @@ const styles = StyleSheet.create({
     paddingVertical: Spacing.md,
     // Constant 2px border so selecting never shifts the layout.
     borderWidth: 2,
-    borderRadius: Radius.lg,
+    borderRadius: Radius.xl,
   },
   text: {
     flex: 1,

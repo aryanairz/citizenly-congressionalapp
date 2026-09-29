@@ -148,7 +148,7 @@ export default function ReviewMistakesScreen() {
         {!loading && total > 0 && finished ? (
           <View style={styles.centerFill}>
             <AppText variant="display" color="navy" center>
-              Review Complete!
+              Review complete
             </AppText>
             <AppText variant="bodyLg" color="muted" center>
               You resolved {resolvedCount} of {total} mistake{total === 1 ? '' : 's'}.

@@ -105,8 +105,8 @@ export default function HomeScreen() {
   const progress = Math.round((mastered / TOTAL_QUESTIONS) * 100);
   const encouragement =
     mastered === 0
-      ? 'Ready when you are. Let’s begin!'
-      : `You’re doing great! ${TOTAL_QUESTIONS - mastered} more to go.`;
+      ? 'Ready when you are. Let’s begin.'
+      : `Going well. ${TOTAL_QUESTIONS - mastered} more to go.`;
 
   return (
     <ScreenContainer padded={false}>

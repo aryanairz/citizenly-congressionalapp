@@ -43,13 +43,21 @@ const spacing = {
   screenX: 24, // global horizontal screen margin
 };
 
-/** Corner radius. 16 (lg) is the standard for interactive components + cards. */
+/**
+ * Corner radius.
+ *
+ * The scale exists so nesting reads correctly: a container is rounder than
+ * the things inside it, because a child's corner sits inside its parent's and
+ * matching radii make the inner element look like it is bulging out. Cards
+ * and sheets take `xl`, interactive controls take `lg`, chips and inner
+ * fills take `md`.
+ */
 const radius = {
   xs: 4,
   sm: 8,
   md: 12,
   lg: 16,
-  xl: 24,
+  xl: 22,
   full: 9999,
 };
 

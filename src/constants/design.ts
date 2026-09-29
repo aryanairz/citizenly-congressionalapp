@@ -25,6 +25,13 @@ export const Elevation = tokens.elevation as Record<
 
 export type ElevationName = keyof typeof tokens.elevation;
 
+/**
+ * Lining up digits. Proportional figures make a counter jitter as it climbs
+ * (1 is narrower than 8), which is distracting on anything that updates in
+ * place: question counters, scores, timers.
+ */
+export const TabularNums = { fontVariant: ['tabular-nums'] } as const satisfies TextStyle;
+
 export type ColorName = keyof typeof Colors;
 export type SpacingKey = keyof typeof Spacing;
 export type RadiusKey = keyof typeof Radius;

@@ -26,7 +26,7 @@ import {
   ScreenHeader,
   ProgressBar,
 } from '@/components';
-import { Colors, Radius, Sizing, Spacing } from '@/constants/design';
+import { Colors, Radius, Sizing, Spacing, TabularNums } from '@/constants/design';
 import { filterByTopic, parseTopicKey } from '@/constants/topics';
 import { localize } from '@/lib/i18n';
 import { addMistake } from '@/lib/local-mistakes';
@@ -251,7 +251,7 @@ export default function FlashcardsScreen() {
           <>
             {/* Progress */}
             <View style={styles.progressText}>
-              <AppText variant="labelMd" color="muted">
+              <AppText variant="labelMd" color="muted" style={TabularNums}>
                 {t('questionXofY', lang, { current: index + 1, total })}
               </AppText>
               <ProgressBar percent={((index + 1) / total) * 100} />

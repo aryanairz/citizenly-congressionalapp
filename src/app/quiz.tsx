@@ -17,7 +17,7 @@ import {
   type OptionVisual,
   ProgressBar,
 } from '@/components';
-import { Spacing } from '@/constants/design';
+import { Spacing, TabularNums } from '@/constants/design';
 import { filterByTopic, parseTopicKey } from '@/constants/topics';
 import { localize } from '@/lib/i18n';
 import { addMistake } from '@/lib/local-mistakes';
@@ -169,7 +169,7 @@ export default function QuizScreen() {
                 set is orienting; it belongs above the question, quietly. */}
             <View style={styles.progressRow}>
               <View style={styles.progressText}>
-                <AppText variant="labelMd" color="subtle" style={styles.counter}>
+                <AppText variant="labelMd" color="subtle" style={[styles.counter, TabularNums]}>
                   {t('questionXofY', lang, { current: index + 1, total })}
                 </AppText>
                 <ProgressBar percent={((index + 1) / total) * 100} />

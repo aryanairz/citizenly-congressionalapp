@@ -168,7 +168,7 @@ const styles = StyleSheet.create({
     gap: Spacing.md,
     minHeight: 72,
     borderWidth: 2,
-    borderRadius: Radius.lg,
+    borderRadius: Radius.xl,
     paddingVertical: Spacing.md,
     paddingHorizontal: Spacing.md,
   },
@@ -188,7 +188,7 @@ const styles = StyleSheet.create({
   },
   panel: {
     borderWidth: 2,
-    borderRadius: Radius.lg,
+    borderRadius: Radius.xl,
     padding: Spacing.lg,
     gap: Spacing.md,
     marginBottom: Spacing.md,
