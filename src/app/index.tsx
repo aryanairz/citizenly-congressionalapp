@@ -18,9 +18,11 @@ import Animated, {
 
 import { AppText } from '@/components/app-text';
 import { Button } from '@/components/button';
+import { PressableSurface } from '@/components/pressable-surface';
 import { ScreenContainer } from '@/components/screen-container';
 import { MARQUEE_LANGUAGE_NAMES } from '@/constants/brand';
-import { Colors, Spacing } from '@/constants/design';
+import { Colors, FontFamily, Radius, Spacing, TabularNums } from '@/constants/design';
+import { OFFICIAL_QUESTIONS } from '@/data/question-bank';
 import { useSession } from '@/lib/session-context';
 import { t } from '@/lib/ui-i18n';
 import { useLang } from '@/lib/use-lang';
@@ -29,6 +31,32 @@ import { useLang } from '@/lib/use-lang';
 // white plate baked in, which showed as a pale rectangle on any background
 // that was not pure white.
 const wordmark = require('@/assets/images/citizenly-wordmark.png');
+
+// Both halves of the headline need identical metrics, because the accent half
+// is a nested Text and would otherwise fall back to the body size.
+const TITLE_FACE = {
+  fontFamily: FontFamily.bold,
+  fontSize: 38,
+  lineHeight: 43,
+  letterSpacing: -1.3,
+} as const;
+
+// The headline promises a path, so the page shows the path. Three steps is
+// the whole product, and naming them is more honest than a feature grid.
+const STEPS = [
+  {
+    title: 'Pick your language',
+    detail: `${MARQUEE_LANGUAGE_NAMES.length} to choose from.`,
+  },
+  {
+    title: `Study all ${OFFICIAL_QUESTIONS.length} questions`,
+    detail: 'Flashcards, quizzes, mock interview.',
+  },
+  {
+    title: 'Walk in ready',
+    detail: 'Know every answer on interview day.',
+  },
+];
 
 export default function WelcomeScreen() {
   const router = useRouter();
@@ -44,67 +72,114 @@ export default function WelcomeScreen() {
   }
 
   return (
-    <ScreenContainer>
-      {/* A very faint navy wash behind the top of the screen. Flat white
-          reads as unfinished; this gives the hero something to sit on
-          without introducing a second background colour or a hard edge
-          anywhere. Radial, not a 45-degree fade, so it has no direction. */}
-      <LinearGradient
-        colors={['rgba(27,42,74,0.055)', 'rgba(27,42,74,0)']}
-        style={styles.ambient}
-        pointerEvents="none"
-      />
-      {/* Wordmark, claim and proof read as one block, centred together in the
-          space above the actions. Each part arrives a beat after the one above
-          it, so the screen introduces itself in reading order. */}
-      <View style={styles.main}>
-        <Animated.View style={styles.hero} entering={FadeIn.duration(400)}>
-          <Image
-            source={wordmark}
-            style={styles.wordmark}
-            contentFit="contain"
-            accessibilityLabel="Citizenly"
-          />
-          <Animated.View entering={FadeInDown.delay(120).duration(420)}>
-            {/* One line AND real presence means the sentence has to be short.
-                Measured at 375pt (327px usable): the full sentence only fits
-                at 18px, which is body-text size; trimmed to four words it
-                holds 28px and reads as a headline again. */}
-            <AppText
-              variant="display"
-              color="navy"
-              center
-              numberOfLines={1}
-              adjustsFontSizeToFit
-              style={styles.heroTitle}>
-              Your path to citizenship
+    <ScreenContainer padded={false}>
+      {/* Scrolls only when it has to: the layout is sized for a phone, and
+          growing text or a short screen should push content rather than
+          clip it. */}
+      <ScrollView
+        contentContainerStyle={styles.scroll}
+        showsVerticalScrollIndicator={false}
+        bounces={false}>
+        <View style={styles.main}>
+          {/* Left-aligned, not centred. Centring every element is what made
+              this screen read as a splash rather than a product, and a left
+              edge gives the eye one place to start each line. */}
+          <Animated.View style={styles.hero} entering={FadeInDown.duration(380)}>
+            <Image
+              source={wordmark}
+              style={styles.wordmark}
+              contentFit="contain"
+              accessibilityLabel="Citizenly"
+            />
+            {/* Navy sentence, red close - the same split the wordmark makes,
+                so the headline belongs to the logo above it. */}
+            <AppText style={styles.title}>
+              {'Your path to citizenship\n'}
+              <AppText style={styles.titleAccent}>starts here.</AppText>
+            </AppText>
+            <AppText variant="bodyLg" color="muted" style={styles.subtitle}>
+              Practice the official U.S. civics test in your own language.
             </AppText>
           </Animated.View>
-        </Animated.View>
 
-        {/* The languages are the proof of the promise above, so they sit
-            directly under it rather than stranded at the bottom edge. */}
-        <Animated.View style={styles.proof} entering={FadeIn.delay(360).duration(500)}>
-          <LanguageMarquee />
-          <AppText variant="bodyMd" color="subtle" center>
-            {`Available in ${MARQUEE_LANGUAGE_NAMES.length} languages`}
-          </AppText>
-        </Animated.View>
-      </View>
+          {/* Sits directly under "in your own language" and answers it: the
+              names drift past, fading in and out of the page. */}
+          <Animated.View entering={FadeIn.delay(300).duration(600)}>
+            <LanguageMarquee />
+          </Animated.View>
 
-      <Animated.View style={styles.actions} entering={FadeInDown.delay(240).duration(420)}>
-        <Button
-          label={t('getStarted', lang)}
-          onPress={() => router.push('/sign-up')}
-          rightIcon={<MaterialIcons name="arrow-forward" size={22} color={Colors.onNavy} />}
-        />
-        <Button
-          label={t('alreadyHaveAccount', lang)}
-          variant="secondary"
-          onPress={() => router.push('/log-in')}
-        />
-      </Animated.View>
+          <Animated.View style={styles.steps} entering={FadeInDown.delay(160).duration(460)}>
+            {STEPS.map((step, index) => (
+              <Step
+                key={step.title}
+                number={index + 1}
+                title={step.title}
+                detail={step.detail}
+                last={index === STEPS.length - 1}
+              />
+            ))}
+          </Animated.View>
+        </View>
+
+        <Animated.View style={styles.actions} entering={FadeInDown.delay(220).duration(420)}>
+          <Button
+            label={t('getStarted', lang)}
+            onPress={() => router.push('/sign-up')}
+            rightIcon={<MaterialIcons name="arrow-forward" size={22} color={Colors.onNavy} />}
+          />
+          {/* A text link, not a second outlined button. Two buttons of equal
+              weight make the user choose twice; one action and one quiet way
+              back makes the primary path obvious. */}
+          <PressableSurface
+            accessibilityRole="link"
+            onPress={() => router.push('/log-in')}
+            weight="control"
+            style={styles.loginLinkTarget}>
+            <AppText variant="labelLg" color="navy" center>
+              {t('alreadyHaveAccount', lang)}
+            </AppText>
+          </PressableSurface>
+        </Animated.View>
+      </ScrollView>
     </ScreenContainer>
+  );
+}
+
+/**
+ * One numbered stop on the path. The rail down the left side is what makes
+ * three separate rows read as one route; the last step ends it rather than
+ * trailing off.
+ */
+function Step({
+  number,
+  title,
+  detail,
+  last,
+}: {
+  number: number;
+  title: string;
+  detail: string;
+  last: boolean;
+}) {
+  return (
+    <View style={styles.step}>
+      <View style={styles.stepRail}>
+        <View style={styles.stepTile}>
+          <AppText variant="labelLg" color="navy" style={[styles.stepNumber, TabularNums]}>
+            {number}
+          </AppText>
+        </View>
+        {last ? null : <View style={styles.stepLine} />}
+      </View>
+      <View style={styles.stepText}>
+        <AppText variant="labelLg" color="navy">
+          {title}
+        </AppText>
+        <AppText variant="bodyMd" color="muted">
+          {detail}
+        </AppText>
+      </View>
+    </View>
   );
 }
 
@@ -138,27 +213,50 @@ function LanguageMarquee() {
     MARQUEE_LANGUAGE_NAMES.map((name) => (
       // No letter-spacing: tracking can break complex-script ligatures
       // (Devanagari, Malayalam, Gujarati).
-      <AppText key={name} variant="bodyMd" color="muted">
+      <AppText key={name} variant="bodyMd" color="subtle">
         {name}
       </AppText>
     ));
 
+  // Fades the page back in over both ends, so names dissolve at the edges
+  // instead of being guillotined mid-glyph.
+  const edges = (
+    <>
+      <LinearGradient
+        colors={[Colors.white, FADE_OUT_WHITE]}
+        start={{ x: 0, y: 0.5 }}
+        end={{ x: 1, y: 0.5 }}
+        style={[styles.marqueeEdge, styles.marqueeEdgeLeft]}
+        pointerEvents="none"
+      />
+      <LinearGradient
+        colors={[FADE_OUT_WHITE, Colors.white]}
+        start={{ x: 0, y: 0.5 }}
+        end={{ x: 1, y: 0.5 }}
+        style={[styles.marqueeEdge, styles.marqueeEdgeRight]}
+        pointerEvents="none"
+      />
+    </>
+  );
+
   // Respect "reduce motion": a static, finger-scrollable row instead of animation.
   if (reduceMotion) {
     return (
-      <ScrollView
-        horizontal
-        showsHorizontalScrollIndicator={false}
-        style={styles.marquee}
-        contentContainerStyle={[styles.marqueeSet, styles.marqueeStaticPad]}>
-        {renderNames()}
-      </ScrollView>
+      <View style={styles.marqueeWrap}>
+        <ScrollView
+          horizontal
+          showsHorizontalScrollIndicator={false}
+          contentContainerStyle={[styles.marqueeSet, styles.marqueeStaticPad]}>
+          {renderNames()}
+        </ScrollView>
+        {edges}
+      </View>
     );
   }
 
   return (
     <View
-      style={styles.marquee}
+      style={styles.marqueeWrap}
       accessible
       accessibilityLabel={`Available in ${MARQUEE_LANGUAGE_NAMES.length} languages`}>
       <Animated.View style={[styles.marqueeTrack, scrollStyle]}>
@@ -169,54 +267,102 @@ function LanguageMarquee() {
         </View>
         <View style={styles.marqueeSet}>{renderNames()}</View>
       </Animated.View>
+      {edges}
     </View>
   );
 }
 
+// White at zero alpha. Fading to `transparent` goes through black on some
+// engines and leaves a dirty smear at the edge.
+const FADE_OUT_WHITE = 'rgba(255,255,255,0)';
+
 const styles = StyleSheet.create({
-  ambient: {
-    position: 'absolute',
-    top: -Spacing.xxl,
-    left: -Spacing.screenX,
-    right: -Spacing.screenX,
-    height: '62%',
+  scroll: {
+    flexGrow: 1,
   },
-  hero: {
-    alignItems: 'center',
-    gap: Spacing.lg,
-  },
-  heroTitle: {
-    fontSize: 28,
-    lineHeight: 34,
-    letterSpacing: -0.7,
-  },
-  wordmark: {
-    width: '100%',
-    maxWidth: 260,
-    // Matches the asset's own 2172x724 proportions, so it never letterboxes.
-    aspectRatio: 2172 / 724,
-  },
-  // Takes the leftover height so the message block centres as a unit. The
-  // generous internal gap is deliberate: letting the block breathe makes it
-  // occupy the screen rather than huddling in the middle of it, which is what
-  // removes the sense of empty space above and below.
   main: {
     flex: 1,
     justifyContent: 'center',
-    gap: Spacing.xxl,
+    gap: Spacing.xl,
+    paddingHorizontal: Spacing.screenX,
+    paddingTop: Spacing.lg,
   },
-  proof: {
+  hero: {
     gap: Spacing.md,
+  },
+  wordmark: {
+    width: 150,
+    // Matches the asset's own 2172x724 proportions, so it never letterboxes.
+    aspectRatio: 2172 / 724,
+    marginBottom: Spacing.xs,
+  },
+  title: {
+    // Outside the scale on purpose: this is the largest thing in the app and
+    // it earns a size of its own.
+    ...TITLE_FACE,
+    color: Colors.navy,
+  },
+  titleAccent: {
+    ...TITLE_FACE,
+    color: Colors.red,
+  },
+  subtitle: {
+    maxWidth: 340,
+  },
+  steps: {
+    // Full width: every detail line should clear on one line, so the three
+    // steps keep an even rhythm down the rail.
+    paddingRight: 0,
+  },
+  step: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    gap: Spacing.md,
+  },
+  // Not stretched: the rail's own height sets the spacing between steps, so
+  // a long detail line can never pull the numbers apart.
+  stepRail: {
+    alignItems: 'center',
+  },
+  stepTile: {
+    width: 44,
+    height: 44,
+    borderRadius: Radius.md,
+    backgroundColor: Colors.navyTint,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  stepNumber: {
+    letterSpacing: 0,
+  },
+  stepLine: {
+    width: 2,
+    height: 30,
+    marginVertical: Spacing.xs,
+    borderRadius: 1,
+    backgroundColor: Colors.border,
+  },
+  stepText: {
+    flex: 1,
+    gap: 2,
+    // Optical, not mathematical: lines up the title's cap height with the
+    // centre of the tile beside it.
+    paddingTop: 5,
   },
   actions: {
-    gap: Spacing.md,
+    gap: Spacing.sm,
+    paddingHorizontal: Spacing.screenX,
+    paddingTop: Spacing.xl,
     paddingBottom: Spacing.sm,
   },
-  // Bleed past the container's 24px side padding so the loop runs edge-to-edge.
-  marquee: {
+  loginLinkTarget: {
+    minHeight: 48,
+    justifyContent: 'center',
+  },
+  // Bleeds past the side padding so the loop runs edge to edge.
+  marqueeWrap: {
     marginHorizontal: -Spacing.screenX,
     overflow: 'hidden',
-    paddingBottom: Spacing.sm,
   },
   // Width hugs its content (two copies of the set) instead of stretching.
   marqueeTrack: {
@@ -231,5 +377,17 @@ const styles = StyleSheet.create({
   },
   marqueeStaticPad: {
     paddingLeft: Spacing.screenX,
+  },
+  marqueeEdge: {
+    position: 'absolute',
+    top: 0,
+    bottom: 0,
+    width: 56,
+  },
+  marqueeEdgeLeft: {
+    left: 0,
+  },
+  marqueeEdgeRight: {
+    right: 0,
   },
 });
