@@ -1,6 +1,6 @@
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useEffect, useMemo, useState } from 'react';
-import { ScrollView, StyleSheet, View } from 'react-native';
+import { StyleSheet, View } from 'react-native';
 import Animated, { FadeIn } from 'react-native-reanimated';
 
 import {
@@ -10,6 +10,7 @@ import {
   FeedbackPanel,
   LETTERS,
   OptionCard,
+  QuestionScroller,
   ReadAloudButton,
   ScreenContainer,
   ScreenHeader,
@@ -184,10 +185,7 @@ export default function QuizScreen() {
               />
             </View>
 
-            <ScrollView
-              style={styles.scroll}
-              contentContainerStyle={styles.scrollContent}
-              showsVerticalScrollIndicator={false}>
+            <QuestionScroller>
               {/* Left-aligned, not centred: centred text makes every line start
                   in a different place, which is exactly the wrong thing to ask
                   of someone reading a second language. The question changes on
@@ -221,8 +219,7 @@ export default function QuizScreen() {
                   );
                 })}
               </View>
-
-            </ScrollView>
+            </QuestionScroller>
 
             {checked ? (
               <FeedbackPanel
@@ -275,19 +272,6 @@ const styles = StyleSheet.create({
   },
   counter: {
     textTransform: 'uppercase',
-  },
-  scroll: {
-    flex: 1,
-  },
-  // flexGrow + centred: with four short options the screen used to pack
-  // everything against the top and leave a void above the footer. Letting the
-  // group find the middle of its own space removes the void without pinning
-  // anything, and long questions still scroll normally.
-  scrollContent: {
-    flexGrow: 1,
-    justifyContent: 'center',
-    paddingVertical: Spacing.lg,
-    gap: Spacing.xl,
   },
   question: {
     // Room for the question to breathe; it is the thing being asked.

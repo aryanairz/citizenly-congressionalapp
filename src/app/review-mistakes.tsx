@@ -1,7 +1,7 @@
 import { MaterialIcons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import { useEffect, useMemo, useState } from 'react';
-import { ActivityIndicator, ScrollView, StyleSheet, View } from 'react-native';
+import { ActivityIndicator, StyleSheet, View } from 'react-native';
 
 import {
   AppText,
@@ -11,6 +11,7 @@ import {
   IconButton,
   LETTERS,
   OptionCard,
+  QuestionScroller,
   ScreenContainer,
   ScreenHeader,
   shuffledIndices,
@@ -182,10 +183,7 @@ export default function ReviewMistakesScreen() {
               <IconButton icon="delete-outline" label="Clear all mistakes" onPress={handleClearAll} />
             </View>
 
-            <ScrollView
-              style={styles.scroll}
-              contentContainerStyle={styles.scrollContent}
-              showsVerticalScrollIndicator={false}>
+            <QuestionScroller>
               <AppText variant="questionText" color="navy" center style={styles.question}>
                 {localize(question.question, lang)}
               </AppText>
@@ -215,7 +213,7 @@ export default function ReviewMistakesScreen() {
                   );
                 })}
               </View>
-            </ScrollView>
+            </QuestionScroller>
 
             {checked ? (
               <FeedbackPanel
@@ -275,23 +273,17 @@ const styles = StyleSheet.create({
     flex: 1,
     gap: Spacing.sm,
   },
-  scroll: {
-    flex: 1,
-  },
-  scrollContent: {
-    paddingVertical: Spacing.md,
-    gap: Spacing.lg,
-  },
   question: {
     paddingHorizontal: Spacing.sm,
   },
   options: {
     gap: Spacing.md,
   },
+  // No hairline above this any more: the scroller fades its own bottom edge
+  // when there is something cut off, and a rule plus a fade is two devices
+  // doing one job.
   nextArea: {
     paddingTop: Spacing.sm,
     paddingBottom: Spacing.md,
-    borderTopWidth: StyleSheet.hairlineWidth,
-    borderTopColor: Colors.border,
   },
 });

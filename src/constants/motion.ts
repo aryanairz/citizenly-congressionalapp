@@ -22,7 +22,12 @@
  * needing to know.
  */
 
-import { ReduceMotion, type WithSpringConfig, type WithTimingConfig } from 'react-native-reanimated';
+import {
+  LinearTransition,
+  ReduceMotion,
+  type WithSpringConfig,
+  type WithTimingConfig,
+} from 'react-native-reanimated';
 import { Easing } from 'react-native-reanimated';
 
 /**
@@ -62,6 +67,19 @@ export const SPRING_SHEET: WithSpringConfig = {
   duration: 350,
   reduceMotion: ReduceMotion.System,
 };
+
+/**
+ * Repositioning caused by something else resizing: a panel opening below a
+ * list, a row leaving a group. Same numbers as `SPRING`, because it is the
+ * same kind of motion; it just animates a layout change rather than a value.
+ *
+ * Without this, a view whose neighbour grew teleports to its new position in
+ * a single frame while the neighbour animates in, and the two read as
+ * unrelated events instead of one.
+ */
+export const LAYOUT = LinearTransition.springify(400)
+  .dampingRatio(1)
+  .reduceMotion(ReduceMotion.System);
 
 /**
  * Non-interactive cross-fades (opacity only). A spring on opacity is wasted
