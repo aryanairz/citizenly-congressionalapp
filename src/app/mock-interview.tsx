@@ -29,7 +29,7 @@ import {
   ScreenContainer,
   ScreenHeader,
 } from '@/components';
-import { Colors, Radius, Spacing } from '@/constants/design';
+import { Colors, Elevation, Radius, Spacing } from '@/constants/design';
 import {
   INTERVIEW_POOLS,
   QUESTION_BY_ID,
@@ -1271,6 +1271,7 @@ const styles = StyleSheet.create({
   },
   questionBlock: {
     gap: Spacing.md,
+    paddingTop: Spacing.sm,
   },
   overline: {
     textTransform: 'uppercase',
@@ -1320,9 +1321,10 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     gap: Spacing.sm,
     borderWidth: 2,
-    borderRadius: Radius.lg,
+    borderRadius: Radius.xl,
     paddingVertical: Spacing.lg,
     paddingHorizontal: Spacing.lg,
+    ...Elevation.raised,
   },
   missedRow: {
     gap: Spacing.sm,

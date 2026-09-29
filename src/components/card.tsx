@@ -108,8 +108,8 @@ export function Divider({ inset = false, style }: DividerProps) {
 const styles = StyleSheet.create({
   card: {
     backgroundColor: Colors.white,
-    borderWidth: 1,
-    borderColor: Colors.border,
+    // No outline: the card already carries elevation, and a border on top of
+    // a shadow is the generic card look - two devices doing one job.
     borderRadius: Radius.xl,
     padding: Spacing.lg,
   },

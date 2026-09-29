@@ -26,7 +26,7 @@ import {
   ScreenHeader,
   ProgressBar,
 } from '@/components';
-import { Colors, Radius, Sizing, Spacing, TabularNums } from '@/constants/design';
+import { Colors, Elevation, Radius, Sizing, Spacing, TabularNums } from '@/constants/design';
 import { filterByTopic, parseTopicKey } from '@/constants/topics';
 import { localize } from '@/lib/i18n';
 import { addMistake } from '@/lib/local-mistakes';
@@ -418,11 +418,10 @@ const styles = StyleSheet.create({
     ...StyleSheet.absoluteFillObject,
     backfaceVisibility: 'hidden',
     backgroundColor: Colors.white,
-    borderWidth: 1,
-    borderColor: Colors.border,
-    borderRadius: Radius.lg,
+    borderRadius: Radius.xl,
     padding: Spacing.lg,
     justifyContent: 'space-between',
+    ...Elevation.raised,
   },
   faceTopRow: {
     flexDirection: 'row',

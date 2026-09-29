@@ -1,17 +1,18 @@
 import { MaterialIcons } from '@expo/vector-icons';
 import { useLocalSearchParams } from 'expo-router';
 import { useMemo, useState } from 'react';
-import { FlatList, Pressable, StyleSheet, View } from 'react-native';
+import { FlatList, StyleSheet, View } from 'react-native';
 
 import {
   AppText,
   BottomNav,
   Divider,
+  PressableSurface,
   ReadAloudButton,
   ScreenContainer,
   ScreenHeader,
 } from '@/components';
-import { Colors, Radius, Spacing } from '@/constants/design';
+import { Colors, Elevation, Radius, Spacing, TabularNums } from '@/constants/design';
 import { filterByTopic, parseTopicKey, topicLabel } from '@/constants/topics';
 import type { Question } from '@/data/question-types';
 import { correctAnswerText, localize } from '@/lib/i18n';
@@ -96,19 +97,18 @@ function QuestionCard({
   expanded: boolean;
   onToggle: () => void;
 }) {
-  const [pressed, setPressed] = useState(false);
-
   return (
-    <Pressable
+    <PressableSurface
       accessibilityRole="button"
       accessibilityState={{ expanded }}
       onPress={onToggle}
-      onPressIn={() => setPressed(true)}
-      onPressOut={() => setPressed(false)}>
-      <View style={[styles.card, expanded && styles.cardExpanded, pressed && styles.cardPressed]}>
+      weight="surface">
+      {/* Expanding lifts the card rather than outlining it, so the open
+          question reads as nearer than the ones it pushed aside. */}
+      <View style={[styles.card, expanded ? Elevation.raised : Elevation.card]}>
         <View style={styles.cardHeader}>
           <View style={styles.numberChip}>
-            <AppText variant="labelMd" color="navy" style={styles.numberText}>
+            <AppText variant="labelMd" color="navy" style={[styles.numberText, TabularNums]}>
               {number}
             </AppText>
           </View>
@@ -147,7 +147,7 @@ function QuestionCard({
           </View>
         ) : null}
       </View>
-    </Pressable>
+    </PressableSurface>
   );
 }
 
@@ -173,18 +173,10 @@ const styles = StyleSheet.create({
     paddingBottom: Spacing.xl,
   },
   card: {
-    borderWidth: 2,
-    borderColor: Colors.border,
-    borderRadius: Radius.lg,
+    borderRadius: Radius.xl,
     backgroundColor: Colors.white,
     padding: Spacing.lg,
     gap: Spacing.md,
-  },
-  cardExpanded: {
-    borderColor: Colors.navy,
-  },
-  cardPressed: {
-    backgroundColor: Colors.surfaceMuted,
   },
   cardHeader: {
     flexDirection: 'row',
@@ -194,7 +186,7 @@ const styles = StyleSheet.create({
   numberChip: {
     minWidth: 36,
     height: 36,
-    borderRadius: Radius.full,
+    borderRadius: Radius.md,
     backgroundColor: Colors.navyTint,
     alignItems: 'center',
     justifyContent: 'center',

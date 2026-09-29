@@ -1,10 +1,15 @@
 import { MaterialIcons } from '@expo/vector-icons';
 import { type Href, useLocalSearchParams, useRouter } from 'expo-router';
-import { useState } from 'react';
-import { Pressable, ScrollView, StyleSheet, View } from 'react-native';
+import { ScrollView, StyleSheet, View } from 'react-native';
 
-import { AppText, BottomNav, ScreenContainer, ScreenHeader } from '@/components';
-import { Colors, Radius, Sizing, Spacing } from '@/constants/design';
+import {
+  AppText,
+  BottomNav,
+  PressableSurface,
+  ScreenContainer,
+  ScreenHeader,
+} from '@/components';
+import { Colors, Elevation, Radius, Sizing, Spacing, TabularNums } from '@/constants/design';
 import { filterByTopic, TOPIC_OPTIONS, type TopicKey } from '@/constants/topics';
 import { t, tCount } from '@/lib/ui-i18n';
 import { useLang } from '@/lib/use-lang';
@@ -77,28 +82,26 @@ export default function SelectTopicScreen() {
 }
 
 function TopicRow({ name, count, onPress }: { name: string; count: number; onPress: () => void }) {
-  const [pressed, setPressed] = useState(false);
   const lang = useLang();
 
   return (
-    <Pressable
+    <PressableSurface
       accessibilityRole="button"
       accessibilityLabel={`${name}, ${tCount('questionsCount', count, lang)}`}
       onPress={onPress}
-      onPressIn={() => setPressed(true)}
-      onPressOut={() => setPressed(false)}>
-      <View style={[styles.row, pressed && styles.rowPressed]}>
+      weight="surface">
+      <View style={[styles.row, Elevation.card]}>
         <AppText variant="labelLg" color="navy" style={styles.rowTitle}>
           {name}
         </AppText>
         <View style={styles.countPill}>
-          <AppText variant="labelMd" color="navy" style={styles.countText}>
+          <AppText variant="labelMd" color="navy" style={[styles.countText, TabularNums]}>
             {count}
           </AppText>
         </View>
         <MaterialIcons name="chevron-right" size={26} color={Colors.subtle} />
       </View>
-    </Pressable>
+    </PressableSurface>
   );
 }
 
@@ -136,13 +139,8 @@ const styles = StyleSheet.create({
     minHeight: Sizing.rowMin,
     paddingHorizontal: Spacing.lg,
     paddingVertical: Spacing.md,
-    borderWidth: 2,
-    borderColor: Colors.border,
-    borderRadius: Radius.lg,
+    borderRadius: Radius.xl,
     backgroundColor: Colors.white,
-  },
-  rowPressed: {
-    backgroundColor: Colors.surfaceMuted,
   },
   rowTitle: {
     flex: 1,

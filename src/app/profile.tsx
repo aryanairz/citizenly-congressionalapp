@@ -8,7 +8,6 @@ import {
   BottomNav,
   Button,
   Card,
-  Divider,
   Input,
   PinInput,
   ScreenContainer,
@@ -87,40 +86,54 @@ export default function ProfileScreen() {
             Profile
           </AppText>
 
-          <Card style={styles.card}>
-            <ReadOnlyRow label="Name" value={user.name} />
-            <Divider />
+          {/* One card per setting rather than four rows divided inside one.
+              Each is its own thing to change, and separate surfaces say that
+              more clearly than hairlines through a single block do. */}
+          <AppText variant="labelMd" color="subtle" style={styles.sectionLabel}>
+            Account
+          </AppText>
+          <View style={styles.group}>
+            <Card style={styles.card}>
+              <ReadOnlyRow label="Name" value={user.name} />
+            </Card>
 
             {/* Email - editable, PIN-confirmed */}
-            <EditableRow
-              label="Email"
-              value={user.email ?? 'Not set'}
-              editing={open === 'email'}
-              onToggle={() => setOpen(open === 'email' ? 'none' : 'email')}>
-              <EmailEditor onDone={() => setOpen('none')} />
-            </EditableRow>
-            <Divider />
+            <Card style={styles.card}>
+              <EditableRow
+                label="Email"
+                value={user.email ?? 'Not set'}
+                editing={open === 'email'}
+                onToggle={() => setOpen(open === 'email' ? 'none' : 'email')}>
+                <EmailEditor onDone={() => setOpen('none')} />
+              </EditableRow>
+            </Card>
 
             {/* PIN - separate change flow */}
-            <EditableRow
-              label="PIN"
-              value="•••••"
-              editing={open === 'pin'}
-              onToggle={() => setOpen(open === 'pin' ? 'none' : 'pin')}
-              editLabel="Change">
-              <PinEditor onDone={() => setOpen('none')} />
-            </EditableRow>
-            <Divider />
+            <Card style={styles.card}>
+              <EditableRow
+                label="PIN"
+                value="•••••"
+                editing={open === 'pin'}
+                onToggle={() => setOpen(open === 'pin' ? 'none' : 'pin')}
+                editLabel="Change">
+                <PinEditor onDone={() => setOpen('none')} />
+              </EditableRow>
+            </Card>
 
             {/* Location - no PIN; reuses the onboarding picker on its own screen */}
-            <EditableRow
-              label="State & District"
-              value={locationValue}
-              editing={false}
-              onToggle={() => router.push('/edit-location')}
-            />
-          </Card>
+            <Card style={styles.card}>
+              <EditableRow
+                label="State & District"
+                value={locationValue}
+                editing={false}
+                onToggle={() => router.push('/edit-location')}
+              />
+            </Card>
+          </View>
 
+          <AppText variant="labelMd" color="subtle" style={styles.sectionLabel}>
+            Audio
+          </AppText>
           <Card style={styles.card}>
             <AutoSpeakRow />
           </Card>
@@ -390,6 +403,13 @@ const styles = StyleSheet.create({
   },
   card: {
     gap: Spacing.md,
+  },
+  group: {
+    gap: Spacing.sm,
+  },
+  sectionLabel: {
+    textTransform: 'uppercase',
+    paddingTop: Spacing.sm,
   },
   speakRow: {
     flexDirection: 'row',
