@@ -43,7 +43,7 @@ export default function RootLayout() {
       <OnboardingProvider>
         <SessionProvider>
           <Stack
-            screenOptions={{ headerShown: false, contentStyle: { backgroundColor: Colors.white } }}
+            screenOptions={{ headerShown: false, contentStyle: { backgroundColor: Colors.canvas } }}
           />
         </SessionProvider>
       </OnboardingProvider>

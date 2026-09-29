@@ -25,7 +25,10 @@ import { useSession } from '@/lib/session-context';
 import { t } from '@/lib/ui-i18n';
 import { useLang } from '@/lib/use-lang';
 
-const wordmark = require('@/assets/images/og-image.png');
+// Transparent wordmark: the previous asset was a social-share image with a
+// white plate baked in, which showed as a pale rectangle on any background
+// that was not pure white.
+const wordmark = require('@/assets/images/citizenly-wordmark.png');
 
 export default function WelcomeScreen() {
   const router = useRouter();
@@ -189,8 +192,9 @@ const styles = StyleSheet.create({
   },
   wordmark: {
     width: '100%',
-    maxWidth: 320,
-    aspectRatio: 1600 / 630,
+    maxWidth: 260,
+    // Matches the asset's own 2172x724 proportions, so it never letterboxes.
+    aspectRatio: 2172 / 724,
   },
   // Takes the leftover height so the message block centres as a unit. The
   // generous internal gap is deliberate: letting the block breathe makes it

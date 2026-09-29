@@ -91,7 +91,7 @@ export function ScreenContainer({
 const styles = StyleSheet.create({
   safe: {
     flex: 1,
-    backgroundColor: Colors.white,
+    backgroundColor: Colors.canvas,
   },
   flex: {
     flex: 1,
@@ -101,6 +101,6 @@ const styles = StyleSheet.create({
   },
   footer: {
     paddingTop: Spacing.md,
-    backgroundColor: Colors.white,
+    backgroundColor: Colors.canvas,
   },
 });

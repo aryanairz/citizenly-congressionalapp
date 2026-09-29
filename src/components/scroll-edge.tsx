@@ -1,6 +1,8 @@
 import { LinearGradient } from 'expo-linear-gradient';
 import { StyleSheet } from 'react-native';
 
+import { Colors } from '@/constants/design';
+
 export interface ScrollEdgeProps {
   /** Which way the content fades: above floating chrome, or below a header. */
   direction?: 'up' | 'down';
@@ -20,12 +22,12 @@ export interface ScrollEdgeProps {
  * content beneath it.
  */
 export function ScrollEdge({ direction = 'up', height = 28 }: ScrollEdgeProps) {
-  // 'up' fades content out as it approaches chrome below it, so the opaque
-  // end is at the bottom.
+  // Fades to the canvas, not to white: the chrome this sits against is the
+  // page colour, so a white fade would read as a pale band across the paper.
+  const solid = Colors.canvas;
+  const clear = `${Colors.canvas}00`;
   const colors =
-    direction === 'up'
-      ? (['rgba(255,255,255,0)', 'rgba(255,255,255,1)'] as const)
-      : (['rgba(255,255,255,1)', 'rgba(255,255,255,0)'] as const);
+    direction === 'up' ? ([clear, solid] as const) : ([solid, clear] as const);
 
   return (
     <LinearGradient
