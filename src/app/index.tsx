@@ -21,8 +21,7 @@ import { Button } from '@/components/button';
 import { PressableSurface } from '@/components/pressable-surface';
 import { ScreenContainer } from '@/components/screen-container';
 import { MARQUEE_LANGUAGE_NAMES } from '@/constants/brand';
-import { Colors, FontFamily, Radius, Spacing, TabularNums } from '@/constants/design';
-import { OFFICIAL_QUESTIONS } from '@/data/question-bank';
+import { Colors, FontFamily, Spacing } from '@/constants/design';
 import { useSession } from '@/lib/session-context';
 import { t } from '@/lib/ui-i18n';
 import { useLang } from '@/lib/use-lang';
@@ -41,23 +40,15 @@ const TITLE_FACE = {
   letterSpacing: -1.3,
 } as const;
 
-// The headline promises a path, so the page shows the path. Three steps is
-// the whole product, and naming them is more honest than a feature grid.
-const STEPS = [
-  {
-    title: 'Pick your language',
-    detail: `${MARQUEE_LANGUAGE_NAMES.length} to choose from.`,
-  },
-  {
-    title: `Study all ${OFFICIAL_QUESTIONS.length} questions`,
-    detail: 'Flashcards, quizzes, mock interview.',
-  },
-  {
-    title: 'Walk in ready',
-    detail: 'Know every answer on interview day.',
-  },
-];
-
+/**
+ * Welcome.
+ *
+ * One screen, one job: say what this is and start. It used to pitch three
+ * times over - a sample question, a row of figures, a numbered feature list -
+ * which is the thing welcome screens are repeatedly told not to do. All of it
+ * is gone. What remains is the name, the promise, one band of evidence and
+ * one button.
+ */
 export default function WelcomeScreen() {
   const router = useRouter();
   const session = useSession();
@@ -80,10 +71,12 @@ export default function WelcomeScreen() {
         contentContainerStyle={styles.scroll}
         showsVerticalScrollIndicator={false}
         bounces={false}>
+        {/* Hero at the top, band at the bottom, air in between. The empty
+            middle is the design, not a gap waiting to be filled. */}
         <View style={styles.main}>
-          {/* Left-aligned, not centred. Centring every element is what made
-              this screen read as a splash rather than a product, and a left
-              edge gives the eye one place to start each line. */}
+          {/* Left-aligned, not centred. Centring everything is what made this
+              read as a splash screen, and a left edge gives the eye one place
+              to start each line. */}
           <Animated.View style={styles.hero} entering={FadeInDown.duration(380)}>
             <Image
               source={wordmark}
@@ -102,26 +95,17 @@ export default function WelcomeScreen() {
             </AppText>
           </Animated.View>
 
-          {/* Sits directly under "in your own language" and answers it: the
-              names drift past, fading in and out of the page. */}
-          <Animated.View entering={FadeIn.delay(300).duration(600)}>
+          {/* The one thing on this screen that is not type on white. It is
+              also the only claim left, and it proves itself: the names of
+              every language the app speaks, drifting past in their own
+              scripts. Telling someone "48 languages" is a number; showing
+              them their own alphabet is the product. */}
+          <Animated.View style={styles.band} entering={FadeIn.delay(260).duration(600)}>
             <LanguageMarquee />
-          </Animated.View>
-
-          <Animated.View style={styles.steps} entering={FadeInDown.delay(160).duration(460)}>
-            {STEPS.map((step, index) => (
-              <Step
-                key={step.title}
-                number={index + 1}
-                title={step.title}
-                detail={step.detail}
-                last={index === STEPS.length - 1}
-              />
-            ))}
           </Animated.View>
         </View>
 
-        <Animated.View style={styles.actions} entering={FadeInDown.delay(220).duration(420)}>
+        <Animated.View style={styles.actions} entering={FadeInDown.delay(180).duration(420)}>
           <Button
             label={t('getStarted', lang)}
             onPress={() => router.push('/sign-up')}
@@ -145,44 +129,6 @@ export default function WelcomeScreen() {
   );
 }
 
-/**
- * One numbered stop on the path. The rail down the left side is what makes
- * three separate rows read as one route; the last step ends it rather than
- * trailing off.
- */
-function Step({
-  number,
-  title,
-  detail,
-  last,
-}: {
-  number: number;
-  title: string;
-  detail: string;
-  last: boolean;
-}) {
-  return (
-    <View style={styles.step}>
-      <View style={styles.stepRail}>
-        <View style={styles.stepTile}>
-          <AppText variant="labelLg" color="navy" style={[styles.stepNumber, TabularNums]}>
-            {number}
-          </AppText>
-        </View>
-        {last ? null : <View style={styles.stepLine} />}
-      </View>
-      <View style={styles.stepText}>
-        <AppText variant="labelLg" color="navy">
-          {title}
-        </AppText>
-        <AppText variant="bodyMd" color="muted">
-          {detail}
-        </AppText>
-      </View>
-    </View>
-  );
-}
-
 /** Slow, seamless infinite loop of every platform language in native script. */
 function LanguageMarquee() {
   const reduceMotion = useReducedMotion();
@@ -196,8 +142,9 @@ function LanguageMarquee() {
     offset.value = 0;
     offset.value = withRepeat(
       withTiming(-setWidth, {
-        // Constant speed (~60 px/s) regardless of how wide the names render.
-        duration: (setWidth / 60) * 1000,
+        // Constant speed (~45 px/s) regardless of how wide the names render.
+        // Slow enough to read a name you recognise before it leaves.
+        duration: (setWidth / 45) * 1000,
         easing: Easing.linear,
       }),
       -1,
@@ -213,24 +160,24 @@ function LanguageMarquee() {
     MARQUEE_LANGUAGE_NAMES.map((name) => (
       // No letter-spacing: tracking can break complex-script ligatures
       // (Devanagari, Malayalam, Gujarati).
-      <AppText key={name} variant="bodyMd" color="subtle">
+      <AppText key={name} variant="bodyLg" color="muted">
         {name}
       </AppText>
     ));
 
-  // Fades the page back in over both ends, so names dissolve at the edges
-  // instead of being guillotined mid-glyph.
+  // Fades the band colour back in over both ends, so names dissolve at the
+  // edges instead of being guillotined mid-glyph.
   const edges = (
     <>
       <LinearGradient
-        colors={[Colors.white, FADE_OUT_WHITE]}
+        colors={[Colors.surfaceMuted, FADE_OUT_TINT]}
         start={{ x: 0, y: 0.5 }}
         end={{ x: 1, y: 0.5 }}
         style={[styles.marqueeEdge, styles.marqueeEdgeLeft]}
         pointerEvents="none"
       />
       <LinearGradient
-        colors={[FADE_OUT_WHITE, Colors.white]}
+        colors={[FADE_OUT_TINT, Colors.surfaceMuted]}
         start={{ x: 0, y: 0.5 }}
         end={{ x: 1, y: 0.5 }}
         style={[styles.marqueeEdge, styles.marqueeEdgeRight]}
@@ -272,9 +219,9 @@ function LanguageMarquee() {
   );
 }
 
-// White at zero alpha. Fading to `transparent` goes through black on some
-// engines and leaves a dirty smear at the edge.
-const FADE_OUT_WHITE = 'rgba(255,255,255,0)';
+// `surfaceMuted` at zero alpha. Fading to `transparent` goes through black on
+// some engines and leaves a dirty smear at the edge.
+const FADE_OUT_TINT = 'rgba(244,246,250,0)';
 
 const styles = StyleSheet.create({
   scroll: {
@@ -282,13 +229,12 @@ const styles = StyleSheet.create({
   },
   main: {
     flex: 1,
-    justifyContent: 'center',
-    gap: Spacing.xl,
-    paddingHorizontal: Spacing.screenX,
-    paddingTop: Spacing.lg,
+    justifyContent: 'space-between',
+    paddingTop: Spacing.xl,
   },
   hero: {
     gap: Spacing.md,
+    paddingHorizontal: Spacing.screenX,
   },
   wordmark: {
     width: 150,
@@ -309,45 +255,11 @@ const styles = StyleSheet.create({
   subtitle: {
     maxWidth: 340,
   },
-  steps: {
-    // Full width: every detail line should clear on one line, so the three
-    // steps keep an even rhythm down the rail.
-    paddingRight: 0,
-  },
-  step: {
-    flexDirection: 'row',
-    alignItems: 'flex-start',
-    gap: Spacing.md,
-  },
-  // Not stretched: the rail's own height sets the spacing between steps, so
-  // a long detail line can never pull the numbers apart.
-  stepRail: {
-    alignItems: 'center',
-  },
-  stepTile: {
-    width: 44,
-    height: 44,
-    borderRadius: Radius.md,
-    backgroundColor: Colors.navyTint,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  stepNumber: {
-    letterSpacing: 0,
-  },
-  stepLine: {
-    width: 2,
-    height: 30,
-    marginVertical: Spacing.xs,
-    borderRadius: 1,
-    backgroundColor: Colors.border,
-  },
-  stepText: {
-    flex: 1,
-    gap: 2,
-    // Optical, not mathematical: lines up the title's cap height with the
-    // centre of the tile beside it.
-    paddingTop: 5,
+  // Full bleed, edge to edge: one horizontal line across the screen that
+  // separates the promise above from the action below.
+  band: {
+    backgroundColor: Colors.surfaceMuted,
+    paddingVertical: Spacing.lg,
   },
   actions: {
     gap: Spacing.sm,
@@ -359,9 +271,7 @@ const styles = StyleSheet.create({
     minHeight: 48,
     justifyContent: 'center',
   },
-  // Bleeds past the side padding so the loop runs edge to edge.
   marqueeWrap: {
-    marginHorizontal: -Spacing.screenX,
     overflow: 'hidden',
   },
   // Width hugs its content (two copies of the set) instead of stretching.
@@ -382,7 +292,7 @@ const styles = StyleSheet.create({
     position: 'absolute',
     top: 0,
     bottom: 0,
-    width: 56,
+    width: 64,
   },
   marqueeEdgeLeft: {
     left: 0,
