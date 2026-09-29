@@ -98,22 +98,66 @@ console resets you to a first-time user.
 - **Partial UI i18n** - the app chrome is being translated via
   `src/lib/ui-strings.ts` (dictionary generated from the website's complete
   48-language `lib/i18n.ts`) + `t()`/`tCount()` (`src/lib/ui-i18n.ts`, with
-  `Intl.PluralRules` plurals) + `useLang()`. ~20 high-traffic keys are wired
-  (welcome, auth, nav, mode titles, quiz session chrome).
+  `Intl.PluralRules` plurals) + `useLang()`. Roughly two dozen high-traffic
+  keys are wired (welcome, auth, nav, mode titles, quiz session chrome).
+
+## How it looks
+
+The audience is elderly, often low-vision, and frequently reading a second
+language. Every visual decision below follows from that, and the rules live in
+`src/constants/design-tokens.js` rather than in any screen.
+
+- **One typeface, three weights.** DM Sans at 400/600/700. The 500 Medium face
+  is deliberately absent: it failed to resolve at runtime and fell through to
+  the browser's serif default, which is what once turned every question into
+  Times New Roman. The family name carries the weight, so no `fontWeight` is
+  ever emitted, and on web the family is followed by a system sans stack. A
+  serif fallback is now structurally impossible rather than merely fixed.
+- **Tracking is size-specific.** Display sizes take negative tracking because
+  letters read as drifting apart the larger they get; small labels take
+  positive tracking to stay legible. Leading moves the opposite way, and stays
+  generous throughout. Nothing gets a blanket `letterSpacing`, which would also
+  break complex-script ligatures in Devanagari, Malayalam and Gujarati.
+- **Depth, not outlines.** Surfaces sit on `Elevation.card | raised | chrome`,
+  with navy-tinted rather than black shadows so they do not muddy the white
+  ground. A border on top of a shadow is two devices doing one job.
+- **Touch targets stay 56-72px** and the primary action is always a single
+  filled button. A second button of equal weight makes the user choose twice.
+- **Springs, not timed transitions**, from `src/constants/motion.ts`, described
+  by damping ratio and response. Overshoot is allowed only where the user's own
+  flick or drag put the element in motion. `PressableSurface` responds on
+  press-*down* and scales rather than dimming, because a dip in opacity is
+  invisible on the navy fill. Every preset carries `ReduceMotion.System`.
+- **The welcome screen** is the name, one headline, one line of copy, two rows
+  of the 48 language names drifting past in opposite directions, and one
+  button. It used to pitch three times over with a sample question, a row of
+  figures and a feature list. Showing someone their own alphabet does more than
+  telling them the number 48 does.
 
 ## Known gaps
 
+- **35 strings in the question bank never got translated** (`audit/language-leaks.md`).
+  19 of them are Hmong, which needs a native-speaker reviewer rather than a
+  script. Nothing here is missing or empty, so no screen breaks; the reader
+  just sees English where their own language should be. No test guards this
+  yet, so a bad regeneration would not be caught the way a missing field is.
 - **No RTL support.** Arabic and Hebrew are selectable and their *question
   content* renders, but layouts don't mirror and content isn't
   right-aligned. Needs `writingDirection`/`textAlign` handling (or full
   `I18nManager`) before those languages are truly usable.
-- **~150 UI strings are still English-only** - validation/error copy,
+- **183 UI strings are still English-only** (counted by
+  `scripts/audit-untranslated-ui.js`; full list in
+  `audit/untranslated-ui.md`) - validation/error copy,
   onboarding questions, profile editors, dialogs, loading/empty states,
   "Check Answer"/"Finish", the Profile tab, mode descriptions. The i18n
   infrastructure handles them the moment translations are added to
   `ui-strings.ts`.
 - **Dashboard progress is hardcoded to 0** - no progress tracking, streaks,
   or per-topic mastery yet.
+- **The splash screen is still Expo's template blue** (`#208AEF` in
+  `app.json`, with `#E6F4FE` behind the adaptive icon). Neither is in the
+  palette, so the first thing anyone sees on launch belongs to a different
+  app than the one that opens.
 - **No timed test** - the website's exam simulator (20 questions / 10 min /
   12 to pass, or 10 / 5 / 6 for 65/20) has no app equivalent yet.
 - **Accounts don't sync or transfer.** They live on one device with no
@@ -158,6 +202,24 @@ src/
     │               pool · content i18n (localize) · UI i18n (t/tCount) ·
     └──             answer-matching · interview-machine · interview voice
 ```
+
+Outside `src/`:
+
+```
+scripts/           audit-language-leaks.js · audit-untranslated-ui.js
+audit/             the reports those two produce, checked in so the gaps are
+                   visible rather than remembered
+```
+
+`audit-language-leaks.js` checks all 36,096 translated strings for values that
+never got translated. Comparing against English alone produces mostly noise,
+because proper nouns are legitimately identical across languages, so instead it
+counts how many of the 47 non-English languages leave a value byte-identical:
+"Joe Biden" is unchanged in about 30 because it is a name, while "Capitalism"
+is unchanged in exactly one because one translator skipped it. Anything shared
+by more than 14 languages is filed as a proper noun rather than counted. What
+survives is **35 hard leaks**, plus 87 medium-confidence and 109 length
+findings.
 
 ### Regenerating the question bank
 

@@ -563,7 +563,7 @@ function SetupStage({
       keyboardShouldPersistTaps="handled"
       showsVerticalScrollIndicator={false}>
       <Speakable
-        text="A few questions first. Your answers decide which test the officer gives you - just like a real interview."
+        text="A few questions first. Your answers decide which test the officer gives you, just like a real interview."
         speak={speak}
         variant="bodyLg"
         color="muted"
@@ -709,7 +709,7 @@ function EligibilityPhase({
             color="navy"
           />
           <Speakable
-            text="Be honest - in a real interview the officer only needs to see that you understand and respond."
+            text="Be honest. In a real interview the officer only needs to see that you understand and respond."
             speak={speak}
             variant="bodyMd"
             color="muted"
@@ -740,7 +740,7 @@ function EligibilityPhase({
           color="navy"
         />
         <Speakable
-          text="Answer out loud in your own words. This part is about understanding, not right answers - nothing is recorded."
+          text="Answer out loud in your own words. This part is about understanding, not right answers. Nothing is recorded."
           speak={speak}
           variant="bodyMd"
           color="muted"
@@ -813,7 +813,7 @@ function ReadingPhase({
           </AppText>
           <Button label="I read it out loud" onPress={() => onSelfReport(true)} />
           <Button
-            label="This one is hard - try another"
+            label="This one is hard, try another"
             variant="secondary"
             onPress={() => onSelfReport(false)}
           />

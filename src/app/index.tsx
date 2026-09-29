@@ -21,7 +21,7 @@ import { Button } from '@/components/button';
 import { PressableSurface } from '@/components/pressable-surface';
 import { ScreenContainer } from '@/components/screen-container';
 import { MARQUEE_LANGUAGE_NAMES } from '@/constants/brand';
-import { Colors, FontFamily, Radius, Spacing } from '@/constants/design';
+import { Colors, FontFamily, Spacing } from '@/constants/design';
 import { useSession } from '@/lib/session-context';
 import { t } from '@/lib/ui-i18n';
 import { useLang } from '@/lib/use-lang';
@@ -179,14 +179,12 @@ function MarqueeRow({ names, direction }: { names: string[]; direction: 'left' |
 
   const renderChips = () =>
     names.map((name) => (
-      <View key={name} style={styles.chip}>
-        {/* bodyMd carries zero tracking. The small label variants add
-            positive tracking, which breaks complex-script ligatures
-            (Devanagari, Malayalam, Gujarati). */}
-        <AppText variant="bodyMd" color="navy">
-          {name}
-        </AppText>
-      </View>
+      // bodyLg carries zero tracking. The small label variants add positive
+      // tracking, which breaks complex-script ligatures (Devanagari,
+      // Malayalam, Gujarati).
+      <AppText key={name} variant="bodyLg" color="muted">
+        {name}
+      </AppText>
     ));
 
   // Fades the page back in over both ends, so chips dissolve at the edges
@@ -280,14 +278,8 @@ const styles = StyleSheet.create({
   // page, which made it read as a section pasted in rather than part of the
   // screen. The chips carry the tint instead.
   marquee: {
-    gap: Spacing.sm,
+    gap: Spacing.md,
     paddingVertical: Spacing.md,
-  },
-  chip: {
-    backgroundColor: Colors.navyTint,
-    borderRadius: Radius.full,
-    paddingHorizontal: Spacing.md,
-    paddingVertical: Spacing.sm,
   },
   actions: {
     gap: Spacing.sm,
@@ -307,13 +299,13 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignSelf: 'flex-start',
   },
-  // Chips carry their own padding, so the gap between them is tighter than
-  // it was between bare words.
+  // Bare words need a wide gap to read as separate names rather than one
+  // run-on line.
   marqueeSet: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: Spacing.sm,
-    paddingRight: Spacing.sm,
+    gap: Spacing.xl,
+    paddingRight: Spacing.xl,
   },
   marqueeStaticPad: {
     paddingLeft: Spacing.screenX,
