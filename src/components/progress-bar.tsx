@@ -12,6 +12,9 @@ import { SPRING } from '@/constants/motion';
 export interface ProgressBarProps {
   /** 0-100. Values outside the range are clamped. */
   percent: number;
+  /** Override for use on a dark surface, where the default track vanishes. */
+  trackColor?: string;
+  fillColor?: string;
   style?: StyleProp<ViewStyle>;
 }
 
@@ -26,7 +29,7 @@ export interface ProgressBarProps {
  * update that lands mid-flight retargets from wherever the bar currently is
  * instead of restarting.
  */
-export function ProgressBar({ percent, style }: ProgressBarProps) {
+export function ProgressBar({ percent, trackColor, fillColor, style }: ProgressBarProps) {
   const clamped = Math.max(0, Math.min(100, percent));
   const width = useSharedValue(clamped);
 
@@ -40,10 +43,12 @@ export function ProgressBar({ percent, style }: ProgressBarProps) {
 
   return (
     <View
-      style={[styles.track, style]}
+      style={[styles.track, trackColor ? { backgroundColor: trackColor } : null, style]}
       accessibilityRole="progressbar"
       accessibilityValue={{ min: 0, max: 100, now: Math.round(clamped) }}>
-      <Animated.View style={[styles.fill, fillStyle]} />
+      <Animated.View
+        style={[styles.fill, fillColor ? { backgroundColor: fillColor } : null, fillStyle]}
+      />
     </View>
   );
 }

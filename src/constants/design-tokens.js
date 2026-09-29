@@ -14,26 +14,24 @@
 /**
  * Brand + neutral palette. Navy primary, red for critical actions only.
  *
- * The page sits on warm paper rather than white, and cards stay white on top
- * of it. That separation is what gives the app depth: a white card on a white
- * page has to be outlined to exist, while a white card on paper simply reads
- * as nearer.
+ * White page, white cards. `canvas` and `white` are the same value on
+ * purpose: the token split stays so depth can come from elevation and the
+ * recessed `surfaceMuted` tier rather than from tinting the page.
  *
- * Every neutral is warm to match. Cool greys on a warm ground is the most
- * common way a beige palette goes wrong, so `border`, `subtle` and `muted`
- * are all tinted toward the paper rather than left blue-grey.
+ * Every neutral carries a slight cool cast toward the navy, so greys read as
+ * belonging to the brand rather than as generic middle grey.
  */
 const colors = {
   navy: '#1B2A4A', // primary: headers, primary buttons, key navigation
   red: '#C41E3A', // accent/critical: errors, destructive, "incorrect"
-  canvas: '#F4F1E9', // the page itself: warm paper
+  canvas: '#FFFFFF', // the page itself
   white: '#FFFFFF', // raised surfaces (cards, sheets) that sit on the canvas
-  ink: '#211E19', // body text: warm charcoal, ~14:1 on canvas
-  muted: '#5A5349', // secondary / supporting text
-  border: '#E4DED1', // hairline dividers + default input/card outlines
-  subtle: '#A39A88', // placeholder text, disabled icons (lighter than `muted`)
-  surfaceMuted: '#EDE8DC', // recessed grouped surface, a step below the canvas
-  navyTint: '#E7EAF1', // faint navy fill for selected states
+  ink: '#1A1D23', // body text: near-black with a cool cast, ~15:1 on white
+  muted: '#5B6472', // secondary / supporting text
+  border: '#E6E9EF', // hairline dividers + default input/card outlines
+  subtle: '#9AA3B2', // placeholder text, disabled icons (lighter than `muted`)
+  surfaceMuted: '#F4F6FA', // recessed grouped surface, a step below the canvas
+  navyTint: '#EDF1F8', // faint navy fill for selected states
   onNavy: '#FFFFFF', // text/icons on a navy surface
   // Semantic result colors (quiz/interview feedback). Dark enough for WCAG
   // contrast on white; each has a faint tint for banner backgrounds.

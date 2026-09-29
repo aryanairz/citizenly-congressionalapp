@@ -7,7 +7,7 @@
  * Import from here in components:  import { Colors, Spacing, Radius, Typography } from '@/constants/design';
  */
 
-import type { TextStyle, ViewStyle } from 'react-native';
+import { Platform, type TextStyle, type ViewStyle } from 'react-native';
 
 import tokens from '@/constants/design-tokens';
 
@@ -40,20 +40,38 @@ export type RadiusKey = keyof typeof Radius;
 export type TypographyVariant = keyof typeof tokens.typography;
 
 /**
+ * Sans fallbacks, web only.
+ *
+ * If a DM Sans face fails to resolve for any reason - a slow load, a cache
+ * miss, a face that was never registered - the browser falls through to its
+ * default, and that default is a serif. That is what kept turning text into
+ * Times New Roman. Naming explicit sans fallbacks means the worst case is
+ * now the platform's own UI font rather than a serif, which is a difference
+ * nobody would notice instead of one everybody does.
+ *
+ * Native ignores comma-separated stacks, so it only ever gets the face name.
+ */
+const WEB_FALLBACKS =
+  'system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif';
+
+function familyWithFallback(face: string): string {
+  return Platform.OS === 'web' ? `${face}, ${WEB_FALLBACKS}` : face;
+}
+
+/**
  * Deliberately emits NO `fontWeight`.
  *
- * DM Sans is loaded as four separately named faces (DMSans_400Regular,
- * DMSans_500Medium, ...), each registered at CSS weight `normal`. The family
- * name already carries the weight, so also asking for `fontWeight: 500` tells
- * the browser to find a 500 face inside a family that declares none. Where it
- * cannot synthesize one it drops the family entirely and lands on the serif
- * default, which is what turned every `questionText` into Times New Roman.
+ * DM Sans is loaded as separately named faces (DMSans_400Regular,
+ * DMSans_700Bold, ...), each registered at CSS weight `normal`. The family
+ * name already carries the weight, so also asking for `fontWeight: 700` tells
+ * the browser to find a bold face inside a family that declares none, and
+ * where it cannot synthesize one it drops the family entirely.
  *
  * Weight lives in `spec.weight` purely as documentation of which face is which.
  */
 function toTextStyle(spec: (typeof tokens.typography)[TypographyVariant]): TextStyle {
   return {
-    fontFamily: FontFamily[spec.family as keyof typeof FontFamily],
+    fontFamily: familyWithFallback(FontFamily[spec.family as keyof typeof FontFamily]),
     fontSize: spec.size,
     lineHeight: spec.lineHeight,
     letterSpacing: spec.letterSpacing,

@@ -1,19 +1,17 @@
 import { MaterialIcons } from '@expo/vector-icons';
 import { type Href, useFocusEffect, useRouter } from 'expo-router';
-import { Fragment, useCallback } from 'react';
+import { useCallback } from 'react';
 import { ScrollView, StyleSheet, View } from 'react-native';
 import Animated, { FadeInDown } from 'react-native-reanimated';
 
 import {
   AppText,
   BottomNav,
-  Card,
-  Divider,
-  ListRow,
+  PressableSurface,
   ProgressBar,
   ScreenContainer,
 } from '@/components';
-import { Colors, Radius, Spacing } from '@/constants/design';
+import { Colors, Elevation, FontFamily, Radius, Sizing, Spacing } from '@/constants/design';
 import { TOTAL_OFFICIAL as TOTAL_QUESTIONS } from '@/data/question-bank';
 import { useMistakes } from '@/lib/local-mistakes';
 import { useOnboarding } from '@/lib/onboarding-context';
@@ -115,44 +113,53 @@ export default function HomeScreen() {
         contentContainerStyle={styles.content}
         showsVerticalScrollIndicator={false}>
         {/* Greeting */}
-        <View style={styles.greeting}>
+        <Animated.View style={styles.greeting} entering={FadeInDown.duration(320)}>
           <AppText variant="display" color="navy">
             {firstName ? `Hello, ${firstName}.` : 'Hello.'}
           </AppText>
           <AppText variant="bodyLg" color="muted">
             Let&apos;s continue your citizenship journey.
           </AppText>
-        </View>
+        </Animated.View>
 
-        {/* Progress card - always framed against the 128-question total */}
-        <Card surface="muted" style={styles.progressCard}>
-          <View style={styles.progressHeader}>
-            <AppText variant="labelLg" color="navy">
-              Questions Mastered
+        {/* Progress, as the anchor of the screen rather than a grey strip.
+            Filling it navy makes the one number that measures the user the
+            most prominent thing here, and gives the page a centre of gravity
+            that a list of equal-weight rows never had. */}
+        <Animated.View entering={FadeInDown.delay(60).duration(320)}>
+          <View style={[styles.progressCard, Elevation.raised]}>
+            <AppText variant="labelMd" color="onNavy" style={styles.progressLabel}>
+              Questions mastered
             </AppText>
-            <AppText variant="headlineMd" color="navy">
-              {mastered}{' '}
-              <AppText variant="labelMd" color="muted">
+            <View style={styles.progressFigure}>
+              <AppText style={styles.progressNumber}>{mastered}</AppText>
+              <AppText variant="headlineMd" style={styles.progressTotal}>
                 / {TOTAL_QUESTIONS}
               </AppText>
+            </View>
+            <ProgressBar percent={progress} trackColor="rgba(255,255,255,0.22)" fillColor={Colors.white} />
+            <AppText variant="bodyMd" style={styles.progressNote}>
+              {encouragement}
             </AppText>
           </View>
-          <ProgressBar percent={progress} />
-          <AppText variant="labelMd" color="muted">
-            {encouragement}
-          </AppText>
-        </Card>
+        </Animated.View>
 
-        {/* Study modes. Each row arrives just after the one above it, so the
-            list assembles in reading order instead of appearing all at once. */}
-        <View>
+        {/* Modes as separate cards rather than one divided list. Dividers say
+            "rows of a table"; separate surfaces say "five things you can
+            choose", which is what this actually is. */}
+        <View style={styles.modes}>
+          <AppText variant="labelMd" color="subtle" style={styles.sectionLabel}>
+            Practice
+          </AppText>
           {MODES.map((mode, index) => (
-            <Fragment key={mode.id}>
-              {index > 0 ? <Divider style={styles.divider} /> : null}
-              <Animated.View entering={FadeInDown.delay(index * 45).duration(260)}>
-              <ListRow
+            <Animated.View
+              key={mode.id}
+              entering={FadeInDown.delay(120 + index * 45).duration(280)}>
+              <ModeCard
                 title={mode.titleKey ? t(mode.titleKey, lang) : mode.title}
-                subtitle={mode.description}
+                description={mode.description}
+                icon={mode.icon}
+                emphasized={mode.emphasized}
                 badge={
                   mode.id === 'review-mistakes'
                     ? mistakeCount > 0
@@ -160,11 +167,9 @@ export default function HomeScreen() {
                       : undefined
                     : mode.badge
                 }
-                left={<ModeIcon icon={mode.icon} emphasized={mode.emphasized} />}
-                onPress={mode.route ? () => router.push(mode.route!) : () => {}}
+                onPress={mode.route ? () => router.push(mode.route!) : undefined}
               />
-              </Animated.View>
-            </Fragment>
+            </Animated.View>
           ))}
         </View>
       </ScrollView>
@@ -174,17 +179,57 @@ export default function HomeScreen() {
   );
 }
 
-function ModeIcon({
+/**
+ * One study mode as its own surface: icon tile, title, description, chevron.
+ * The emphasised variant fills its tile navy, which is how Mock Interview
+ * reads as the flagship without needing a different card shape.
+ */
+function ModeCard({
+  title,
+  description,
   icon,
+  badge,
   emphasized = false,
+  onPress,
 }: {
+  title: string;
+  description: string;
   icon: keyof typeof MaterialIcons.glyphMap;
+  badge?: string;
   emphasized?: boolean;
+  onPress?: () => void;
 }) {
   return (
-    <View style={[styles.modeIcon, emphasized && styles.modeIconEmphasized]}>
-      <MaterialIcons name={icon} size={24} color={emphasized ? Colors.onNavy : Colors.navy} />
-    </View>
+    <PressableSurface
+      accessibilityRole="button"
+      accessibilityLabel={`${title}. ${description}`}
+      disabled={!onPress}
+      onPress={onPress}
+      weight="surface">
+      <View style={[styles.modeCard, Elevation.card]}>
+        <View style={[styles.modeIcon, emphasized && styles.modeIconEmphasized]}>
+          <MaterialIcons name={icon} size={24} color={emphasized ? Colors.onNavy : Colors.navy} />
+        </View>
+        <View style={styles.modeText}>
+          <View style={styles.modeTitleRow}>
+            <AppText variant="labelLg" color="navy">
+              {title}
+            </AppText>
+            {badge ? (
+              <View style={styles.badge}>
+                <AppText variant="labelMd" color="white" style={styles.badgeText}>
+                  {badge}
+                </AppText>
+              </View>
+            ) : null}
+          </View>
+          <AppText variant="bodyMd" color="muted">
+            {description}
+          </AppText>
+        </View>
+        <MaterialIcons name="chevron-right" size={24} color={Colors.subtle} />
+      </View>
+    </PressableSurface>
   );
 }
 
@@ -202,21 +247,78 @@ const styles = StyleSheet.create({
     gap: Spacing.xs,
   },
   progressCard: {
+    backgroundColor: Colors.navy,
+    borderRadius: Radius.xl,
+    padding: Spacing.lg,
     gap: Spacing.md,
   },
-  progressHeader: {
+  progressLabel: {
+    textTransform: 'uppercase',
+    opacity: 0.7,
+  },
+  progressFigure: {
     flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'flex-end',
-    gap: Spacing.md,
+    alignItems: 'baseline',
+    gap: Spacing.sm,
   },
-  divider: {
-    marginVertical: Spacing.xs,
+  progressNumber: {
+    // Deliberately outside the type scale: this is the one number on the
+    // screen that measures the user, so it is sized as a figure, not as text.
+    fontFamily: FontFamily.bold,
+    fontSize: 52,
+    lineHeight: 56,
+    letterSpacing: -1.6,
+    color: Colors.onNavy,
+  },
+  progressTotal: {
+    color: Colors.onNavy,
+    opacity: 0.55,
+  },
+  progressNote: {
+    color: Colors.onNavy,
+    opacity: 0.75,
+  },
+  modes: {
+    gap: Spacing.sm,
+  },
+  sectionLabel: {
+    textTransform: 'uppercase',
+    paddingBottom: Spacing.xs,
+  },
+  modeCard: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: Spacing.md,
+    minHeight: Sizing.rowMin,
+    paddingVertical: Spacing.md,
+    paddingHorizontal: Spacing.md,
+    borderRadius: Radius.xl,
+    backgroundColor: Colors.white,
+  },
+  modeText: {
+    flex: 1,
+    gap: 2,
+  },
+  modeTitleRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: Spacing.sm,
+  },
+  badge: {
+    backgroundColor: Colors.red,
+    borderRadius: Radius.sm,
+    paddingHorizontal: Spacing.sm,
+    paddingVertical: 2,
+  },
+  badgeText: {
+    fontSize: 11,
+    lineHeight: 15,
+    letterSpacing: 0.4,
   },
   modeIcon: {
     width: 48,
     height: 48,
-    borderRadius: Radius.full,
+    borderRadius: Radius.md,
     backgroundColor: Colors.navyTint,
     alignItems: 'center',
     justifyContent: 'center',
