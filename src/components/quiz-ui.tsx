@@ -5,22 +5,13 @@
  */
 
 import { MaterialIcons } from '@expo/vector-icons';
-import type { ReactNode } from 'react';
 import { StyleSheet, View } from 'react-native';
-import Animated, {
-  SlideInDown,
-  useAnimatedScrollHandler,
-  useAnimatedStyle,
-  useSharedValue,
-  ZoomIn,
-} from 'react-native-reanimated';
+import Animated, { SlideInDown, ZoomIn } from 'react-native-reanimated';
 
 import { AppText } from '@/components/app-text';
 import { Button } from '@/components/button';
 import { PressableSurface } from '@/components/pressable-surface';
-import { ScrollEdge } from '@/components/scroll-edge';
 import { Colors, Elevation, Radius, Spacing } from '@/constants/design';
-import { LAYOUT } from '@/constants/motion';
 import { t } from '@/lib/ui-i18n';
 import { useLang } from '@/lib/use-lang';
 
@@ -36,75 +27,6 @@ export function shuffledIndices(count: number): number[] {
     [indices[i], indices[j]] = [indices[j], indices[i]];
   }
   return indices;
-}
-
-/** Scroll travel over which an edge fade reaches full strength. */
-const FADE_RAMP = 28;
-const FADE_HEIGHT = 32;
-
-/**
- * The scrolling question + options area, shared by Quiz and Review Mistakes.
- *
- * Two things happen here that are easy to miss but obvious once wrong.
- *
- * **The edges fade only when something is actually cut off.** A fade that is
- * always painted washes out the last option for no reason: if the correct
- * answer is D and everything already fits, nothing is hidden and there is
- * nothing to soften. So each fade's opacity is driven by real scroll state,
- * the distance scrolled at the top and the distance still to go at the
- * bottom, which means a screen that fits shows no fade at all.
- *
- * **The group animates when the feedback panel opens.** That panel is a
- * sibling below this one, so grading the answer shrinks this viewport by
- * around 140px and the centred content would otherwise jump up in a single
- * frame while the panel itself springs in. Animating the group's reposition
- * makes the two read as one movement.
- */
-export function QuestionScroller({ children }: { children: ReactNode }) {
-  const offsetY = useSharedValue(0);
-  const contentHeight = useSharedValue(0);
-  const viewportHeight = useSharedValue(0);
-
-  const onScroll = useAnimatedScrollHandler((event) => {
-    offsetY.value = event.contentOffset.y;
-  });
-
-  const topFade = useAnimatedStyle(() => ({
-    opacity: Math.min(offsetY.value / FADE_RAMP, 1),
-  }));
-
-  const bottomFade = useAnimatedStyle(() => {
-    // Negative whenever the content fits, which zeroes the fade.
-    const remaining = contentHeight.value - viewportHeight.value - offsetY.value;
-    return { opacity: Math.max(0, Math.min(remaining / FADE_RAMP, 1)) };
-  });
-
-  return (
-    <View style={styles.scrollWrap}>
-      <Animated.ScrollView
-        contentContainerStyle={styles.scrollContent}
-        showsVerticalScrollIndicator={false}
-        onScroll={onScroll}
-        scrollEventThrottle={16}
-        onLayout={(event) => {
-          viewportHeight.value = event.nativeEvent.layout.height;
-        }}
-        onContentSizeChange={(_width, height) => {
-          contentHeight.value = height;
-        }}>
-        <Animated.View style={styles.scrollGroup} layout={LAYOUT}>
-          {children}
-        </Animated.View>
-      </Animated.ScrollView>
-
-      <Animated.View style={[styles.edge, styles.edgeTop, topFade]} pointerEvents="none">
-        <ScrollEdge direction="down" height={FADE_HEIGHT} style={StyleSheet.absoluteFill} />
-      </Animated.View>
-      <Animated.View style={[styles.edge, styles.edgeBottom, bottomFade]} pointerEvents="none">
-        <ScrollEdge direction="up" height={FADE_HEIGHT} style={StyleSheet.absoluteFill} />
-      </Animated.View>
-    </View>
-  );
 }
 
 export function OptionCard({
@@ -240,33 +162,6 @@ export function FeedbackPanel({
 }
 
 const styles = StyleSheet.create({
-  scrollWrap: {
-    flex: 1,
-  },
-  // flexGrow + centred: with four short options the screen used to pack
-  // everything against the top and leave a void above the footer. Letting the
-  // group find the middle of its own space removes the void without pinning
-  // anything, and long questions still scroll normally.
-  scrollContent: {
-    flexGrow: 1,
-    justifyContent: 'center',
-    paddingVertical: Spacing.lg,
-  },
-  scrollGroup: {
-    gap: Spacing.xl,
-  },
-  edge: {
-    position: 'absolute',
-    left: 0,
-    right: 0,
-    height: FADE_HEIGHT,
-  },
-  edgeTop: {
-    top: 0,
-  },
-  edgeBottom: {
-    bottom: 0,
-  },
   option: {
     flexDirection: 'row',
     alignItems: 'center',

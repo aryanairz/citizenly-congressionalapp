@@ -1,6 +1,6 @@
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useEffect, useMemo, useState } from 'react';
-import { StyleSheet, View } from 'react-native';
+import { ScrollView, StyleSheet, View } from 'react-native';
 import Animated, { FadeIn } from 'react-native-reanimated';
 
 import {
@@ -10,7 +10,6 @@ import {
   FeedbackPanel,
   LETTERS,
   OptionCard,
-  QuestionScroller,
   ReadAloudButton,
   ScreenContainer,
   ScreenHeader,
@@ -19,6 +18,7 @@ import {
   ProgressBar,
 } from '@/components';
 import { Spacing, TabularNums } from '@/constants/design';
+import { LAYOUT } from '@/constants/motion';
 import { filterByTopic, parseTopicKey } from '@/constants/topics';
 import { localize } from '@/lib/i18n';
 import { addMistake } from '@/lib/local-mistakes';
@@ -185,41 +185,53 @@ export default function QuizScreen() {
               />
             </View>
 
-            <QuestionScroller>
-              {/* Left-aligned, not centred: centred text makes every line start
-                  in a different place, which is exactly the wrong thing to ask
-                  of someone reading a second language. The question changes on
-                  every card, so it fades in rather than swapping. */}
-              <Animated.View key={question.id} entering={FadeIn.duration(220)}>
-                <AppText variant="headlineMd" color="navy" style={styles.question}>
-                  {localize(question.question, lang)}
-                </AppText>
-              </Animated.View>
+            <ScrollView
+              style={styles.scroll}
+              contentContainerStyle={styles.scrollContent}
+              showsVerticalScrollIndicator={false}>
+              {/* Grading swaps the small Check Answer button below for the much
+                  taller feedback panel, which shrinks this viewport by around
+                  140px. Without a layout transition the centred content
+                  teleports to its new position in one frame while the panel
+                  itself springs in, and the two halves of one movement read as
+                  two unrelated events. */}
+              <Animated.View style={styles.scrollGroup} layout={LAYOUT}>
+                {/* Left-aligned, not centred: centred text makes every line
+                    start in a different place, which is exactly the wrong
+                    thing to ask of someone reading a second language. The
+                    question changes on every card, so it fades in rather than
+                    swapping. */}
+                <Animated.View key={question.id} entering={FadeIn.duration(220)}>
+                  <AppText variant="headlineMd" color="navy" style={styles.question}>
+                    {localize(question.question, lang)}
+                  </AppText>
+                </Animated.View>
 
-              <View style={styles.options}>
-                {order.map((originalIndex, displayIndex) => {
-                  const visual: OptionVisual = !checked
-                    ? displayIndex === selected
-                      ? 'selected'
-                      : 'default'
-                    : correctSet.has(originalIndex)
-                      ? 'correct'
-                      : displayIndex === selected
-                        ? 'wrong'
-                        : 'dimmed';
-                  return (
-                    <OptionCard
-                      key={originalIndex}
-                      letter={LETTERS[displayIndex] ?? '?'}
-                      text={localize(question.options[originalIndex], lang)}
-                      visual={visual}
-                      disabled={checked}
-                      onPress={() => handleSelect(displayIndex)}
-                    />
-                  );
-                })}
-              </View>
-            </QuestionScroller>
+                <View style={styles.options}>
+                  {order.map((originalIndex, displayIndex) => {
+                    const visual: OptionVisual = !checked
+                      ? displayIndex === selected
+                        ? 'selected'
+                        : 'default'
+                      : correctSet.has(originalIndex)
+                        ? 'correct'
+                        : displayIndex === selected
+                          ? 'wrong'
+                          : 'dimmed';
+                    return (
+                      <OptionCard
+                        key={originalIndex}
+                        letter={LETTERS[displayIndex] ?? '?'}
+                        text={localize(question.options[originalIndex], lang)}
+                        visual={visual}
+                        disabled={checked}
+                        onPress={() => handleSelect(displayIndex)}
+                      />
+                    );
+                  })}
+                </View>
+              </Animated.View>
+            </ScrollView>
 
             {checked ? (
               <FeedbackPanel
@@ -272,6 +284,22 @@ const styles = StyleSheet.create({
   },
   counter: {
     textTransform: 'uppercase',
+  },
+  scroll: {
+    flex: 1,
+  },
+  // flexGrow + centred: with four short options the screen used to pack
+  // everything against the top and leave a void above the footer. Letting the
+  // group find the middle of its own space removes the void without pinning
+  // anything, and long questions still scroll normally.
+  scrollContent: {
+    flexGrow: 1,
+    justifyContent: 'center',
+    paddingVertical: Spacing.lg,
+  },
+  // The gap moved off scrollContent so the whole group is one animated view.
+  scrollGroup: {
+    gap: Spacing.xl,
   },
   question: {
     // Room for the question to breathe; it is the thing being asked.

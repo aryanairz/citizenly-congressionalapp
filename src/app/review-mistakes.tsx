@@ -1,7 +1,8 @@
 import { MaterialIcons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import { useEffect, useMemo, useState } from 'react';
-import { ActivityIndicator, StyleSheet, View } from 'react-native';
+import { ActivityIndicator, ScrollView, StyleSheet, View } from 'react-native';
+import Animated from 'react-native-reanimated';
 
 import {
   AppText,
@@ -11,7 +12,6 @@ import {
   IconButton,
   LETTERS,
   OptionCard,
-  QuestionScroller,
   ScreenContainer,
   ScreenHeader,
   shuffledIndices,
@@ -19,6 +19,7 @@ import {
   ProgressBar,
 } from '@/components';
 import { Colors, Radius, Spacing } from '@/constants/design';
+import { LAYOUT } from '@/constants/motion';
 import { confirmAction } from '@/lib/confirm';
 import { clearMistakes, removeMistake, useMistakes } from '@/lib/local-mistakes';
 import { correctAnswerText, localize } from '@/lib/i18n';
@@ -183,37 +184,45 @@ export default function ReviewMistakesScreen() {
               <IconButton icon="delete-outline" label="Clear all mistakes" onPress={handleClearAll} />
             </View>
 
-            <QuestionScroller>
-              <AppText variant="questionText" color="navy" center style={styles.question}>
-                {localize(question.question, lang)}
-              </AppText>
+            <ScrollView
+              style={styles.scroll}
+              contentContainerStyle={styles.scrollContent}
+              showsVerticalScrollIndicator={false}>
+              {/* Grading swaps the small Check Answer button below for the much
+                  taller feedback panel. Animating this group's reposition keeps
+                  it from teleporting while the panel springs in. */}
+              <Animated.View style={styles.scrollGroup} layout={LAYOUT}>
+                <AppText variant="questionText" color="navy" center style={styles.question}>
+                  {localize(question.question, lang)}
+                </AppText>
 
-              <View style={styles.options}>
-                {order.map((originalIndex, displayIndex) => {
-                  const visual: OptionVisual = !checked
-                    ? displayIndex === selected
-                      ? 'selected'
-                      : 'default'
-                    : correctSet.has(originalIndex)
-                      ? 'correct'
-                      : displayIndex === selected
-                        ? 'wrong'
-                        : 'dimmed';
-                  return (
-                    <OptionCard
-                      key={originalIndex}
-                      letter={LETTERS[displayIndex] ?? '?'}
-                      text={localize(question.options[originalIndex], lang)}
-                      visual={visual}
-                      disabled={checked}
-                      onPress={() => {
-                        if (!checked) setSelected(displayIndex);
-                      }}
-                    />
-                  );
-                })}
-              </View>
-            </QuestionScroller>
+                <View style={styles.options}>
+                  {order.map((originalIndex, displayIndex) => {
+                    const visual: OptionVisual = !checked
+                      ? displayIndex === selected
+                        ? 'selected'
+                        : 'default'
+                      : correctSet.has(originalIndex)
+                        ? 'correct'
+                        : displayIndex === selected
+                          ? 'wrong'
+                          : 'dimmed';
+                    return (
+                      <OptionCard
+                        key={originalIndex}
+                        letter={LETTERS[displayIndex] ?? '?'}
+                        text={localize(question.options[originalIndex], lang)}
+                        visual={visual}
+                        disabled={checked}
+                        onPress={() => {
+                          if (!checked) setSelected(displayIndex);
+                        }}
+                      />
+                    );
+                  })}
+                </View>
+              </Animated.View>
+            </ScrollView>
 
             {checked ? (
               <FeedbackPanel
@@ -273,17 +282,26 @@ const styles = StyleSheet.create({
     flex: 1,
     gap: Spacing.sm,
   },
+  scroll: {
+    flex: 1,
+  },
+  scrollContent: {
+    paddingVertical: Spacing.md,
+  },
+  // The gap moved off scrollContent so the whole group is one animated view.
+  scrollGroup: {
+    gap: Spacing.lg,
+  },
   question: {
     paddingHorizontal: Spacing.sm,
   },
   options: {
     gap: Spacing.md,
   },
-  // No hairline above this any more: the scroller fades its own bottom edge
-  // when there is something cut off, and a rule plus a fade is two devices
-  // doing one job.
   nextArea: {
     paddingTop: Spacing.sm,
     paddingBottom: Spacing.md,
+    borderTopWidth: StyleSheet.hairlineWidth,
+    borderTopColor: Colors.border,
   },
 });

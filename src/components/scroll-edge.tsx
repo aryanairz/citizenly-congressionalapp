@@ -1,5 +1,5 @@
 import { LinearGradient } from 'expo-linear-gradient';
-import { StyleSheet, type StyleProp, type ViewStyle } from 'react-native';
+import { StyleSheet } from 'react-native';
 
 import { Colors } from '@/constants/design';
 
@@ -8,12 +8,6 @@ export interface ScrollEdgeProps {
   direction?: 'up' | 'down';
   /** Height of the fade. Taller reads softer. */
   height?: number;
-  /**
-   * Overrides the default placement just outside the parent's edge. Pass
-   * `StyleSheet.absoluteFill` to fill a wrapper that is already positioned,
-   * which is how a caller animates the fade's opacity.
-   */
-  style?: StyleProp<ViewStyle>;
 }
 
 /**
@@ -27,7 +21,7 @@ export interface ScrollEdgeProps {
  * Pointer events are disabled so the fade never eats a tap meant for the
  * content beneath it.
  */
-export function ScrollEdge({ direction = 'up', height = 28, style }: ScrollEdgeProps) {
+export function ScrollEdge({ direction = 'up', height = 28 }: ScrollEdgeProps) {
   // Fades to the canvas, not to white: the chrome this sits against is the
   // page colour, so a white fade would read as a pale band across the paper.
   const solid = Colors.canvas;
@@ -38,12 +32,7 @@ export function ScrollEdge({ direction = 'up', height = 28, style }: ScrollEdgeP
   return (
     <LinearGradient
       colors={colors}
-      style={[
-        styles.edge,
-        { height },
-        direction === 'up' ? styles.above : styles.below,
-        style,
-      ]}
+      style={[styles.edge, { height }, direction === 'up' ? styles.above : styles.below]}
       pointerEvents="none"
     />
   );

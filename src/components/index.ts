@@ -21,7 +21,6 @@ export { ScrollEdge, type ScrollEdgeProps } from '@/components/scroll-edge';
 export {
   OptionCard,
   FeedbackPanel,
-  QuestionScroller,
   shuffledIndices,
   LETTERS,
   type OptionVisual,
