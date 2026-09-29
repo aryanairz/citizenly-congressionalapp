@@ -21,7 +21,7 @@ import { Button } from '@/components/button';
 import { PressableSurface } from '@/components/pressable-surface';
 import { ScreenContainer } from '@/components/screen-container';
 import { MARQUEE_LANGUAGE_NAMES } from '@/constants/brand';
-import { Colors, FontFamily, Spacing } from '@/constants/design';
+import { Colors, FontFamily, Radius, Spacing } from '@/constants/design';
 import { useSession } from '@/lib/session-context';
 import { t } from '@/lib/ui-i18n';
 import { useLang } from '@/lib/use-lang';
@@ -39,6 +39,12 @@ const TITLE_FACE = {
   lineHeight: 43,
   letterSpacing: -1.3,
 } as const;
+
+// Split so the two rows never show the same name side by side. px per second.
+const MARQUEE_SPLIT = Math.ceil(MARQUEE_LANGUAGE_NAMES.length / 2);
+const NAMES_TOP = MARQUEE_LANGUAGE_NAMES.slice(0, MARQUEE_SPLIT);
+const NAMES_BOTTOM = MARQUEE_LANGUAGE_NAMES.slice(MARQUEE_SPLIT);
+const MARQUEE_SPEED = 26;
 
 /**
  * Welcome.
@@ -100,8 +106,13 @@ export default function WelcomeScreen() {
               every language the app speaks, drifting past in their own
               scripts. Telling someone "48 languages" is a number; showing
               them their own alphabet is the product. */}
-          <Animated.View style={styles.band} entering={FadeIn.delay(260).duration(600)}>
-            <LanguageMarquee />
+          <Animated.View
+            style={styles.marquee}
+            entering={FadeIn.delay(260).duration(600)}
+            accessible
+            accessibilityLabel={`Available in ${MARQUEE_LANGUAGE_NAMES.length} languages`}>
+            <MarqueeRow names={NAMES_TOP} direction="left" />
+            <MarqueeRow names={NAMES_BOTTOM} direction="right" />
           </Animated.View>
         </View>
 
@@ -129,55 +140,68 @@ export default function WelcomeScreen() {
   );
 }
 
-/** Slow, seamless infinite loop of every platform language in native script. */
-function LanguageMarquee() {
+/**
+ * One drifting row of language chips.
+ *
+ * Two of these run against each other. A single row reads as a stray line of
+ * text; two moving in opposite directions read as a body of languages, and
+ * the opposing motion is what makes it look deliberate rather than stuck.
+ */
+function MarqueeRow({ names, direction }: { names: string[]; direction: 'left' | 'right' }) {
   const reduceMotion = useReducedMotion();
   const offset = useSharedValue(0);
-  // Width of ONE copy of the name set (incl. trailing gap); the loop translates
-  // by exactly this amount, so copy 2 lands where copy 1 started - seamless.
+  // Width of ONE copy of the name set (incl. trailing gap); the loop travels
+  // exactly this far, so copy 2 lands where copy 1 started - seamless.
   const [setWidth, setSetWidth] = useState(0);
 
   useEffect(() => {
     if (reduceMotion || setWidth === 0) return;
-    offset.value = 0;
+    // Leftward runs 0 to -width; rightward starts a set behind and runs back
+    // to 0. Either way the travel is one full set, so neither seam shows.
+    const from = direction === 'left' ? 0 : -setWidth;
+    const to = direction === 'left' ? -setWidth : 0;
+    offset.value = from;
     offset.value = withRepeat(
-      withTiming(-setWidth, {
-        // Constant speed (~45 px/s) regardless of how wide the names render.
-        // Slow enough to read a name you recognise before it leaves.
-        duration: (setWidth / 45) * 1000,
+      withTiming(to, {
+        // Constant speed regardless of how wide the names render. Slow enough
+        // to read a name you recognise before it leaves.
+        duration: (setWidth / MARQUEE_SPEED) * 1000,
         easing: Easing.linear,
       }),
       -1,
     );
     return () => cancelAnimation(offset);
-  }, [offset, reduceMotion, setWidth]);
+  }, [direction, offset, reduceMotion, setWidth]);
 
   const scrollStyle = useAnimatedStyle(() => ({
     transform: [{ translateX: offset.value }],
   }));
 
-  const renderNames = () =>
-    MARQUEE_LANGUAGE_NAMES.map((name) => (
-      // No letter-spacing: tracking can break complex-script ligatures
-      // (Devanagari, Malayalam, Gujarati).
-      <AppText key={name} variant="bodyLg" color="muted">
-        {name}
-      </AppText>
+  const renderChips = () =>
+    names.map((name) => (
+      <View key={name} style={styles.chip}>
+        {/* bodyMd carries zero tracking. The small label variants add
+            positive tracking, which breaks complex-script ligatures
+            (Devanagari, Malayalam, Gujarati). */}
+        <AppText variant="bodyMd" color="navy">
+          {name}
+        </AppText>
+      </View>
     ));
 
-  // Fades the band colour back in over both ends, so names dissolve at the
-  // edges instead of being guillotined mid-glyph.
+  // Fades the page back in over both ends, so chips dissolve at the edges
+  // instead of being guillotined mid-glyph.
   const edges = (
     <>
       <LinearGradient
-        colors={[Colors.surfaceMuted, FADE_OUT_TINT]}
+        colors={[Colors.white, FADE_OUT_WHITE]}
         start={{ x: 0, y: 0.5 }}
         end={{ x: 1, y: 0.5 }}
         style={[styles.marqueeEdge, styles.marqueeEdgeLeft]}
         pointerEvents="none"
       />
       <LinearGradient
-        colors={[FADE_OUT_TINT, Colors.surfaceMuted]}
+        colors={[FADE_OUT_WHITE, Colors.white]}
         start={{ x: 0, y: 0.5 }}
         end={{ x: 1, y: 0.5 }}
         style={[styles.marqueeEdge, styles.marqueeEdgeRight]}
@@ -194,7 +218,7 @@ function LanguageMarquee() {
           horizontal
           showsHorizontalScrollIndicator={false}
           contentContainerStyle={[styles.marqueeSet, styles.marqueeStaticPad]}>
-          {renderNames()}
+          {renderChips()}
         </ScrollView>
         {edges}
       </View>
@@ -202,26 +226,23 @@ function LanguageMarquee() {
   }
 
   return (
-    <View
-      style={styles.marqueeWrap}
-      accessible
-      accessibilityLabel={`Available in ${MARQUEE_LANGUAGE_NAMES.length} languages`}>
+    <View style={styles.marqueeWrap}>
       <Animated.View style={[styles.marqueeTrack, scrollStyle]}>
         <View
           style={styles.marqueeSet}
           onLayout={(e) => setSetWidth(Math.round(e.nativeEvent.layout.width))}>
-          {renderNames()}
+          {renderChips()}
         </View>
-        <View style={styles.marqueeSet}>{renderNames()}</View>
+        <View style={styles.marqueeSet}>{renderChips()}</View>
       </Animated.View>
       {edges}
     </View>
   );
 }
 
-// `surfaceMuted` at zero alpha. Fading to `transparent` goes through black on
-// some engines and leaves a dirty smear at the edge.
-const FADE_OUT_TINT = 'rgba(244,246,250,0)';
+// White at zero alpha. Fading to `transparent` goes through black on some
+// engines and leaves a dirty smear at the edge.
+const FADE_OUT_WHITE = 'rgba(255,255,255,0)';
 
 const styles = StyleSheet.create({
   scroll: {
@@ -255,11 +276,18 @@ const styles = StyleSheet.create({
   subtitle: {
     maxWidth: 340,
   },
-  // Full bleed, edge to edge: one horizontal line across the screen that
-  // separates the promise above from the action below.
-  band: {
-    backgroundColor: Colors.surfaceMuted,
-    paddingVertical: Spacing.lg,
+  // No background plate. A full-width grey stripe was the only grey on the
+  // page, which made it read as a section pasted in rather than part of the
+  // screen. The chips carry the tint instead.
+  marquee: {
+    gap: Spacing.sm,
+    paddingVertical: Spacing.md,
+  },
+  chip: {
+    backgroundColor: Colors.navyTint,
+    borderRadius: Radius.full,
+    paddingHorizontal: Spacing.md,
+    paddingVertical: Spacing.sm,
   },
   actions: {
     gap: Spacing.sm,
@@ -279,11 +307,13 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignSelf: 'flex-start',
   },
+  // Chips carry their own padding, so the gap between them is tighter than
+  // it was between bare words.
   marqueeSet: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: Spacing.xl,
-    paddingRight: Spacing.xl,
+    gap: Spacing.sm,
+    paddingRight: Spacing.sm,
   },
   marqueeStaticPad: {
     paddingLeft: Spacing.screenX,
