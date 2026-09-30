@@ -22,6 +22,7 @@ export {
   OptionCard,
   FeedbackPanel,
   shuffledIndices,
+  useGradedOptionReveal,
   LETTERS,
   type OptionVisual,
 } from '@/components/quiz-ui';

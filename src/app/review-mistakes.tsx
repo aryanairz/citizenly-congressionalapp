@@ -15,6 +15,7 @@ import {
   ScreenContainer,
   ScreenHeader,
   shuffledIndices,
+  useGradedOptionReveal,
   type OptionVisual,
   ProgressBar,
 } from '@/components';
@@ -48,6 +49,7 @@ export default function ReviewMistakesScreen() {
   const [order, setOrder] = useState<number[]>([]);
   const [selected, setSelected] = useState<number | null>(null);
   const [checked, setChecked] = useState(false);
+  const reveal = useGradedOptionReveal();
   const [resolvedIds, setResolvedIds] = useState<Set<string>>(new Set());
   const [finished, setFinished] = useState(false);
 
@@ -70,12 +72,13 @@ export default function ReviewMistakesScreen() {
     setFinished(false);
   }, [reviewQuestions]);
 
-  // New question → reshuffle, clear grading.
+  // New question → reshuffle, clear grading, back to the top of the list.
   useEffect(() => {
     if (!question) return;
     setOrder(shuffledIndices(question.options.length));
     setSelected(null);
     setChecked(false);
+    reveal.reset();
   }, [index, question]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const correctSet = new Set(
@@ -91,6 +94,9 @@ export default function ReviewMistakesScreen() {
   const handleCheck = () => {
     if (selected === null || checked || !question) return;
     setChecked(true);
+    // The panel about to open shrinks the list, so ask for the graded card to
+    // be brought back into view once the new viewport height is known.
+    reveal.reveal(order.findIndex((original) => correctSet.has(original)));
     if (correctSet.has(order[selected]) && session.user?.id) {
       // Resolved! The only place a mistake leaves the bank.
       setResolvedIds((prev) => new Set(prev).add(question.id));
@@ -184,45 +190,56 @@ export default function ReviewMistakesScreen() {
               <IconButton icon="delete-outline" label="Clear all mistakes" onPress={handleClearAll} />
             </View>
 
-            <ScrollView
-              style={styles.scroll}
-              contentContainerStyle={styles.scrollContent}
-              showsVerticalScrollIndicator={false}>
-              {/* Grading swaps the small Check Answer button below for the much
-                  taller feedback panel. Animating this group's reposition keeps
-                  it from teleporting while the panel springs in. */}
-              <Animated.View style={styles.scrollGroup} layout={LAYOUT}>
-                <AppText variant="questionText" color="navy" center style={styles.question}>
-                  {localize(question.question, lang)}
-                </AppText>
+            {/* Outside the scroll view: the question must never leave the
+                screen, and pulling the graded card into view used to scroll
+                it away. */}
+            <AppText variant="questionText" color="navy" center style={styles.question}>
+              {localize(question.question, lang)}
+            </AppText>
 
-                <View style={styles.options}>
-                  {order.map((originalIndex, displayIndex) => {
-                    const visual: OptionVisual = !checked
-                      ? displayIndex === selected
-                        ? 'selected'
-                        : 'default'
-                      : correctSet.has(originalIndex)
-                        ? 'correct'
-                        : displayIndex === selected
-                          ? 'wrong'
-                          : 'dimmed';
-                    return (
-                      <OptionCard
-                        key={originalIndex}
-                        letter={LETTERS[displayIndex] ?? '?'}
-                        text={localize(question.options[originalIndex], lang)}
-                        visual={visual}
-                        disabled={checked}
-                        onPress={() => {
-                          if (!checked) setSelected(displayIndex);
-                        }}
-                      />
-                    );
-                  })}
-                </View>
-              </Animated.View>
-            </ScrollView>
+            <View style={styles.scroll} ref={reveal.viewportRef} onLayout={reveal.onScrollLayout}>
+              <ScrollView
+                ref={reveal.scrollRef}
+                contentContainerStyle={styles.scrollContent}
+                showsVerticalScrollIndicator={false}
+                onScroll={reveal.onScroll}
+                scrollEventThrottle={16}>
+                {/* Grading swaps the small Check Answer button below for the
+                    much taller feedback panel. Animating this group's
+                    reposition keeps it from teleporting while the panel
+                    springs in. */}
+                <Animated.View style={styles.scrollGroup} layout={LAYOUT}>
+                  <View style={styles.options}>
+                    {order.map((originalIndex, displayIndex) => {
+                      const visual: OptionVisual = !checked
+                        ? displayIndex === selected
+                          ? 'selected'
+                          : 'default'
+                        : correctSet.has(originalIndex)
+                          ? 'correct'
+                          : displayIndex === selected
+                            ? 'wrong'
+                            : 'dimmed';
+                      return (
+                        // Wrapped so the card can be measured; the graded one
+                        // gets scrolled back into view.
+                        <View key={originalIndex} ref={reveal.registerCard(displayIndex)}>
+                          <OptionCard
+                            letter={LETTERS[displayIndex] ?? '?'}
+                            text={localize(question.options[originalIndex], lang)}
+                            visual={visual}
+                            disabled={checked}
+                            onPress={() => {
+                              if (!checked) setSelected(displayIndex);
+                            }}
+                          />
+                        </View>
+                      );
+                    })}
+                  </View>
+                </Animated.View>
+              </ScrollView>
+            </View>
 
             {checked ? (
               <FeedbackPanel
@@ -285,8 +302,11 @@ const styles = StyleSheet.create({
   scroll: {
     flex: 1,
   },
+  // Top-aligned: the question is pinned above this now, so there is nothing
+  // left to centre against.
   scrollContent: {
-    paddingVertical: Spacing.md,
+    flexGrow: 1,
+    paddingBottom: Spacing.md,
   },
   // The gap moved off scrollContent so the whole group is one animated view.
   scrollGroup: {
@@ -294,6 +314,7 @@ const styles = StyleSheet.create({
   },
   question: {
     paddingHorizontal: Spacing.sm,
+    paddingBottom: Spacing.lg,
   },
   options: {
     gap: Spacing.md,

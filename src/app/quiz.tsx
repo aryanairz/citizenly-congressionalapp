@@ -11,6 +11,7 @@ import {
   LETTERS,
   OptionCard,
   ReadAloudButton,
+  useGradedOptionReveal,
   ScreenContainer,
   ScreenHeader,
   shuffledIndices,
@@ -45,6 +46,7 @@ export default function QuizScreen() {
   const [checked, setChecked] = useState(false); // answer confirmed & graded
   const [score, setScore] = useState(0);
   const [finished, setFinished] = useState(false);
+  const reveal = useGradedOptionReveal();
 
   // Memoized so the array identity is stable across renders - the reset
   // effects below key off it.
@@ -66,12 +68,14 @@ export default function QuizScreen() {
   // Never let a voice keep talking after the user has left the screen.
   useEffect(() => stopSpeaking, []);
 
-  // Reshuffle + clear the selection whenever a new question is shown.
+  // Reshuffle + clear the selection whenever a new question is shown. The
+  // reveal measurements belong to the old card's options, so they go too.
   useEffect(() => {
     if (!question) return;
     setOrder(shuffledIndices(question.options.length));
     setSelected(null);
     setChecked(false);
+    reveal.reset();
   }, [index, round, questions]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const isLast = index === total - 1;
@@ -100,6 +104,9 @@ export default function QuizScreen() {
   const handleCheck = () => {
     if (selected === null || checked || !question) return;
     setChecked(true);
+    // The panel about to open shrinks the list, so ask for the graded card to
+    // be brought back into view once the new viewport height is known.
+    reveal.reveal(order.findIndex((original) => correctSet.has(original)));
     const right = correctSet.has(order[selected]);
     if (right) {
       setScore((s) => s + 1);
@@ -185,10 +192,26 @@ export default function QuizScreen() {
               />
             </View>
 
+            {/* Outside the scroll view, and that is the point: the question is
+                the one thing that must never leave the screen. Inside, it
+                scrolled away as soon as the graded card was pulled into view.
+                Left-aligned, not centred, because centred text makes every
+                line start in a different place, which is the wrong thing to
+                ask of someone reading a second language. It changes on every
+                card, so it fades in rather than swapping. */}
+            <Animated.View key={question.id} entering={FadeIn.duration(220)}>
+              <AppText variant="headlineMd" color="navy" style={styles.question}>
+                {localize(question.question, lang)}
+              </AppText>
+            </Animated.View>
+
+            <View style={styles.scroll} ref={reveal.viewportRef} onLayout={reveal.onScrollLayout}>
             <ScrollView
-              style={styles.scroll}
+              ref={reveal.scrollRef}
               contentContainerStyle={styles.scrollContent}
-              showsVerticalScrollIndicator={false}>
+              showsVerticalScrollIndicator={false}
+              onScroll={reveal.onScroll}
+              scrollEventThrottle={16}>
               {/* Grading swaps the small Check Answer button below for the much
                   taller feedback panel, which shrinks this viewport by around
                   140px. Without a layout transition the centred content
@@ -196,17 +219,6 @@ export default function QuizScreen() {
                   itself springs in, and the two halves of one movement read as
                   two unrelated events. */}
               <Animated.View style={styles.scrollGroup} layout={LAYOUT}>
-                {/* Left-aligned, not centred: centred text makes every line
-                    start in a different place, which is exactly the wrong
-                    thing to ask of someone reading a second language. The
-                    question changes on every card, so it fades in rather than
-                    swapping. */}
-                <Animated.View key={question.id} entering={FadeIn.duration(220)}>
-                  <AppText variant="headlineMd" color="navy" style={styles.question}>
-                    {localize(question.question, lang)}
-                  </AppText>
-                </Animated.View>
-
                 <View style={styles.options}>
                   {order.map((originalIndex, displayIndex) => {
                     const visual: OptionVisual = !checked
@@ -219,19 +231,23 @@ export default function QuizScreen() {
                           ? 'wrong'
                           : 'dimmed';
                     return (
-                      <OptionCard
-                        key={originalIndex}
-                        letter={LETTERS[displayIndex] ?? '?'}
-                        text={localize(question.options[originalIndex], lang)}
-                        visual={visual}
-                        disabled={checked}
-                        onPress={() => handleSelect(displayIndex)}
-                      />
+                      // Wrapped so the card can be measured; the graded one
+                      // gets scrolled back into view.
+                      <View key={originalIndex} ref={reveal.registerCard(displayIndex)}>
+                        <OptionCard
+                          letter={LETTERS[displayIndex] ?? '?'}
+                          text={localize(question.options[originalIndex], lang)}
+                          visual={visual}
+                          disabled={checked}
+                          onPress={() => handleSelect(displayIndex)}
+                        />
+                      </View>
                     );
                   })}
                 </View>
               </Animated.View>
             </ScrollView>
+            </View>
 
             {checked ? (
               <FeedbackPanel
@@ -292,10 +308,12 @@ const styles = StyleSheet.create({
   // everything against the top and leave a void above the footer. Letting the
   // group find the middle of its own space removes the void without pinning
   // anything, and long questions still scroll normally.
+  // Top-aligned, not centred. Centring made sense when the question scrolled
+  // with the options and the pair could sit in the middle together. Now that
+  // the question is pinned above, centring only opened a gap beneath it.
   scrollContent: {
     flexGrow: 1,
-    justifyContent: 'center',
-    paddingVertical: Spacing.lg,
+    paddingBottom: Spacing.lg,
   },
   // The gap moved off scrollContent so the whole group is one animated view.
   scrollGroup: {
@@ -304,6 +322,7 @@ const styles = StyleSheet.create({
   question: {
     // Room for the question to breathe; it is the thing being asked.
     paddingRight: Spacing.md,
+    paddingBottom: Spacing.lg,
   },
   options: {
     gap: Spacing.md,

@@ -5,7 +5,14 @@
  */
 
 import { MaterialIcons } from '@expo/vector-icons';
-import { StyleSheet, View } from 'react-native';
+import { useCallback, useRef } from 'react';
+import {
+  type NativeScrollEvent,
+  type NativeSyntheticEvent,
+  ScrollView,
+  StyleSheet,
+  View,
+} from 'react-native';
 import Animated, { ZoomIn } from 'react-native-reanimated';
 
 import { AppText } from '@/components/app-text';
@@ -28,6 +35,93 @@ export function shuffledIndices(count: number): number[] {
     [indices[i], indices[j]] = [indices[j], indices[i]];
   }
   return indices;
+}
+
+/** Breathing room left below the graded card once it is scrolled into view. */
+const REVEAL_MARGIN = Spacing.sm;
+
+/**
+ * Keeps the graded option on screen once the answer is checked.
+ *
+ * The feedback panel is a sibling below the list, so grading takes roughly
+ * 140px off the scroll viewport. The list is centred, which means an
+ * overflowing list shows its top and drops the rest off the bottom edge, and
+ * the card that gets dropped is often the one the user needs to see. Naming
+ * the answer in the panel helps, but it does not show them which card they
+ * should have picked.
+ *
+ * Both measurements are taken in window coordinates and compared against the
+ * live scroll offset, rather than reconstructing the card's position in the
+ * content from a chain of `onLayout` offsets. That chain has to account for
+ * content padding and for a centred group that stops being centred the moment
+ * the list overflows, and getting any of it slightly wrong leaves the card a
+ * few pixels short of clear. Asking the two views where they actually are
+ * cannot drift.
+ *
+ * The scroll is driven from the ScrollView's `onLayout`, not an effect on
+ * `checked`: an effect runs before the layout pass, so it would measure the
+ * viewport at its old, taller height. It then waits one frame, because the
+ * views are still settling when that fires.
+ *
+ * It jumps rather than animates on purpose. The group is already running its
+ * layout spring, and a second, differently-timed movement is exactly what
+ * made this screen feel unsettled before.
+ */
+export function useGradedOptionReveal() {
+  const scrollRef = useRef<ScrollView>(null);
+  // ScrollView does not expose measureInWindow, so the viewport is measured
+  // through a plain View wrapped around it.
+  const viewportRef = useRef<View>(null);
+  const scrollY = useRef(0);
+  const cardRefs = useRef<Record<number, View | null>>({});
+  const pending = useRef<number | null>(null);
+
+  /** Call when the answer is graded, with the correct card's display index. */
+  const reveal = useCallback((displayIndex: number) => {
+    pending.current = displayIndex;
+  }, []);
+
+  /** Call when a new question is shown, to return to the top of the list. */
+  const reset = useCallback(() => {
+    pending.current = null;
+    scrollRef.current?.scrollTo({ y: 0, animated: false });
+  }, []);
+
+  const onScroll = useCallback((event: NativeSyntheticEvent<NativeScrollEvent>) => {
+    scrollY.current = event.nativeEvent.contentOffset.y;
+  }, []);
+
+  const onScrollLayout = useCallback(() => {
+    const index = pending.current;
+    if (index === null || index < 0) return;
+    pending.current = null;
+    requestAnimationFrame(() => {
+      const card = cardRefs.current[index];
+      const scroll = scrollRef.current;
+      const viewport = viewportRef.current;
+      if (!card || !scroll || !viewport) return;
+      viewport.measureInWindow((_vx, viewportTop, _vw, viewportHeight) => {
+        card.measureInWindow((_cx, cardTop, _cw, cardHeight) => {
+          // How far the card's bottom edge sits past the viewport's, plus the
+          // gap we want under it. Negative means it is already clear.
+          const hidden = cardTop + cardHeight - (viewportTop + viewportHeight) + REVEAL_MARGIN;
+          if (hidden > 0) {
+            scroll.scrollTo({ y: scrollY.current + hidden, animated: false });
+          }
+        });
+      });
+    });
+  }, []);
+
+  /** Ref callback for the wrapper around each option card. */
+  const registerCard = useCallback(
+    (displayIndex: number) => (node: View | null) => {
+      cardRefs.current[displayIndex] = node;
+    },
+    [],
+  );
+
+  return { scrollRef, viewportRef, reveal, reset, onScroll, onScrollLayout, registerCard };
 }
 
 export function OptionCard({
@@ -89,18 +183,25 @@ export function OptionCard({
         <AppText variant="bodyLg" color="ink" style={styles.optionText}>
           {text}
         </AppText>
-        {/* The verdict icon scales in with a little overshoot: the one place
+        {/* The slot is always here, empty until the answer is graded. If the
+            icon only appeared on grading it would narrow the text column at
+            that moment, and a two-line answer could wrap to three and grow
+            the card after everything else had been measured and placed.
+
+            The icon itself scales in with a little overshoot: the one place
             bounce is earned, because it lands on the user's own answer. */}
-        {visual === 'correct' ? (
-          <Animated.View entering={ZoomIn.springify().damping(11).stiffness(200)}>
-            <MaterialIcons name="check-circle" size={26} color={Colors.success} />
-          </Animated.View>
-        ) : null}
-        {visual === 'wrong' ? (
-          <Animated.View entering={ZoomIn.springify().damping(11).stiffness(200)}>
-            <MaterialIcons name="cancel" size={26} color={Colors.red} />
-          </Animated.View>
-        ) : null}
+        <View style={styles.verdict}>
+          {visual === 'correct' ? (
+            <Animated.View entering={ZoomIn.springify().damping(11).stiffness(200)}>
+              <MaterialIcons name="check-circle" size={26} color={Colors.success} />
+            </Animated.View>
+          ) : null}
+          {visual === 'wrong' ? (
+            <Animated.View entering={ZoomIn.springify().damping(11).stiffness(200)}>
+              <MaterialIcons name="cancel" size={26} color={Colors.red} />
+            </Animated.View>
+          ) : null}
+        </View>
       </View>
     </PressableSurface>
   );
@@ -190,6 +291,12 @@ const styles = StyleSheet.create({
   },
   optionText: {
     flex: 1,
+  },
+  // Fixed, so the text column is the same width graded or not.
+  verdict: {
+    width: 26,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   panel: {
     borderWidth: 2,
