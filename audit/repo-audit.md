@@ -58,20 +58,39 @@ installing `eslint@^9` and `eslint-config-expo@~10` and writing
 `eslint.config.js`. **I left that repair in place**, see "What this audit
 changed". Lint now reports 0 errors and 4 warnings.
 
-**P1-2. The app identifies itself as a template.** In `app.json`:
+**P1-2. The app identified itself as a template. MOSTLY RESOLVED.**
 
-| Field | Current | Problem |
+This turned out to be worse than a wrong colour. The app icon, the Android
+adaptive icon, the favicon and the splash mark were all still Expo's default
+blue chevron, while the real brand art sat unreferenced in `assets/images/`:
+`logo.png`, a red speech bubble holding the Statue of Liberty, had **zero
+references anywhere in the project**. A judge's first two impressions, the
+home-screen icon and the launch screen, were of the Expo starter app.
+
+Fixed by building the real identity out of assets already in the repo:
+
+| Field | Was | Now |
 |---|---|---|
-| `name` | `citizenly-app` | This is the label under the home-screen icon. It should read `Citizenly`. |
-| `slug` | `citizenly-app` | Cosmetic, but it leaks into URLs. |
-| splash `backgroundColor` | `#208AEF` | Bright blue. Not in the palette. Navy is `#1B2A4A`. |
-| `adaptiveIcon.backgroundColor` | `#E6F4FE` | Pale blue. Also not in the palette. |
-| `ios` | absent | No `bundleIdentifier`. Fine for Expo Go, blocks a real build. |
-| `android.package` | absent | Same. |
+| `name` | `citizenly-app` | `Citizenly` |
+| `icon` | Expo chevron, 799 KB | `logo.png` on navy `#1B2A4A`, 1024x1024, 255 KB |
+| `adaptiveIcon.foregroundImage` | Expo chevron | `logo.png` at 55% so the launcher's mask cannot clip it |
+| `adaptiveIcon.backgroundColor` | `#E6F4FE` | `#1B2A4A` |
+| `favicon` | Expo chevron | same mark on navy |
+| splash `backgroundColor` | `#208AEF` | `#FFFFFF`, which flows into the white welcome screen |
+| splash `image` | Expo chevron at 76px | `citizenly-wordmark.png` at 220px |
 
-The splash colour is the single highest-leverage fix in this document. It is
-the first thing anyone sees, it belongs to a different app than the one that
-opens, and it is a one-line change.
+Navy was chosen over white for the icon after rendering both: at 64px, the
+home-screen size that actually matters, the red mark holds its shape against
+navy and washes out against white.
+
+Still open: `slug` is left as `citizenly-app` deliberately, since changing it
+can break an existing EAS project link and it is invisible to users. There is
+still no `ios.bundleIdentifier` or `android.package`, which is fine for Expo
+Go but blocks a store build.
+
+Now unreferenced as a result, and safe to delete: `splash-icon.png`,
+`android-icon-background.png`. Keep `logo.png`, which is the source the icons
+are generated from.
 
 **P1-3. The persistence layer has almost no tests.** `src/lib/local-account.ts`
 and `src/lib/local-mistakes.ts` own every piece of user data in an app that
