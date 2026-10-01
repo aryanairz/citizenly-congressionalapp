@@ -22,6 +22,7 @@ import {
 import { Colors, Radius, Spacing } from '@/constants/design';
 import { LAYOUT } from '@/constants/motion';
 import { confirmAction } from '@/lib/confirm';
+import { addMastered } from '@/lib/local-mastery';
 import { clearMistakes, removeMistake, useMistakes } from '@/lib/local-mistakes';
 import { correctAnswerText, localize } from '@/lib/i18n';
 import { useOnboarding } from '@/lib/onboarding-context';
@@ -97,10 +98,14 @@ export default function ReviewMistakesScreen() {
     // The panel about to open shrinks the list, so ask for the graded card to
     // be brought back into view once the new viewport height is known.
     reveal.reveal(order.findIndex((original) => correctSet.has(original)));
-    if (correctSet.has(order[selected]) && session.user?.id) {
-      // Resolved! The only place a mistake leaves the bank.
+    const userId = session.user?.id;
+    if (correctSet.has(order[selected]) && userId) {
+      // Resolved! The only place a mistake leaves the bank. It moves straight
+      // into the mastery set, which is what makes the dashboard figure climb
+      // as the bank drains.
       setResolvedIds((prev) => new Set(prev).add(question.id));
-      void removeMistake(session.user.id, question.id);
+      void removeMistake(userId, question.id);
+      void addMastered(userId, question.id);
     }
   };
 

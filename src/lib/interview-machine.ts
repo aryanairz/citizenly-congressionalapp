@@ -470,6 +470,11 @@ export function summarize(state: InterviewState) {
     missedQuestionIds: state.civics.history
       .filter((h) => !h.correct)
       .map((h) => h.questionId),
+    // The mirror of the above. Misses feed the mistake bank; these feed the
+    // mastery set, so an interview moves the dashboard in both directions.
+    correctQuestionIds: state.civics.history
+      .filter((h) => h.correct)
+      .map((h) => h.questionId),
     retake: retakePortions(state),
   };
 }

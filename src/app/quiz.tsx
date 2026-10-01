@@ -22,6 +22,7 @@ import { Spacing, TabularNums } from '@/constants/design';
 import { LAYOUT } from '@/constants/motion';
 import { filterByTopic, parseTopicKey } from '@/constants/topics';
 import { localize } from '@/lib/i18n';
+import { addMastered, removeMastered } from '@/lib/local-mastery';
 import { addMistake } from '@/lib/local-mistakes';
 import { speakAuto, stopSpeaking } from '@/lib/speech';
 import { t, tCount } from '@/lib/ui-i18n';
@@ -110,9 +111,18 @@ export default function QuizScreen() {
     const right = correctSet.has(order[selected]);
     if (right) {
       setScore((s) => s + 1);
-    } else if (session.user?.id) {
-      // Enroll it in the local mistake bank; Review Mistakes drains it later.
-      void addMistake(session.user.id, question.id);
+    }
+    const userId = session.user?.id;
+    if (userId) {
+      // The two sets are complements: a question is in exactly one of them
+      // once it has been seen, so the dashboard figure can move either way.
+      if (right) {
+        void addMastered(userId, question.id);
+      } else {
+        // Enroll it in the local mistake bank; Review Mistakes drains it later.
+        void addMistake(userId, question.id);
+        void removeMastered(userId, question.id);
+      }
     }
     // Speak the verdict and the reason, so someone who can't read the
     // feedback panel still gets it. Silent if auto-speak is turned off.

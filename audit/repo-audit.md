@@ -73,10 +73,15 @@ The splash colour is the single highest-leverage fix in this document. It is
 the first thing anyone sees, it belongs to a different app than the one that
 opens, and it is a one-line change.
 
-**P1-3. The persistence layer has no tests.** `src/lib/local-account.ts` and
-`src/lib/local-mistakes.ts` own every piece of user data in an app that
+**P1-3. The persistence layer has almost no tests.** `src/lib/local-account.ts`
+and `src/lib/local-mistakes.ts` own every piece of user data in an app that
 deliberately has no backend and no recovery path. A regression there silently
-destroys someone's account with no way back. Both have zero tests.
+destroys someone's account with no way back. Both still have zero tests.
+
+*Partly addressed.* `local-mastery.ts` was added with 15 tests covering
+corrupt storage, non-array payloads, idempotent writes, per-account scoping
+and read/write failure, so the pattern the other two should follow now exists
+in the repo. `local-account` and `local-mistakes` remain the gap.
 
 Untested modules in full:
 
@@ -102,16 +107,25 @@ entries are marked `dynamic: true`**, meaning they name current officeholders
 and change with elections. Those have to be corrected in two files, in two
 formats, or the app contradicts itself. Last verified 2026-08-23.
 
-**P2-2. Dashboard progress is a hardcoded `0`.** `src/app/dashboard.tsx:101`
-declares `const mastered = 0` with the comment "Placeholder until real
-progress tracking is wired up". The navy hero, the 52px figure and the
-progress bar are the visual centrepiece of the screen and they always read
-zero. It also makes the next line dead code: the `mastered === 0` branch
-means the "Going well" encouragement can never render.
+**P2-2. Dashboard progress was a hardcoded `0`. RESOLVED.**
+`src/app/dashboard.tsx` declared `const mastered = 0` with the comment
+"Placeholder until real progress tracking is wired up", so the navy hero, the
+52px figure and the progress bar, the visual centrepiece of the screen, always
+read zero. It also made the next line dead code: with `mastered` a constant
+`0`, the "Going well" encouragement could never render.
 
-For judging, a dashboard that never moves is worse than no dashboard. Either
-wire it to the mistake bank, which already tracks per-question state, or
-replace the figure with something true.
+Now backed by `src/lib/local-mastery.ts`. A question is mastered when answered
+correctly and stops being mastered when answered wrong again. All four modes
+write to it: a right answer in Quiz, "Got it" in Flashcards, a resolved
+question in Review Mistakes, a correct answer in the Mock Interview. The
+displayed figure subtracts anything still sitting in the mistake bank, because
+by design a mistake only leaves that bank by being resolved inside Review
+Mistakes, so without the subtraction the count would include questions the
+user is on record as getting wrong.
+
+Verified end to end in the browser: new account reads `0 / 128` with "Ready
+when you are", and after one correct quiz answer reads `1 / 128` with "Going
+well. 127 more to go."
 
 **P2-3. 183 UI strings are English-only.** The app ships 48 languages of
 *question* content but roughly 30 `t()` call sites and 29 defined keys, so the

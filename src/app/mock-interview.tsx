@@ -56,6 +56,7 @@ import {
   type InterviewEvent,
   type InterviewState,
 } from '@/lib/interview-machine';
+import { addMastered, removeMastered } from '@/lib/local-mastery';
 import { addMistake } from '@/lib/local-mistakes';
 import { useSession } from '@/lib/session-context';
 import { useInterviewVoice, type InterviewVoice } from '@/lib/use-interview-voice';
@@ -252,6 +253,12 @@ export default function MockInterviewScreen() {
     if (userId) {
       for (const id of summary.missedQuestionIds.filter(isServerQuestionId)) {
         void addMistake(userId, id);
+        void removeMastered(userId, id);
+      }
+      // A simulated interview counts as real practice, so the answers that
+      // were right move the dashboard the same way a quiz would.
+      for (const id of summary.correctQuestionIds.filter(isServerQuestionId)) {
+        void addMastered(userId, id);
       }
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps

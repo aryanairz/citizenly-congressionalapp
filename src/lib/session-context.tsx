@@ -17,6 +17,8 @@ import { LANGUAGES, type LanguageCode } from '@/constants/brand';
 import { EXEMPTIONS, type ExemptionChoice } from '@/constants/exemptions';
 import { US_STATES } from '@/constants/us-states';
 import { deleteAccount, readAccount, type LocalUser } from '@/lib/local-account';
+import { clearMastered } from '@/lib/local-mastery';
+import { clearMistakes } from '@/lib/local-mistakes';
 import { useOnboarding, type OnboardingData } from '@/lib/onboarding-context';
 import { getStoredItem, deleteStoredItem, setStoredItem } from '@/lib/token-store';
 
@@ -112,11 +114,19 @@ export function SessionProvider({ children }: { children: ReactNode }) {
         update(userToOnboardingPatch(merged));
       },
       forgetAccount: async () => {
+        const userId = user?.id;
         setUser(null);
         setStatus('signedOut');
         reset();
         await deleteStoredItem(ACTIVE_KEY);
         await deleteAccount();
+        // Study history is keyed by account id, so it has to go with the
+        // account. Leaving it behind would hand the next person to sign up
+        // someone else's progress if an id were ever reused.
+        if (userId) {
+          await clearMastered(userId);
+          await clearMistakes(userId);
+        }
       },
     }),
     [status, user, update, reset],

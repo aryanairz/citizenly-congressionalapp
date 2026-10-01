@@ -13,6 +13,7 @@ import {
 } from '@/components';
 import { Colors, Elevation, FontFamily, Radius, Sizing, Spacing } from '@/constants/design';
 import { TOTAL_OFFICIAL as TOTAL_QUESTIONS } from '@/data/question-bank';
+import { useMastery } from '@/lib/local-mastery';
 import { useMistakes } from '@/lib/local-mistakes';
 import { useOnboarding } from '@/lib/onboarding-context';
 import { useSession } from '@/lib/session-context';
@@ -90,21 +91,38 @@ export default function HomeScreen() {
   // Live mistake count for the Review Mistakes badge. The store notifies on
   // every change, and refocusing the Dashboard re-reads it too.
   const { ids: mistakeIds, refresh: refreshMistakes } = useMistakes(session.user?.id);
+  const { ids: masteredIds, refresh: refreshMastery } = useMastery(session.user?.id);
   const mistakeCount = mistakeIds.length;
   useFocusEffect(
     useCallback(() => {
       refreshMistakes();
-    }, [refreshMistakes]),
+      refreshMastery();
+    }, [refreshMistakes, refreshMastery]),
   );
 
   const firstName = data.firstName.trim();
-  // Placeholder until real progress tracking is wired up.
-  const mastered = 0;
+  // Every mode writes here: a right answer in Quiz, "Got it" in Flashcards, a
+  // resolved question in Review Mistakes, a correct answer in the Mock
+  // Interview. Capped because a personalised pool holds 129 questions (the
+  // senators question splits in two) against an official total of 128, and a
+  // figure reading 129/128 would be worse than slightly conservative.
+  // Anything still sitting in the mistake bank is not mastered, whatever the
+  // mastery set says. A question answered right in Quiz is added here but
+  // only leaves the bank by being resolved in Review Mistakes, so without
+  // this subtraction the figure would count questions the user is on record
+  // as getting wrong.
+  const mastered = Math.min(
+    masteredIds.filter((id) => !mistakeIds.includes(id)).length,
+    TOTAL_QUESTIONS,
+  );
+  const remaining = TOTAL_QUESTIONS - mastered;
   const progress = Math.round((mastered / TOTAL_QUESTIONS) * 100);
   const encouragement =
     mastered === 0
       ? 'Ready when you are. Let’s begin.'
-      : `Going well. ${TOTAL_QUESTIONS - mastered} more to go.`;
+      : remaining === 0
+        ? 'Every question answered right at least once. You are ready.'
+        : `Going well. ${remaining} more to go.`;
 
   return (
     <ScreenContainer padded={false}>

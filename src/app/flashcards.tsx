@@ -29,6 +29,7 @@ import {
 import { Colors, Elevation, Radius, Sizing, Spacing, TabularNums } from '@/constants/design';
 import { filterByTopic, parseTopicKey } from '@/constants/topics';
 import { localize } from '@/lib/i18n';
+import { addMastered, removeMastered } from '@/lib/local-mastery';
 import { addMistake } from '@/lib/local-mistakes';
 import { useOnboarding } from '@/lib/onboarding-context';
 import { useSession } from '@/lib/session-context';
@@ -152,10 +153,20 @@ export default function FlashcardsScreen() {
     });
   };
 
+  /** "Got it" = self-reported hit: count it as mastered, then advance. */
+  const gotIt = () => {
+    if (question && session.user?.id) {
+      void addMastered(session.user.id, question.id);
+    }
+    spinToNext();
+  };
+
   /** "Review again" = self-reported miss: record it, then advance as usual. */
   const reviewAgain = () => {
-    if (question && session.user?.id) {
-      void addMistake(session.user.id, question.id);
+    const userId = session.user?.id;
+    if (question && userId) {
+      void addMistake(userId, question.id);
+      void removeMastered(userId, question.id);
     }
     spinToNext();
   };
@@ -315,7 +326,7 @@ export default function FlashcardsScreen() {
                       goes to its inner chrome View, not the outer Pressable,
                       so `flex: 1` passed to Button never reaches the row. */}
                   <View style={styles.feedbackButtonWrap}>
-                    <Button label={t('gotIt', lang)} onPress={spinToNext} style={styles.feedbackButton} />
+                    <Button label={t('gotIt', lang)} onPress={gotIt} style={styles.feedbackButton} />
                   </View>
                   <View style={styles.feedbackButtonWrap}>
                     <Button
