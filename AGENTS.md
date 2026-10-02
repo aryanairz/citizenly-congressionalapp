@@ -1,7 +1,25 @@
 # Expo HAS CHANGED
 
-Read the exact versioned docs at https://docs.expo.dev/versions/v54.0.0/ before writing any code.
-This project pins Expo SDK 54 (`expo: ~54.0.0` in package.json) for Expo Go compatibility - do not write against newer SDK APIs.
+Read the exact versioned docs at https://docs.expo.dev/versions/v57.0.0/ before writing any code.
+This project tracks Expo SDK 57 (`expo: ^57.0.0` in package.json) because iOS
+Expo Go only ever ships the newest SDK, so an older pin cannot be opened on an
+iPhone at all. Do not write against newer SDK APIs.
+
+Two things that moved in the 54 to 57 jump and will bite again:
+
+- `StyleSheet.absoluteFillObject` no longer exists in React Native 0.86. Use
+  `AbsoluteFill` from `src/constants/design.ts`. The old property is now
+  `undefined` on native, and `{ ...undefined }` is legal JavaScript that
+  silently contributes nothing, so a style loses its positioning with no
+  error. react-native-web still ships the old property, which means the web
+  build keeps working and hides it.
+- `expo-router` 57 vendored React Navigation and dropped the dependency on it.
+  Import `ThemeProvider`, `DefaultTheme` and friends from `expo-router`, not
+  from `@react-navigation/native`, which is no longer installed.
+
+TypeScript 6 stopped auto-including ambient `@types/*` packages, so
+`tsconfig.json` now lists `"types": ["jest"]` explicitly. Without it the whole
+test suite fails to compile with "cannot find name describe".
 
 # This app is frontend-only
 

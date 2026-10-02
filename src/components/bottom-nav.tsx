@@ -11,7 +11,7 @@ import Animated, {
 import { AppText } from '@/components/app-text';
 import { PressableSurface } from '@/components/pressable-surface';
 import { ScrollEdge } from '@/components/scroll-edge';
-import { Colors, Elevation, Radius, Spacing } from '@/constants/design';
+import { AbsoluteFill, Colors, Elevation, Radius, Spacing } from '@/constants/design';
 import { SPRING } from '@/constants/motion';
 import { t } from '@/lib/ui-i18n';
 import { useLang } from '@/lib/use-lang';
@@ -134,7 +134,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: Spacing.md,
   },
   pill: {
-    ...StyleSheet.absoluteFillObject,
+    ...AbsoluteFill,
     backgroundColor: Colors.navyTint,
     borderRadius: Radius.lg,
   },

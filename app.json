@@ -36,7 +36,11 @@
           "microphonePermission": "Citizenly uses the microphone so you can practice answering interview questions out loud. Your voice never leaves this device.",
           "speechRecognitionPermission": "Citizenly transcribes your spoken answers on this device so it can check them against the official study answers. Nothing is sent to a server."
         }
-      ]
+      ],
+      "expo-font",
+      "expo-image",
+      "expo-status-bar",
+      "expo-web-browser"
     ],
     "experiments": {
       "typedRoutes": true,

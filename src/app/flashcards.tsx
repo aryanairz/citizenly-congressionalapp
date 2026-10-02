@@ -26,7 +26,15 @@ import {
   ScreenHeader,
   ProgressBar,
 } from '@/components';
-import { Colors, Elevation, Radius, Sizing, Spacing, TabularNums } from '@/constants/design';
+import {
+  AbsoluteFill,
+  Colors,
+  Elevation,
+  Radius,
+  Sizing,
+  Spacing,
+  TabularNums,
+} from '@/constants/design';
 import { filterByTopic, parseTopicKey } from '@/constants/topics';
 import { localize } from '@/lib/i18n';
 import { addMastered, removeMastered } from '@/lib/local-mastery';
@@ -426,7 +434,7 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   face: {
-    ...StyleSheet.absoluteFillObject,
+    ...AbsoluteFill,
     backfaceVisibility: 'hidden',
     backgroundColor: Colors.white,
     borderRadius: Radius.xl,

@@ -29,7 +29,7 @@ import {
   ScreenContainer,
   ScreenHeader,
 } from '@/components';
-import { Colors, Elevation, Radius, Spacing } from '@/constants/design';
+import { AbsoluteFill, Colors, Elevation, Radius, Spacing } from '@/constants/design';
 import {
   INTERVIEW_POOLS,
   QUESTION_BY_ID,
@@ -1307,7 +1307,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   micRing: {
-    ...StyleSheet.absoluteFillObject,
+    ...AbsoluteFill,
     borderRadius: Radius.full,
     backgroundColor: Colors.red,
   },

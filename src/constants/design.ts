@@ -32,6 +32,28 @@ export type ElevationName = keyof typeof tokens.elevation;
  */
 export const TabularNums = { fontVariant: ['tabular-nums'] } as const satisfies TextStyle;
 
+/**
+ * Fill the parent exactly.
+ *
+ * React Native 0.86 removed `StyleSheet.absoluteFillObject`; only the
+ * registered `StyleSheet.absoluteFill` survives, and that cannot be spread
+ * into a style object. The values here are the ones RN used, so anything that
+ * spread the old constant renders identically.
+ *
+ * Worth knowing why this had to be caught by hand: on native the old property
+ * is now `undefined`, and `{ ...undefined }` is legal JavaScript that quietly
+ * contributes nothing. The affected styles would have lost their positioning
+ * with no error at all, and react-native-web still ships the old property, so
+ * the web build would have kept working and hidden it.
+ */
+export const AbsoluteFill = {
+  position: 'absolute',
+  left: 0,
+  right: 0,
+  top: 0,
+  bottom: 0,
+} as const satisfies ViewStyle;
+
 export type ColorName = keyof typeof Colors;
 export type SpacingKey = keyof typeof Spacing;
 export type RadiusKey = keyof typeof Radius;

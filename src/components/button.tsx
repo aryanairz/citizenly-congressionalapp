@@ -11,7 +11,15 @@ import {
 
 import { AppText } from '@/components/app-text';
 import { PressableSurface } from '@/components/pressable-surface';
-import { Colors, Elevation, Radius, Sizing, Spacing, type ColorName } from '@/constants/design';
+import {
+  AbsoluteFill,
+  Colors,
+  Elevation,
+  Radius,
+  Sizing,
+  Spacing,
+  type ColorName,
+} from '@/constants/design';
 
 type ButtonVariant = 'primary' | 'secondary';
 
@@ -109,7 +117,7 @@ export function Button({
 
 const styles = StyleSheet.create({
   sheen: {
-    ...StyleSheet.absoluteFillObject,
+    ...AbsoluteFill,
     borderRadius: Radius.lg,
     // Only the upper half catches the light.
     bottom: '50%',
