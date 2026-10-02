@@ -21,6 +21,22 @@ TypeScript 6 stopped auto-including ambient `@types/*` packages, so
 `tsconfig.json` now lists `"types": ["jest"]` explicitly. Without it the whole
 test suite fails to compile with "cannot find name describe".
 
+# Hermes has no Intl
+
+The iOS JS engine ships without the `Intl` constructors. `Intl.PluralRules` is
+`undefined` there, and calling it throws "undefined cannot be used as a
+constructor" mid-render, which takes the whole screen down.
+
+Nothing on web will ever show this: every browser has `Intl`, so the web build
+stays green while the phone crashes. `src/lib/ui-i18n.ts` guards for it and
+falls back to one/other, and `ui-i18n.test.ts` deletes the global to prove the
+fallback holds.
+
+Before reaching for `Intl.NumberFormat`, `Intl.DateTimeFormat`,
+`Intl.Collator`, `Intl.ListFormat` or `toLocaleString`, assume it is absent on
+device and guard the same way. `String.prototype.normalize` and
+`localeCompare` are fine; they exist, `localeCompare` just ignores the locale.
+
 # This app is frontend-only
 
 There is no backend, and adding one is not a fix. Every feature must work with

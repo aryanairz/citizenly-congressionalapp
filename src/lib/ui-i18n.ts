@@ -43,19 +43,54 @@ const PLURAL_LOCALES: Partial<Record<LanguageCode, string>> = {
   hmn: 'en', // Hmong plural rules aren't in ICU; English one/other is correct for Hmong anyway (no plural inflection)
 };
 
-const rulesCache = new Map<LanguageCode, Intl.PluralRules>();
+/** The one method this module needs, so a fallback can stand in for the real thing. */
+type PluralSelector = { select(count: number): Intl.LDMLPluralRule };
 
-function pluralRules(lang: LanguageCode): Intl.PluralRules {
+/**
+ * Last-resort selector for runtimes with no plural rules at all.
+ *
+ * Hermes on iOS ships without `Intl.PluralRules`, so the constructor is
+ * `undefined` and calling it throws "undefined cannot be used as a
+ * constructor" during render. The old code had a try/catch, but its fallback
+ * called the same missing constructor, so the catch threw too and the error
+ * escaped. The app could not run on iOS at all before SDK 57, which is why
+ * this went unseen: every browser has `Intl`, so the web build was fine.
+ *
+ * One/other is English's rule. For Slavic few/many or Arabic's six forms it
+ * picks a less precise category, but `tCount` already falls back to each
+ * entry's `other` form, so the result is a real string in the right language
+ * rather than a crash.
+ */
+const ENGLISH_LIKE: PluralSelector = {
+  select: (count) => (count === 1 ? 'one' : 'other'),
+};
+
+const hasPluralRules = typeof Intl !== 'undefined' && typeof Intl.PluralRules === 'function';
+
+const rulesCache = new Map<LanguageCode, PluralSelector>();
+
+function pluralRules(lang: LanguageCode): PluralSelector {
   let rules = rulesCache.get(lang);
   if (!rules) {
-    try {
-      rules = new Intl.PluralRules(PLURAL_LOCALES[lang] ?? lang);
-    } catch {
-      rules = new Intl.PluralRules('en');
-    }
+    rules = buildSelector(lang);
     rulesCache.set(lang, rules);
   }
   return rules;
+}
+
+function buildSelector(lang: LanguageCode): PluralSelector {
+  if (!hasPluralRules) return ENGLISH_LIKE;
+  try {
+    return new Intl.PluralRules(PLURAL_LOCALES[lang] ?? lang);
+  } catch {
+    // The constructor exists but this locale has no data. English is still
+    // worth trying, and a build with no locale data at all gets the fallback.
+    try {
+      return new Intl.PluralRules('en');
+    } catch {
+      return ENGLISH_LIKE;
+    }
+  }
 }
 
 /**
