@@ -76,7 +76,6 @@ const MODES: Mode[] = [
     icon: 'mic',
     title: 'Mock Interview',
     description: 'Simulate the real test',
-    badge: 'PRO',
     emphasized: true,
     route: '/mock-interview',
   },
