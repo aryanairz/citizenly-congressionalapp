@@ -119,4 +119,20 @@ describe('GroqError', () => {
     expect(new GroqError('offline', true).retryable).toBe(true);
     expect(new GroqError('bad key', false).retryable).toBe(false);
   });
+
+  it('retries immediately by default when retryable', () => {
+    expect(new GroqError('offline', true).retryNow).toBe(true);
+  });
+
+  it('can be retryable without being worth retrying straight away', () => {
+    // A timeout already spent the whole budget. Retrying makes the applicant
+    // wait twice as long to hear the same thing.
+    const timedOut = new GroqError('too slow', true, false);
+    expect(timedOut.retryable).toBe(true);
+    expect(timedOut.retryNow).toBe(false);
+  });
+
+  it('never retries something that cannot succeed', () => {
+    expect(new GroqError('bad key', false).retryNow).toBe(false);
+  });
 });

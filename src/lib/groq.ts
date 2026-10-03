@@ -32,8 +32,15 @@ const GRADE_MODEL = 'openai/gpt-oss-120b';
 const TRANSCRIBE_URL = 'https://api.groq.com/openai/v1/audio/transcriptions';
 const CHAT_URL = 'https://api.groq.com/openai/v1/chat/completions';
 
-/** Someone mid-interview will not wait longer than this for a verdict. */
-const TIMEOUT_MS = 20000;
+/**
+ * Transcription has to upload a file first, so it gets much longer than
+ * grading does. A phone on a weak connection spends most of this budget on
+ * the upload, not on Whisper, and cutting it off early is what produced
+ * "that took too long" on a request that would have finished.
+ */
+const TRANSCRIBE_TIMEOUT_MS = 60000;
+/** Grading is a short POST. In testing it answered in about half a second. */
+const GRADE_TIMEOUT_MS = 30000;
 
 const API_KEY = process.env.EXPO_PUBLIC_GROQ_API_KEY ?? '';
 
@@ -47,24 +54,56 @@ export class GroqError extends Error {
     message: string,
     /** True when retrying later could plausibly work: offline, timeout, 5xx. */
     readonly retryable: boolean,
+    /**
+     * Whether retrying immediately is worth the applicant's time. A timeout is
+     * retryable in principle but not automatically: it already spent the whole
+     * budget, and trying again just makes them wait twice as long before
+     * being told the same thing.
+     */
+    readonly retryNow: boolean = retryable,
   ) {
     super(message);
     this.name = 'GroqError';
   }
 }
 
-async function withTimeout<T>(run: (signal: AbortSignal) => Promise<T>): Promise<T> {
+async function withTimeout<T>(
+  ms: number,
+  run: (signal: AbortSignal) => Promise<T>,
+): Promise<T> {
   const controller = new AbortController();
-  const timer = setTimeout(() => controller.abort(), TIMEOUT_MS);
+  const timer = setTimeout(() => controller.abort(), ms);
   try {
     return await run(controller.signal);
   } catch (error) {
     if (controller.signal.aborted) {
-      throw new GroqError('That took too long. Check your connection.', true);
+      throw new GroqError('That took too long. Check your connection.', true, false);
+    }
+    // React Native reports every connection failure as "Network request
+    // failed", which tells the applicant nothing. Say the useful part.
+    if (error instanceof TypeError) {
+      throw new GroqError('No internet connection.', true);
     }
     throw error;
   } finally {
     clearTimeout(timer);
+  }
+}
+
+/**
+ * Runs `attempt` again once if it failed in a way that might not fail twice.
+ *
+ * Mobile connections drop a request and then work fine a second later, and
+ * the cost of not retrying is that someone's spoken answer is thrown away.
+ */
+async function withOneRetry<T>(attempt: () => Promise<T>): Promise<T> {
+  try {
+    return await attempt();
+  } catch (error) {
+    if (error instanceof GroqError && error.retryNow) {
+      return attempt();
+    }
+    throw error;
   }
 }
 
@@ -112,13 +151,27 @@ export async function transcribeAudio(
     throw new GroqError('No transcription key is configured.', false);
   }
 
+  // Name the part after the real file. Whisper decides how to decode from the
+  // extension, so calling a .caf an .m4a is a decode failure waiting to
+  // happen. audio/mp4 is the registered type for .m4a; "audio/m4a" is not a
+  // real MIME type and some servers will not parse the part at all.
+  const extension = uri.split('.').pop()?.toLowerCase() ?? 'm4a';
+  const mimeByExtension: Record<string, string> = {
+    m4a: 'audio/mp4',
+    mp4: 'audio/mp4',
+    caf: 'audio/x-caf',
+    wav: 'audio/wav',
+    '3gp': 'audio/3gpp',
+    webm: 'audio/webm',
+  };
+
   const form = new FormData();
   // React Native's FormData takes this shape for a local file; it is not the
   // web File object and TypeScript's DOM types do not describe it.
   form.append('file', {
     uri,
-    name: 'answer.m4a',
-    type: 'audio/m4a',
+    name: `answer.${extension}`,
+    type: mimeByExtension[extension] ?? 'audio/mp4',
   } as unknown as Blob);
   form.append('model', TRANSCRIBE_MODEL);
   form.append('response_format', 'verbose_json');
@@ -129,13 +182,15 @@ export async function transcribeAudio(
     form.append('prompt', bias.join(', ').slice(0, 800));
   }
 
-  const response = await withTimeout((signal) =>
-    fetch(TRANSCRIBE_URL, {
-      method: 'POST',
-      headers: { Authorization: `Bearer ${API_KEY}` },
-      body: form,
-      signal,
-    }),
+  const response = await withOneRetry(() =>
+    withTimeout(TRANSCRIBE_TIMEOUT_MS, (signal) =>
+      fetch(TRANSCRIBE_URL, {
+        method: 'POST',
+        headers: { Authorization: `Bearer ${API_KEY}` },
+        body: form,
+        signal,
+      }),
+    ),
   );
 
   if (!response.ok) throw describeHttpFailure(response.status);
@@ -208,7 +263,7 @@ export async function gradeAnswer(input: GradeInput): Promise<GradeResult> {
     `Applicant said: ${input.transcript}`,
   ].join('\n');
 
-  const response = await withTimeout((signal) =>
+  const response = await withTimeout(GRADE_TIMEOUT_MS, (signal) =>
     fetch(CHAT_URL, {
       method: 'POST',
       headers: {

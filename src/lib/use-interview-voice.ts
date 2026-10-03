@@ -20,10 +20,12 @@
 import * as Speech from 'expo-speech';
 import {
   AudioModule,
-  RecordingPresets,
+  AudioQuality,
+  IOSOutputFormat,
   requestRecordingPermissionsAsync,
   setAudioModeAsync,
   useAudioRecorder,
+  type RecordingOptions,
 } from 'expo-audio';
 import { useCallback, useEffect, useRef, useState } from 'react';
 
@@ -42,6 +44,38 @@ export type MicStatus =
 /** Slightly slower than default - the audience is elderly and often stressed. */
 const OFFICER_SPEECH_RATE = 0.9;
 const SPEECH_LANGUAGE = 'en-US';
+
+/**
+ * Recording settings tuned for speech, not music.
+ *
+ * `RecordingPresets.HIGH_QUALITY` is 44.1kHz stereo at 128kbps, which is about
+ * 240KB for a fifteen second answer. Whisper resamples everything to 16kHz
+ * mono before it looks at it, so all of that extra data is uploaded from a
+ * phone, over mobile data, to be thrown away. 16kHz mono at 32kbps is roughly
+ * an eighth the size with nothing lost that the model would have used, and
+ * the upload is what was timing out.
+ */
+const SPEECH_RECORDING: RecordingOptions = {
+  extension: '.m4a',
+  sampleRate: 16000,
+  numberOfChannels: 1,
+  bitRate: 32000,
+  android: {
+    outputFormat: 'mpeg4',
+    audioEncoder: 'aac',
+  },
+  ios: {
+    outputFormat: IOSOutputFormat.MPEG4AAC,
+    audioQuality: AudioQuality.MEDIUM,
+    linearPCMBitDepth: 16,
+    linearPCMIsBigEndian: false,
+    linearPCMIsFloat: false,
+  },
+  web: {
+    mimeType: 'audio/webm',
+    bitsPerSecond: 32000,
+  },
+};
 
 export interface InterviewVoice {
   micStatus: MicStatus;
@@ -73,7 +107,7 @@ export interface InterviewVoice {
 export function useInterviewVoice(
   onFinalTranscript: (transcript: string) => void,
 ): InterviewVoice {
-  const recorder = useAudioRecorder(RecordingPresets.HIGH_QUALITY);
+  const recorder = useAudioRecorder(SPEECH_RECORDING);
 
   const [micStatus, setMicStatus] = useState<MicStatus>(
     isGroqConfigured() ? 'unknown' : 'unavailable',
