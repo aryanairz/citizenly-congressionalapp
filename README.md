@@ -15,10 +15,15 @@ designed for elders, set up by their adult children.
 
 > Social-impact project. No ads, no subscriptions, no fees.
 
-**The app is entirely self-contained.** There is no server, no API and no
-network call anywhere: all 128 official questions in all 48 languages are
+**There is no server.** All 128 official questions in all 48 languages are
 bundled into the app, accounts live on the device, and every screen works in
 airplane mode.
+
+The one exception is spoken answers in the Mock Interview, which send the
+recording to Groq to be transcribed and graded. That feature is optional:
+without a key or a connection the interview falls back to typed answers and
+the bundled matcher, and nothing else in the app is affected. See "Voice input
+and grading".
 
 ---
 
@@ -34,10 +39,9 @@ No environment variables, no second terminal, nothing to configure.
 `npx tsc --noEmit` type-checks; `npm run lint` lints; `npm test` runs the Jest
 suite over the bundled content and the interview logic.
 
-> Voice input in the Mock Interview needs a **development build**
-> (`npx expo run:ios` / `run:android`) - `expo-speech-recognition` is a native
-> module and isn't in Expo Go. Everywhere else, and in Expo Go, the interview
-> falls back to typed answers.
+> Spoken answers in the Mock Interview need a Groq API key in `.env`; copy
+> `.env.example` and fill it in. Without one, the interview uses typed answers
+> and the bundled matcher. Everything else runs with no setup at all.
 
 ### Viewing it on the web
 
@@ -83,16 +87,16 @@ console resets you to a first-time user.
   (`src/lib/speech-languages.ts`).
 - **Profile** - email change (PIN-confirmed), PIN change, state/district
   change, log out.
-- **Mock Interview** - a full simulated naturalization interview, entirely
-  offline: an eligibility step routes you to the right test (2008 vs 2025 by
+- **Mock Interview** - a full simulated naturalization interview: an
+  eligibility step routes you to the right test (2008 vs 2025 by
   age and years as an LPR (50/20, 55/15 and 65/20 special consideration),
   then a pure state machine (`src/lib/interview-machine.ts`) runs oath →
   eligibility → reading → writing → civics with the officer stopping the
   moment the outcome is decided. The officer speaks (expo-speech), answers
-  are transcribed **on-device** (expo-speech-recognition - needs a dev
-  build; typed-answer fallback in Expo Go/web or with mic denied), and
-  scoring is keyword-based (`src/lib/answer-matching.ts`) - pronunciation
-  and accent are never judged. The 128-question bank is bundled
+  are recorded (expo-audio, which works in Expo Go), transcribed by Groq
+  Whisper in whatever language they were spoken, and graded on meaning rather
+  than wording. Pronunciation and accent are never judged. The 128-question
+  bank is bundled
   (`src/data/civics-2025.ts`) with ids mirroring the website's, so misses
   land in Review Mistakes.
 - **Partial UI i18n** - the app chrome is being translated via
@@ -133,6 +137,39 @@ language. Every visual decision below follows from that, and the rules live in
   button. It used to pitch three times over with a sample question, a row of
   figures and a feature list. Showing someone their own alphabet does more than
   telling them the number 48 does.
+
+## Voice input and grading
+
+The Mock Interview is the one feature that touches a network, and it is worth
+being precise about why, because the rest of the app is deliberately offline.
+
+**The problem.** Expo Go ships no on-device speech recognizer, so the
+microphone reported "unavailable" on every phone and pushed the applicant into
+a text box. Practising a spoken interview by typing is not practice. Separately,
+keyword matching marked correct answers wrong whenever the wording differed
+from the published string, which is most of the time when a person is speaking
+rather than reciting.
+
+**What happens now.** `expo-audio` records the answer, which Expo Go can do.
+The recording goes to Groq's `whisper-large-v3-turbo`, which detects the
+language itself, so an applicant can answer in any of the 48 languages the app
+teaches. The transcript then goes to `openai/gpt-oss-120b` with the question
+and every acceptable answer, and it judges meaning rather than wording.
+
+Measured on 11 cases covering paraphrase, Spanish, Vietnamese, Chinese,
+mangled transcripts, genuinely wrong answers and under-counted lists: 0 wrong
+verdicts, 0 malformed replies, about 545ms per grade.
+
+**It is always optional.** With no key, no signal, or a failed request, the
+interview falls back to typed answers graded by `src/lib/answer-matching.ts`,
+exactly as before. A failed transcription is shown as a failure and never
+graded as a wrong answer.
+
+**The key is readable by anyone who downloads the app.** `EXPO_PUBLIC_*`
+values are inlined into the JavaScript bundle, and with no server there is
+nowhere else to put it. Rotating the key does not change this; only a proxy
+would. It is a deliberate trade for keeping the app serverless, and it is the
+one thing to change first if this ever ships beyond a demo.
 
 ## Known gaps
 

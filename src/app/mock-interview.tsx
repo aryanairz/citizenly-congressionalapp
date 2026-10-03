@@ -8,7 +8,7 @@ import {
   type ComponentProps,
   type ReactNode,
 } from 'react';
-import { Pressable, ScrollView, StyleSheet, View } from 'react-native';
+import { ActivityIndicator, Pressable, ScrollView, StyleSheet, View } from 'react-native';
 import Animated, {
   cancelAnimation,
   Easing,
@@ -41,7 +41,6 @@ import {
   feedbackFor,
   matchAnswer,
   type CivicsQuestion,
-  type MatchResult,
 } from '@/lib/answer-matching';
 import { confirmAction } from '@/lib/confirm';
 import { normalizeDigits } from '@/lib/digits';
@@ -59,6 +58,7 @@ import {
 import { addMastered, removeMastered } from '@/lib/local-mastery';
 import { addMistake } from '@/lib/local-mistakes';
 import { useSession } from '@/lib/session-context';
+import { gradeAnswer, isGroqConfigured } from '@/lib/groq';
 import { useInterviewVoice, type InterviewVoice } from '@/lib/use-interview-voice';
 import { useLang } from '@/lib/use-lang';
 
@@ -142,10 +142,13 @@ export default function MockInterviewScreen() {
   const [eligIndex, setEligIndex] = useState(0);
   const [typedMode, setTypedMode] = useState(false);
   const [typedAnswer, setTypedAnswer] = useState('');
+  // The verdict shown after an answer, whichever grader produced it.
   const [pendingCivics, setPendingCivics] = useState<{
     transcript: string;
-    result: MatchResult;
+    correct: boolean;
+    feedback: string;
   } | null>(null);
+  const [grading, setGrading] = useState(false);
   const [readingFeedback, setReadingFeedback] = useState<{
     heard: string;
     passed: boolean;
@@ -176,7 +179,7 @@ export default function MockInterviewScreen() {
   // --- Voice ---
   const voice = useInterviewVoice((finalText) => {
     if (!itv) return;
-    if (itv.phase === 'civics' && question && !pendingCivics) {
+    if (itv.phase === 'civics' && question && !pendingCivics && !grading) {
       gradeCivicsAnswer(finalText);
     } else if (itv.phase === 'reading' && !readingFeedback) {
       const passed = sentenceScore(finalText, readingSentence) >= SENTENCE_PASS_SCORE;
@@ -184,11 +187,52 @@ export default function MockInterviewScreen() {
     }
   });
 
+  /** Grade with the bundled keyword matcher. Works offline, judges wording. */
+  const gradeLocally = (answerText: string, q: CivicsQuestion) => {
+    const result = matchAnswer(answerText, q);
+    setPendingCivics({
+      transcript: answerText,
+      correct: result.correct,
+      feedback: feedbackFor(result, q),
+    });
+  };
+
+  /**
+   * Grade semantically when there is a key and a connection, so a correct
+   * answer in different words (or a different language) counts. Falls back to
+   * the local matcher rather than marking someone wrong because their signal
+   * dropped.
+   */
   const gradeCivicsAnswer = (answerText: string) => {
     if (!question) return;
-    const result = matchAnswer(answerText, question);
-    setPendingCivics({ transcript: answerText, result });
+    const q = question;
     setTypedAnswer('');
+
+    if (!isGroqConfigured()) {
+      gradeLocally(answerText, q);
+      return;
+    }
+
+    setGrading(true);
+    void (async () => {
+      try {
+        const verdict = await gradeAnswer({
+          question: q.prompt,
+          acceptableAnswers: q.acceptableAnswers,
+          requiredCount: q.requiredCount ?? 1,
+          transcript: answerText,
+        });
+        setPendingCivics({
+          transcript: answerText,
+          correct: verdict.correct,
+          feedback: verdict.reason,
+        });
+      } catch {
+        gradeLocally(answerText, q);
+      } finally {
+        setGrading(false);
+      }
+    })();
   };
 
   // --- Officer speech: one line per "moment", spoken when the moment changes ---
@@ -495,7 +539,7 @@ export default function MockInterviewScreen() {
                 micReady={micReady}
                 pending={pendingCivics}
                 onNext={() => {
-                  const correct = pendingCivics?.result.correct ?? false;
+                  const correct = pendingCivics?.correct ?? false;
                   setPendingCivics(null);
                   dispatch({ type: 'CIVICS_ANSWER', correct });
                 }}
@@ -914,17 +958,17 @@ function CivicsPhase({
   onSwitchToTyping: () => void;
   onSwitchToMic: () => void;
   micReady: boolean;
-  pending: { transcript: string; result: MatchResult } | null;
+  pending: { transcript: string; correct: boolean; feedback: string } | null;
   onNext: () => void;
 }) {
   const progress = civicsProgress(itv);
 
   if (pending) {
-    const { result, transcript } = pending;
+    const { correct, feedback, transcript } = pending;
     return (
       <ResultMoment
-        passed={result.correct}
-        title={feedbackFor(result, question)}
+        passed={correct}
+        title={feedback}
         lines={[
           ...(transcript ? [`You said: “${transcript}”`] : []),
           `One correct answer: ${question.acceptableAnswers[0]}`,
@@ -973,11 +1017,9 @@ function CivicsPhase({
         </View>
       ) : (
         <View style={styles.actionStack}>
-          {!micReady ? (
-            <AppText variant="bodyMd" color="muted" center>
-              Microphone is off. You can type your answer.
-            </AppText>
-          ) : null}
+          {/* Typing is the fallback, never the dead end it used to be: if the
+              microphone is off, the first thing offered is turning it on. */}
+          {!micReady ? <MicOffNotice voice={voice} /> : null}
           <Input
             label="Your answer"
             value={typed}
@@ -1185,22 +1227,84 @@ function ResultMoment({
   );
 }
 
-/** Mic button + live transcript for one spoken answer. */
+/**
+ * What to say when the microphone is not usable.
+ *
+ * This used to be one line telling the applicant to type instead, which is a
+ * dead end in a feature whose entire purpose is speaking out loud. Each case
+ * now says what is actually wrong and offers the thing that can be done.
+ */
+function MicOffNotice({ voice }: { voice: InterviewVoice }) {
+  if (voice.micStatus === 'denied') {
+    return (
+      <View style={styles.micNotice}>
+        <AppText variant="bodyMd" color="muted" center>
+          Citizenly does not have permission to use the microphone. You can turn
+          it on in your phone settings, under Citizenly, then come back.
+        </AppText>
+        <Button
+          label="Ask again"
+          variant="secondary"
+          onPress={() => void voice.requestMic()}
+        />
+      </View>
+    );
+  }
+
+  if (voice.micStatus === 'unavailable') {
+    return (
+      <AppText variant="bodyMd" color="muted" center>
+        Spoken answers need an internet connection. You can still type your
+        answer, and everything else works offline.
+      </AppText>
+    );
+  }
+
+  // 'unknown': never asked, or asking failed early.
+  return (
+    <View style={styles.micNotice}>
+      <AppText variant="bodyMd" color="muted" center>
+        Answer out loud, the way you will in the real interview.
+      </AppText>
+      <Button
+        label="Turn on the microphone"
+        variant="secondary"
+        onPress={() => void voice.requestMic()}
+      />
+    </View>
+  );
+}
+
+/** Mic button, state line and last transcript for one spoken answer. */
 function MicCluster({ voice, bias }: { voice: InterviewVoice; bias: string[] }) {
+  const busy = voice.transcribing;
+  const label = busy
+    ? 'Writing down what you said…'
+    : voice.listening
+      ? 'Listening… tap when you finish'
+      : 'Tap, then say your answer';
+
   return (
     <View style={styles.micCluster}>
       <MicButton
         listening={voice.listening}
-        onPress={() =>
-          voice.listening ? voice.stopListening() : voice.startListening(bias)
-        }
+        busy={busy}
+        onPress={() => {
+          if (busy) return;
+          if (voice.listening) voice.stopListening();
+          else voice.startListening(bias);
+        }}
       />
       <AppText variant="labelLg" color="navy" center>
-        {voice.listening
-          ? 'Listening… tap when you finish'
-          : 'Tap, then say your answer'}
+        {label}
       </AppText>
-      {voice.listening && voice.transcript ? (
+      {/* A failed upload is shown as itself, never graded as a wrong answer. */}
+      {voice.error ? (
+        <AppText variant="bodyMd" color="red" center>
+          {voice.error} Tap the microphone to try again.
+        </AppText>
+      ) : null}
+      {!voice.listening && !busy && voice.transcript ? (
         <AppText variant="bodyMd" color="muted" center>
           “{voice.transcript}”
         </AppText>
@@ -1210,7 +1314,15 @@ function MicCluster({ voice, bias }: { voice: InterviewVoice; bias: string[] }) 
 }
 
 /** Large circular red mic button; pulses with an expanding ring while listening. */
-function MicButton({ listening, onPress }: { listening: boolean; onPress: () => void }) {
+function MicButton({
+  listening,
+  busy,
+  onPress,
+}: {
+  listening: boolean;
+  busy: boolean;
+  onPress: () => void;
+}) {
   const [pressed, setPressed] = useState(false);
   const reduceMotion = useReducedMotion();
   const pulse = useSharedValue(0);
@@ -1235,12 +1347,20 @@ function MicButton({ listening, onPress }: { listening: boolean; onPress: () => 
       {listening ? <Animated.View style={[styles.micRing, ringStyle]} /> : null}
       <Pressable
         accessibilityRole="button"
-        accessibilityLabel={listening ? 'Stop listening' : 'Tap to answer'}
+        accessibilityLabel={
+          busy ? 'Writing down your answer' : listening ? 'Stop listening' : 'Tap to answer'
+        }
+        accessibilityState={{ disabled: busy }}
+        disabled={busy}
         onPress={onPress}
         onPressIn={() => setPressed(true)}
         onPressOut={() => setPressed(false)}>
-        <View style={[styles.mic, pressed && styles.micPressed]}>
-          <MaterialIcons name={listening ? 'stop' : 'mic'} size={40} color={Colors.white} />
+        <View style={[styles.mic, pressed && styles.micPressed, busy && styles.micBusy]}>
+          {busy ? (
+            <ActivityIndicator color={Colors.white} size="large" />
+          ) : (
+            <MaterialIcons name={listening ? 'stop' : 'mic'} size={40} color={Colors.white} />
+          )}
         </View>
       </Pressable>
     </View>
@@ -1321,6 +1441,14 @@ const styles = StyleSheet.create({
   },
   micPressed: {
     opacity: 0.85,
+  },
+  // Navy while the recording uploads, so the red "recording" state cannot be
+  // confused with the wait that follows it.
+  micBusy: {
+    backgroundColor: Colors.navy,
+  },
+  micNotice: {
+    gap: Spacing.md,
   },
   resultBanner: {
     flexDirection: 'row',

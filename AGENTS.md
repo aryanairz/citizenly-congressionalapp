@@ -37,14 +37,28 @@ Before reaching for `Intl.NumberFormat`, `Intl.DateTimeFormat`,
 device and guard the same way. `String.prototype.normalize` and
 `localeCompare` are fine; they exist, `localeCompare` just ignores the locale.
 
-# This app is frontend-only
+# This app has no backend, and one network feature
 
-There is no backend, and adding one is not a fix. Every feature must work with
-the device in airplane mode, signed out, on first launch.
+There is still no server of our own, and adding one is not a fix. Everything
+except spoken answers must work with the device in airplane mode, signed out,
+on first launch.
 
-- **No network calls.** No `fetch`, no API client, no `EXPO_PUBLIC_*` base URL.
-  If a feature seems to need a server, it needs bundled data or local storage
-  instead.
+- **One network call, in one file.** `src/lib/groq.ts` is the only module
+  allowed to use `fetch`. It sends a recording to Groq's Whisper for
+  transcription and the resulting text to a Groq chat model for grading,
+  because Expo Go has no on-device speech recognizer and keyword matching
+  marked correct answers wrong whenever the wording differed.
+- **Anywhere else, no network calls.** No API client, no `EXPO_PUBLIC_*` base
+  URL. If a feature seems to need a server, it needs bundled data or local
+  storage instead.
+- **Groq is always optional.** With no key, no signal, or a failed request,
+  the Mock Interview falls back to typed answers graded by
+  `answer-matching.ts`, and every other screen is unaffected. Never write code
+  that assumes the key exists or the request succeeded.
+- **The key is public.** `EXPO_PUBLIC_GROQ_API_KEY` is inlined into the
+  bundle, so anyone who downloads the app can read it. That is the price of
+  having no server. Never put anything behind that prefix that would be worse
+  than a Groq key to lose.
 - **Content is bundled.** The 128 official USCIS questions, translated into all
   48 languages, live in `src/data/questions.json`. Regenerate it from the
   Citizenly website's `data/questions.ts` by *executing* that module - 29 of its

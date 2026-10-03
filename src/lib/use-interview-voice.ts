@@ -1,40 +1,42 @@
 /**
- * Voice I/O for the mock interview: officer speech (expo-speech TTS) and
- * applicant answers (expo-speech-recognition, on-device only).
+ * Voice I/O for the mock interview: officer speech out (expo-speech) and
+ * applicant answers in (expo-audio recording, transcribed by Groq Whisper).
  *
- * Privacy: recognition runs with requiresOnDeviceRecognition - audio is never
- * sent over the network, there are no API keys and no server. If a device
- * cannot recognize on-device (or the native module is absent, e.g. Expo Go or
- * a browser without the Web Speech API), `micStatus` reports it and screens
- * fall back to typed answers instead of dead-ending.
+ * Why not on-device recognition: Expo Go ships no speech recognizer, so the
+ * old `expo-speech-recognition` path reported "unavailable" on every phone and
+ * pushed the applicant into a text box. Practising a spoken interview by
+ * typing is not practice. Recording is something Expo Go can do, so the audio
+ * goes to Whisper instead.
  *
- * This module never scores audio. It only produces transcripts; matching is
- * keyword-based in src/lib/answer-matching.ts by design - pronunciation and
- * accent are never judged.
+ * Whisper is given no language hint, so someone can answer in any of the 48
+ * languages the app teaches and still be understood.
+ *
+ * This module never scores audio. It produces a transcript; grading happens in
+ * `groq.ts` against the question's acceptable answers, with
+ * `answer-matching.ts` as the offline fallback. Pronunciation and accent are
+ * never judged.
  */
 
-import { useCallback, useEffect, useRef, useState } from 'react';
 import * as Speech from 'expo-speech';
+import {
+  AudioModule,
+  RecordingPresets,
+  requestRecordingPermissionsAsync,
+  setAudioModeAsync,
+  useAudioRecorder,
+} from 'expo-audio';
+import { useCallback, useEffect, useRef, useState } from 'react';
 
-// The native module is missing in Expo Go (it needs a development build) and
-// throws at require time. Load it defensively so the screen still renders and
-// the typed-answer fallback takes over.
-type SpeechRecognitionApi = typeof import('expo-speech-recognition');
-let SpeechRecognition: SpeechRecognitionApi | null = null;
-try {
-  SpeechRecognition = require('expo-speech-recognition');
-} catch {
-  SpeechRecognition = null;
-}
+import { GroqError, isGroqConfigured, transcribeAudio } from '@/lib/groq';
 
 export type MicStatus =
   /** Not asked yet. */
   | 'unknown'
-  /** Permission granted and recognition available. */
+  /** Permission granted and transcription configured. */
   | 'ready'
-  /** User declined the microphone / speech permission. */
+  /** User declined the microphone permission. */
   | 'denied'
-  /** No usable recognizer on this device or build. */
+  /** No recorder, or no transcription key bundled. */
   | 'unavailable';
 
 /** Slightly slower than default - the audience is elderly and often stressed. */
@@ -43,101 +45,81 @@ const SPEECH_LANGUAGE = 'en-US';
 
 export interface InterviewVoice {
   micStatus: MicStatus;
-  /** True while the recognizer is capturing the applicant's answer. */
+  /** True while the microphone is capturing the applicant's answer. */
   listening: boolean;
-  /** Live interim transcript while listening (may lag or be empty). */
+  /** True while the recording is being transcribed. */
+  transcribing: boolean;
+  /** The last transcript, or a short status line while working. */
   transcript: string;
   /** True while the officer voice is speaking. */
   speaking: boolean;
-  /** Ask for mic + speech permission. Resolves to the resulting status. */
+  /** Set when the last attempt failed, phrased for the applicant. */
+  error: string | null;
+  /** Ask for mic permission. Resolves to the resulting status. */
   requestMic: () => Promise<MicStatus>;
   /** Speak a line in the officer voice, interrupting any current speech. */
   speak: (text: string, onDone?: () => void) => void;
   stopSpeaking: () => void;
   /**
-   * Start capturing one answer. `bias` phrases are passed to the recognizer
-   * (iOS contextualStrings) - with the acceptable answers known in advance,
-   * this is the biggest accuracy lever for accented speech.
+   * Start capturing one answer. `bias` phrases are handed to Whisper as
+   * vocabulary context, which is what keeps proper nouns intact in accented
+   * speech.
    */
   startListening: (bias: string[]) => void;
-  /** Finish capturing and deliver a final transcript. */
+  /** Finish capturing, transcribe, and deliver the text. */
   stopListening: () => void;
 }
 
 export function useInterviewVoice(
   onFinalTranscript: (transcript: string) => void,
 ): InterviewVoice {
+  const recorder = useAudioRecorder(RecordingPresets.HIGH_QUALITY);
+
   const [micStatus, setMicStatus] = useState<MicStatus>(
-    SpeechRecognition ? 'unknown' : 'unavailable',
+    isGroqConfigured() ? 'unknown' : 'unavailable',
   );
   const [listening, setListening] = useState(false);
+  const [transcribing, setTranscribing] = useState(false);
   const [transcript, setTranscript] = useState('');
   const [speaking, setSpeaking] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
-  // Latest interim transcript + whether this capture already delivered a
-  // final result ("result isFinal", "error" and "end" can all arrive; the
-  // first one wins).
-  const interimRef = useRef('');
-  const deliveredRef = useRef(true);
   const onFinalRef = useRef(onFinalTranscript);
-  onFinalRef.current = onFinalTranscript;
+  useEffect(() => {
+    onFinalRef.current = onFinalTranscript;
+  }, [onFinalTranscript]);
 
-  const deliver = useCallback((text: string) => {
-    if (deliveredRef.current) return;
-    deliveredRef.current = true;
-    setListening(false);
-    onFinalRef.current(text.trim());
-  }, []);
+  // Guards a late transcription landing after the screen moved on, which would
+  // otherwise grade the previous question's audio against the current one.
+  const captureRef = useRef(0);
+  const biasRef = useRef<string[]>([]);
 
   useEffect(() => {
-    if (!SpeechRecognition) return;
-    const recognizer = SpeechRecognition.ExpoSpeechRecognitionModule;
-
-    const subscriptions = [
-      recognizer.addListener('result', (event) => {
-        const text = event.results[0]?.transcript ?? '';
-        interimRef.current = text;
-        setTranscript(text);
-        if (event.isFinal) deliver(text);
-      }),
-      recognizer.addListener('error', (event) => {
-        if (event.error === 'aborted') return;
-        if (event.error === 'not-allowed') setMicStatus('denied');
-        if (
-          event.error === 'service-not-allowed' ||
-          event.error === 'language-not-supported'
-        ) {
-          // No on-device recognizer - flip the whole session to typed input.
-          setMicStatus('unavailable');
-        }
-        // 'no-speech' and friends: finish with whatever we heard (usually
-        // nothing); the matcher reports an empty transcript kindly.
-        deliver(interimRef.current);
-      }),
-      recognizer.addListener('end', () => {
-        deliver(interimRef.current);
-      }),
-    ];
-
     return () => {
-      subscriptions.forEach((s) => s.remove());
-      recognizer.abort();
+      captureRef.current += 1;
       Speech.stop();
     };
-  }, [deliver]);
+  }, []);
 
   const requestMic = useCallback(async (): Promise<MicStatus> => {
-    if (!SpeechRecognition) return 'unavailable';
+    if (!isGroqConfigured()) {
+      setMicStatus('unavailable');
+      return 'unavailable';
+    }
     try {
-      if (!SpeechRecognition.ExpoSpeechRecognitionModule.isRecognitionAvailable()) {
-        setMicStatus('unavailable');
-        return 'unavailable';
+      const permission = await requestRecordingPermissionsAsync();
+      if (!permission.granted) {
+        setMicStatus('denied');
+        return 'denied';
       }
-      const result =
-        await SpeechRecognition.ExpoSpeechRecognitionModule.requestPermissionsAsync();
-      const status: MicStatus = result.granted ? 'ready' : 'denied';
-      setMicStatus(status);
-      return status;
+      // Required on iOS before the first record, and it is what lets playback
+      // of the officer's voice share the session with the microphone.
+      await setAudioModeAsync({
+        allowsRecording: true,
+        playsInSilentMode: true,
+      });
+      setMicStatus('ready');
+      return 'ready';
     } catch {
       setMicStatus('unavailable');
       return 'unavailable';
@@ -166,49 +148,73 @@ export function useInterviewVoice(
   }, []);
 
   const startListening = useCallback((bias: string[]) => {
-    if (!SpeechRecognition) return;
     // Never record the officer's own voice.
     Speech.stop();
     setSpeaking(false);
-    interimRef.current = '';
-    deliveredRef.current = false;
+    setError(null);
     setTranscript('');
-    setListening(true);
-    try {
-      SpeechRecognition.ExpoSpeechRecognitionModule.start({
-        lang: SPEECH_LANGUAGE,
-        interimResults: true,
-        continuous: false,
-        // Hard privacy requirement: nothing leaves the device.
-        requiresOnDeviceRecognition: true,
-        addsPunctuation: false,
-        contextualStrings: bias,
-        iosCategory: {
-          category: 'playAndRecord',
-          categoryOptions: ['defaultToSpeaker', 'allowBluetooth'],
-          mode: 'measurement',
-        },
-      });
-    } catch {
-      setMicStatus('unavailable');
-      deliver('');
-    }
-  }, [deliver]);
+    biasRef.current = bias;
+    void (async () => {
+      try {
+        await recorder.prepareToRecordAsync();
+        recorder.record();
+        setListening(true);
+      } catch {
+        setListening(false);
+        setError('The microphone would not start.');
+        setMicStatus('unavailable');
+      }
+    })();
+  }, [recorder]);
 
   const stopListening = useCallback(() => {
-    if (!SpeechRecognition) return;
-    try {
-      SpeechRecognition.ExpoSpeechRecognitionModule.stop();
-    } catch {
-      deliver(interimRef.current);
-    }
-  }, [deliver]);
+    const capture = (captureRef.current += 1);
+    void (async () => {
+      setListening(false);
+      let uri: string | null = null;
+      try {
+        await recorder.stop();
+        uri = recorder.uri;
+      } catch {
+        // fall through to the empty-recording path below
+      }
+
+      if (!uri) {
+        if (capture === captureRef.current) {
+          setError('Nothing was recorded.');
+          onFinalRef.current('');
+        }
+        return;
+      }
+
+      setTranscribing(true);
+      try {
+        const result = await transcribeAudio(uri, biasRef.current);
+        if (capture !== captureRef.current) return;
+        setTranscript(result.text);
+        onFinalRef.current(result.text);
+      } catch (e) {
+        if (capture !== captureRef.current) return;
+        // A failed transcription must not be graded as a wrong answer, so the
+        // screen is told nothing and shown why instead.
+        setError(
+          e instanceof GroqError
+            ? e.message
+            : 'Could not reach the transcription service.',
+        );
+      } finally {
+        if (capture === captureRef.current) setTranscribing(false);
+      }
+    })();
+  }, [recorder]);
 
   return {
     micStatus,
     listening,
+    transcribing,
     transcript,
     speaking,
+    error,
     requestMic,
     speak,
     stopSpeaking,
@@ -216,3 +222,7 @@ export function useInterviewVoice(
     stopListening,
   };
 }
+
+/** Exposed so screens can tell "no key" apart from "user said no". */
+export { isGroqConfigured };
+export type { AudioModule };
