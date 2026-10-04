@@ -1,13 +1,14 @@
 /**
  * The bundled civics question bank for the mock USCIS interview.
  *
- * Everything here is local and hardcoded - this feature works fully offline
- * and never calls the /api/* routes.
+ * Everything here is local and hardcoded. The bank itself never touches the
+ * network; the only request the interview makes is sending a spoken answer to
+ * be transcribed and graded, in src/lib/groq.ts.
  *
  * Only the CURRENT (2025) test is bundled: 128 questions, applying to N-400s
- * filed on or after 2025-10-20. Ids mirror the shared backend's official bank
- * (g###/h###/r###/s###), so a miss recorded here is a real server mistake and
- * shows up in Review Mistakes.
+ * filed on or after 2025-10-20. Ids match the study bank's
+ * (g###/h###/r###/s###), so a question missed here is the same question in
+ * Review Mistakes.
  *
  * The legacy 2008 test is deliberately NOT shipped - see README "Known gaps".
  * src/lib/interview-machine.ts still models the filing-date rule correctly, so

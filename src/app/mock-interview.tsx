@@ -71,10 +71,14 @@ import { useLang } from '@/lib/use-lang';
  * decided). This component only renders state and dispatches events - it
  * never re-implements scoring or stop rules.
  *
- * Fully offline: questions come from the bundled banks in src/data, the
- * officer speaks through on-device TTS, and answers are transcribed
- * on-device. Nothing is sent anywhere, and pronunciation is never scored -
- * matching is keyword-based (src/lib/answer-matching.ts).
+ * Questions come from the bundled banks in src/data and the officer speaks
+ * through on-device TTS, so the interview runs without a connection. Spoken
+ * answers are the exception: the recording is sent to Groq to be transcribed
+ * and graded (src/lib/groq.ts). With no key, no signal or a failed request
+ * this falls back to typed answers graded by the bundled keyword matcher
+ * (src/lib/answer-matching.ts).
+ *
+ * Pronunciation and accent are never scored, by either grader.
  */
 
 /** Fixed seed for reproducible demo recordings. Toggle is only shown in dev. */
