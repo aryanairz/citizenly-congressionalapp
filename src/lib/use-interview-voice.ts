@@ -188,6 +188,11 @@ export function useInterviewVoice(
     setError(null);
     setTranscript('');
     biasRef.current = bias;
+    // Abandon any transcription still in flight from the previous tap.
+    // Without this, a slow upload that fails after the user has already
+    // started recording again lands its error on the new attempt, so the
+    // screen reads "Listening..." and shows a failure at the same time.
+    captureRef.current += 1;
     void (async () => {
       try {
         await recorder.prepareToRecordAsync();

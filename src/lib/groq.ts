@@ -67,6 +67,26 @@ export class GroqError extends Error {
   }
 }
 
+/**
+ * A readable sentence for an error we did not anticipate.
+ *
+ * React Native throws several shapes here that are not `TypeError`: aborted
+ * native uploads, SSL refusals, and a body that will not parse. Collapsing
+ * them into one generic string made a real failure on a real phone
+ * undiagnosable, so the underlying reason is kept.
+ */
+function describeUnknown(error: unknown): string {
+  const detail =
+    error instanceof Error
+      ? error.message
+      : typeof error === 'string'
+        ? error
+        : '';
+  return detail
+    ? `The recording could not be sent (${detail}).`
+    : 'The recording could not be sent.';
+}
+
 async function withTimeout<T>(
   ms: number,
   run: (signal: AbortSignal) => Promise<T>,
@@ -84,7 +104,11 @@ async function withTimeout<T>(
     if (error instanceof TypeError) {
       throw new GroqError('No internet connection.', true);
     }
-    throw error;
+    // Anything else is still a failed request, and it must not escape as a
+    // raw error: the caller would show a generic "could not reach the
+    // service" that is wrong about what happened and impossible to debug
+    // from a phone. Carry the real reason instead.
+    throw new GroqError(describeUnknown(error), true);
   } finally {
     clearTimeout(timer);
   }
@@ -195,7 +219,14 @@ export async function transcribeAudio(
 
   if (!response.ok) throw describeHttpFailure(response.status);
 
-  const data = (await response.json()) as { text?: string; language?: string };
+  let data: { text?: string; language?: string };
+  try {
+    data = (await response.json()) as { text?: string; language?: string };
+  } catch {
+    // A 200 whose body will not parse. Reading it as "unreachable" would be a
+    // lie; the service answered, it just answered with something unusable.
+    throw new GroqError('The transcription came back unreadable.', true);
+  }
   return { text: (data.text ?? '').trim(), language: data.language ?? '' };
 }
 
