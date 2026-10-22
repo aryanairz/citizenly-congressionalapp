@@ -42,7 +42,7 @@ export const stateData: Record<string, StateData> = {
     capital: "Sacramento",
     governor: "Gavin Newsom",
     senators: ["Adam Schiff", "Alex Padilla"],
-    districts: {"1":"James Gallagher","2":"Jared Huffman","3":"Kevin Kiley","4":"Mike Thompson","5":"Tom McClintock","6":"Ami Bera","7":"Doris Matsui","8":"John Garamendi","9":"Josh Harder","10":"Mark DeSaulnier","11":"Nancy Pelosi","12":"Lateefah Simon","13":"Adam Gray","14":"Aisha Wahab","15":"Kevin Mullin","16":"Sam Liccardo","17":"Ro Khanna","18":"Zoe Lofgren","19":"Jimmy Panetta","20":"Vince Fong","21":"Jim Costa","22":"David Valadao","23":"Jay Obernolte","24":"Salud Carbajal","25":"Raul Ruiz","26":"Julia Brownley","27":"George Whitesides","28":"Judy Chu","29":"Luz Rivas","30":"Laura Friedman","31":"Gilbert Cisneros Jr.","32":"Brad Sherman","33":"Pete Aguilar","34":"Jimmy Gomez","35":"Norma Torres","36":"Ted Lieu","37":"Sydney Kamlager-Dove","38":"Linda Sánchez","39":"Mark Takano","40":"Young Kim","41":"Ken Calvert","42":"Robert Garcia","43":"Maxine Waters","44":"Nanette Barragán","45":"Derek Tran","46":"Luis Correa","47":"Dave Min","48":"Darrell Issa","49":"Mike Levin","50":"Scott Peters","51":"Sara Jacobs","52":"Juan Vargas"},
+    districts: {"1":"Doug LaMalfa","2":"Jared Huffman","3":"Kevin Kiley","4":"Mike Thompson","5":"Tom McClintock","6":"Ami Bera","7":"Doris Matsui","8":"John Garamendi","9":"Josh Harder","10":"Mark DeSaulnier","11":"Nancy Pelosi","12":"Lateefah Simon","13":"Adam Gray","14":"Eric Swalwell","15":"Kevin Mullin","16":"Sam Liccardo","17":"Ro Khanna","18":"Zoe Lofgren","19":"Jimmy Panetta","20":"Vince Fong","21":"Jim Costa","22":"David Valadao","23":"Jay Obernolte","24":"Salud Carbajal","25":"Raul Ruiz","26":"Julia Brownley","27":"George Whitesides","28":"Judy Chu","29":"Luz Rivas","30":"Laura Friedman","31":"Gilbert Cisneros Jr.","32":"Brad Sherman","33":"Pete Aguilar","34":"Jimmy Gomez","35":"Norma Torres","36":"Ted Lieu","37":"Sydney Kamlager-Dove","38":"Linda Sánchez","39":"Mark Takano","40":"Young Kim","41":"Ken Calvert","42":"Robert Garcia","43":"Maxine Waters","44":"Nanette Barragán","45":"Derek Tran","46":"Luis Correa","47":"Dave Min","48":"Darrell Issa","49":"Mike Levin","50":"Scott Peters","51":"Sara Jacobs","52":"Juan Vargas"},
   },
   CO: {
     name: "Colorado",
@@ -70,14 +70,14 @@ export const stateData: Record<string, StateData> = {
     capital: "Tallahassee",
     governor: "Ron DeSantis",
     senators: ["Ashley Moody", "Rick Scott"],
-    districts: {"1":"Jimmy Patronis Jr.","2":"Neal Dunn","3":"Kat Cammack","4":"Aaron Bean","5":"John Rutherford","6":"Randy Fine","7":"Cory Mills","8":"Mike Haridopolos","9":"Darren Soto","10":"Maxwell Frost","11":"Daniel Webster","12":"Gus Bilirakis","13":"Anna Luna","14":"Kathy Castor","15":"Laurel Lee","16":"Vern Buchanan","17":"Gregory Steube","18":"Scott Franklin","19":"Byron Donalds","20":"","21":"Brian Mast","22":"Lois Frankel","23":"Jared Moskowitz","24":"Frederica Wilson","25":"Debbie Wasserman Schultz","26":"Mario Diaz-Balart","27":"Maria Salazar","28":"Carlos Gimenez"},
+    districts: {"1":"Jimmy Patronis Jr.","2":"Neal Dunn","3":"Kat Cammack","4":"Aaron Bean","5":"John Rutherford","6":"Randy Fine","7":"Cory Mills","8":"Mike Haridopolos","9":"Darren Soto","10":"Maxwell Frost","11":"Daniel Webster","12":"Gus Bilirakis","13":"Anna Luna","14":"Kathy Castor","15":"Laurel Lee","16":"Vern Buchanan","17":"Gregory Steube","18":"Scott Franklin","19":"Byron Donalds","20":"Sheila Cherfilus-McCormick","21":"Brian Mast","22":"Lois Frankel","23":"Jared Moskowitz","24":"Frederica Wilson","25":"Debbie Wasserman Schultz","26":"Mario Diaz-Balart","27":"Maria Salazar","28":"Carlos Gimenez"},
   },
   GA: {
     name: "Georgia",
     capital: "Atlanta",
     governor: "Brian Kemp",
     senators: ["Jon Ossoff", "Raphael Warnock"],
-    districts: {"1":"Buddy Carter","2":"Sanford Bishop Jr.","3":"Brian Jack","4":"Hank Johnson Jr.","5":"Nikema Williams","6":"Lucy McBath","7":"Rich McCormick","8":"Austin Scott","9":"Andrew Clyde","10":"Mike Collins Jr.","11":"Barry Loudermilk","12":"Rick Allen","13":"Everton Blair Jr.","14":"Clay Fuller"},
+    districts: {"1":"Buddy Carter","2":"Sanford Bishop Jr.","3":"Brian Jack","4":"Hank Johnson Jr.","5":"Nikema Williams","6":"Lucy McBath","7":"Rich McCormick","8":"Austin Scott","9":"Andrew Clyde","10":"Mike Collins Jr.","11":"Barry Loudermilk","12":"Rick Allen","13":"David Scott","14":"Clay Fuller"},
   },
   HI: {
     name: "Hawaii",
@@ -286,7 +286,7 @@ export const stateData: Record<string, StateData> = {
     name: "South Carolina",
     capital: "Columbia",
     governor: "Henry McMaster",
-    senators: ["Darline Graham Nordone", "Tim Scott"],
+    senators: ["Lindsey Graham", "Tim Scott"],
     districts: {"1":"Nancy Mace","2":"Joe Wilson","3":"Sheri Biggs","4":"William Timmons","5":"Ralph Norman","6":"Jim Clyburn","7":"Russell Fry"},
   },
   SD: {
@@ -308,7 +308,7 @@ export const stateData: Record<string, StateData> = {
     capital: "Austin",
     governor: "Greg Abbott",
     senators: ["John Cornyn", "Ted Cruz"],
-    districts: {"1":"Nathaniel Moran","2":"Dan Crenshaw","3":"Keith Self","4":"Pat Fallon","5":"Lance Gooden","6":"Jake Ellzey","7":"Lizzie Fletcher","8":"Morgan Luttrell","9":"Al Green","10":"Michael McCaul","11":"August Pfluger II","12":"Craig Goldman","13":"Ronny Jackson","14":"Randy Weber Sr.","15":"Mónica De La Cruz","16":"Veronica Escobar","17":"Pete Sessions","18":"Christian Menefee","19":"Jodey Arrington","20":"Joaquin Castro","21":"Chip Roy","22":"Troy Nehls","23":"","24":"Beth Van Duyne","25":"Roger Williams","26":"Brandon Gill","27":"Michael Cloud","28":"Henry Cuellar","29":"Sylvia Garcia","30":"Jasmine Crockett","31":"John Carter","32":"Julie Johnson","33":"Marc Veasey","34":"Vicente Gonzalez","35":"Gregorio Casar","36":"Brian Babin","37":"Lloyd Doggett","38":"Wesley Hunt"},
+    districts: {"1":"Nathaniel Moran","2":"Dan Crenshaw","3":"Keith Self","4":"Pat Fallon","5":"Lance Gooden","6":"Jake Ellzey","7":"Lizzie Fletcher","8":"Morgan Luttrell","9":"Al Green","10":"Michael McCaul","11":"August Pfluger II","12":"Craig Goldman","13":"Ronny Jackson","14":"Randy Weber Sr.","15":"Mónica De La Cruz","16":"Veronica Escobar","17":"Pete Sessions","18":"Christian Menefee","19":"Jodey Arrington","20":"Joaquin Castro","21":"Chip Roy","22":"Troy Nehls","23":"Tony Gonzales","24":"Beth Van Duyne","25":"Roger Williams","26":"Brandon Gill","27":"Michael Cloud","28":"Henry Cuellar","29":"Sylvia Garcia","30":"Jasmine Crockett","31":"John Carter","32":"Julie Johnson","33":"Marc Veasey","34":"Vicente Gonzalez","35":"Gregorio Casar","36":"Brian Babin","37":"Lloyd Doggett","38":"Wesley Hunt"},
   },
   UT: {
     name: "Utah",
