@@ -6,6 +6,15 @@
 
 import { GroqError, parseGrade } from '@/lib/groq';
 
+// groq.ts imports expo-file-system for the native multipart upload, which is
+// an ES module built for a device runtime and cannot be parsed by the plain
+// ts-jest setup this project uses. These tests only exercise pure functions,
+// so the module is stubbed rather than pulling a React Native preset in.
+jest.mock('expo-file-system', () => ({
+  File: class {},
+  UploadType: { BINARY_CONTENT: 0, MULTIPART: 1 },
+}));
+
 const ANSWERS = ['(the) Constitution', 'the supreme law of the land'];
 
 describe('parseGrade', () => {

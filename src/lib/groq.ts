@@ -20,6 +20,8 @@
  * trade, not an oversight; see README "Voice input and grading".
  */
 
+import { File, UploadType } from 'expo-file-system';
+
 /** Groq's fast multilingual speech model. */
 const TRANSCRIBE_MODEL = 'whisper-large-v3-turbo';
 /**
@@ -175,8 +177,8 @@ export async function transcribeAudio(
     throw new GroqError('No transcription key is configured.', false);
   }
 
-  // Name the part after the real file. Whisper decides how to decode from the
-  // extension, so calling a .caf an .m4a is a decode failure waiting to
+  // Name the part after the real file. Whisper picks its decoder from the
+  // extension, so calling a .3gp an .m4a is a decode failure waiting to
   // happen. audio/mp4 is the registered type for .m4a; "audio/m4a" is not a
   // real MIME type and some servers will not parse the part at all.
   const extension = uri.split('.').pop()?.toLowerCase() ?? 'm4a';
@@ -188,42 +190,54 @@ export async function transcribeAudio(
     '3gp': 'audio/3gpp',
     webm: 'audio/webm',
   };
+  const mimeType = mimeByExtension[extension] ?? 'audio/mp4';
 
-  const form = new FormData();
-  // React Native's FormData takes this shape for a local file; it is not the
-  // web File object and TypeScript's DOM types do not describe it.
-  form.append('file', {
-    uri,
-    name: `answer.${extension}`,
-    type: mimeByExtension[extension] ?? 'audio/mp4',
-  } as unknown as Blob);
-  form.append('model', TRANSCRIBE_MODEL);
-  form.append('response_format', 'verbose_json');
-  form.append('temperature', '0');
+  const parameters: Record<string, string> = {
+    model: TRANSCRIBE_MODEL,
+    response_format: 'verbose_json',
+    temperature: '0',
+  };
   if (bias.length > 0) {
     // Whisper's prompt is capped, and a truncated list is still useful, so
     // take what fits rather than dropping the lever entirely.
-    form.append('prompt', bias.join(', ').slice(0, 800));
+    parameters.prompt = bias.join(', ').slice(0, 800);
   }
 
+  // Uploaded natively rather than through fetch + FormData.
+  //
+  // Expo SDK 57 replaced React Native's fetch with a spec-compliant one, and
+  // it rejects React Native's proprietary { uri, name, type } file part with
+  // "Unsupported FormDataPart implementation". Its own source says so: "uri
+  // is not supported for React Native's FormData". There is no global File to
+  // build a real part from either, so the whole FormData route is a dead end
+  // on this SDK.
+  //
+  // File.upload builds the multipart body in native code instead. It also
+  // never holds the recording in JavaScript, which matters because a spoken
+  // answer is megabytes.
   const response = await withOneRetry(() =>
     withTimeout(TRANSCRIBE_TIMEOUT_MS, (signal) =>
-      fetch(TRANSCRIBE_URL, {
-        method: 'POST',
+      new File(uri).upload(TRANSCRIBE_URL, {
+        httpMethod: 'POST',
+        uploadType: UploadType.MULTIPART,
+        fieldName: 'file',
+        mimeType,
         headers: { Authorization: `Bearer ${API_KEY}` },
-        body: form,
+        parameters,
         signal,
       }),
     ),
   );
 
-  if (!response.ok) throw describeHttpFailure(response.status);
+  if (response.status < 200 || response.status >= 300) {
+    throw describeHttpFailure(response.status);
+  }
 
   let data: { text?: string; language?: string };
   try {
-    data = (await response.json()) as { text?: string; language?: string };
+    data = JSON.parse(response.body) as { text?: string; language?: string };
   } catch {
-    // A 200 whose body will not parse. Reading it as "unreachable" would be a
+    // A 2xx whose body will not parse. Reading it as "unreachable" would be a
     // lie; the service answered, it just answered with something unusable.
     throw new GroqError('The transcription came back unreadable.', true);
   }
