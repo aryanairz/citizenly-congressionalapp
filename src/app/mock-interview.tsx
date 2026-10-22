@@ -279,6 +279,9 @@ export default function MockInterviewScreen() {
 
   const speechKey = speech?.key;
   useEffect(() => {
+    // A new moment means the previous answer is history. Without this the
+    // transcript from the last question sits under the next one's microphone.
+    voice.clearTranscript();
     if (speech && !voice.listening) voice.speak(speech.text);
     // Speak once per moment - not on every re-render of the same moment.
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -1394,10 +1397,13 @@ const styles = StyleSheet.create({
     paddingTop: Spacing.md,
     paddingBottom: Spacing.xl,
   },
+  // One gap between the phase's own action and the "Say that again" footer
+  // below it. The children used to add their own paddingBottom on top of
+  // this one, which stacked into a different, larger gap in every phase.
   phaseBody: {
     flex: 1,
     paddingTop: Spacing.md,
-    paddingBottom: Spacing.lg,
+    paddingBottom: Spacing.md,
     justifyContent: 'space-between',
   },
   questionBlock: {
@@ -1408,11 +1414,11 @@ const styles = StyleSheet.create({
     textTransform: 'uppercase',
   },
   actionArea: {
-    paddingBottom: Spacing.md,
+    paddingBottom: 0,
   },
   actionStack: {
     gap: Spacing.md,
-    paddingBottom: Spacing.md,
+    paddingBottom: 0,
   },
   linkRow: {
     minHeight: 44,
@@ -1422,7 +1428,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     gap: Spacing.md,
     alignSelf: 'stretch',
-    paddingBottom: Spacing.md,
+    paddingBottom: 0,
   },
   micWrap: {
     width: 96,

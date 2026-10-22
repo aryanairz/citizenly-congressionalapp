@@ -95,6 +95,11 @@ export interface InterviewVoice {
   speak: (text: string, onDone?: () => void) => void;
   stopSpeaking: () => void;
   /**
+   * Forget the last transcript. Call it when the moment changes, so an answer
+   * to the previous question cannot sit under the next one.
+   */
+  clearTranscript: () => void;
+  /**
    * Start capturing one answer. `bias` phrases are handed to Whisper as
    * vocabulary context, which is what keeps proper nouns intact in accented
    * speech.
@@ -181,6 +186,11 @@ export function useInterviewVoice(
     setSpeaking(false);
   }, []);
 
+  const clearTranscript = useCallback(() => {
+    setTranscript('');
+    setError(null);
+  }, []);
+
   const startListening = useCallback((bias: string[]) => {
     // Never record the officer's own voice.
     Speech.stop();
@@ -257,6 +267,7 @@ export function useInterviewVoice(
     requestMic,
     speak,
     stopSpeaking,
+    clearTranscript,
     startListening,
     stopListening,
   };
