@@ -119,6 +119,21 @@ export function civicsConfig(routing: Routing): CivicsConfig {
 // State
 // ---------------------------------------------------------------------------
 
+/**
+ * Whether the written-English portion runs.
+ *
+ * Temporarily off. The real interview does test writing, so this is a
+ * deliberate omission rather than a correction: flip it back to `true` and
+ * the phase returns with no other edits. Everything the writing phase needs
+ * is still here, including the WRITING_ATTEMPT handler and the sentences in
+ * src/data/english-test.ts.
+ *
+ * While it is off, writing is treated the way an exemption is treated: it
+ * cannot be failed, and it cannot send anyone to a retake. Leaving it as a
+ * requirement with no way to satisfy it would fail every applicant.
+ */
+export const WRITING_TEST_ENABLED = false;
+
 export type Phase =
   | "idle"
   | "oath" // right hand raised, sworn in
@@ -328,7 +343,11 @@ export function reduce(
       const reading = { attempts, passed };
       return passed === null
         ? { ...state, reading }
-        : { ...state, reading, phase: "writing" };
+        : {
+            ...state,
+            reading,
+            phase: WRITING_TEST_ENABLED ? "writing" : "civics",
+          };
     }
 
     case "WRITING_ATTEMPT": {
@@ -386,7 +405,7 @@ function finalize(state: InterviewState): InterviewState {
   const englishOk = state.routing.englishExempt
     ? true
     : state.reading.passed === true &&
-      state.writing.passed === true &&
+      (!WRITING_TEST_ENABLED || state.writing.passed === true) &&
       state.speakingUnderstood === true;
 
   const outcome: Outcome =
@@ -443,7 +462,7 @@ export function retakePortions(
   const englishFailed =
     !state.routing.englishExempt &&
     (state.reading.passed === false ||
-      state.writing.passed === false ||
+      (WRITING_TEST_ENABLED && state.writing.passed === false) ||
       state.speakingUnderstood === false);
   if (englishFailed) portions.push("english");
   if (state.civics.outcome === "failed") portions.push("civics");

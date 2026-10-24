@@ -9,6 +9,7 @@ import {
   retakePortions,
   summarize,
   TEST_2025_CUTOFF,
+  WRITING_TEST_ENABLED,
   type ApplicantProfile,
   type InterviewState,
   type QuestionPools,
@@ -36,7 +37,10 @@ function toCivics(state: InterviewState): InterviewState {
   s = reduce(s, { type: 'ELIGIBILITY_COMPLETE', understood: true });
   if (!s.routing.englishExempt) {
     s = reduce(s, { type: 'READING_ATTEMPT', passed: true });
-    s = reduce(s, { type: 'WRITING_ATTEMPT', passed: true });
+    // Reading hands straight to civics while writing is switched off, so the
+    // dispatch below would be swallowed by the phase guard rather than doing
+    // nothing on purpose. Say which it is.
+    if (WRITING_TEST_ENABLED) s = reduce(s, { type: 'WRITING_ATTEMPT', passed: true });
   }
   expect(s.phase).toBe('civics');
   return s;
@@ -137,7 +141,12 @@ describe('2008 track stop rules', () => {
 });
 
 describe('English portions', () => {
-  it('reading and writing are one-of-three, passed on first success', () => {
+  // What follows reading depends on whether the written-English portion is
+  // switched on. Asserting against the flag rather than a literal means
+  // turning writing back on does not take this suite down with it.
+  const AFTER_READING = WRITING_TEST_ENABLED ? 'writing' : 'civics';
+
+  it('reading is one-of-three, passed on first success', () => {
     let s = reduce(createInterview(profile(), pools, 6), { type: 'BEGIN' });
     s = reduce(s, { type: 'SWORN_IN' });
     s = reduce(s, { type: 'ELIGIBILITY_COMPLETE', understood: true });
@@ -145,7 +154,7 @@ describe('English portions', () => {
     s = reduce(s, { type: 'READING_ATTEMPT', passed: false });
     expect(s.phase).toBe('reading');
     s = reduce(s, { type: 'READING_ATTEMPT', passed: true });
-    expect(s.phase).toBe('writing');
+    expect(s.phase).toBe(AFTER_READING);
     expect(s.reading).toEqual({ attempts: 2, passed: true });
   });
 
@@ -155,8 +164,8 @@ describe('English portions', () => {
     s = reduce(s, { type: 'ELIGIBILITY_COMPLETE', understood: true });
     for (let i = 0; i < 3; i += 1) s = reduce(s, { type: 'READING_ATTEMPT', passed: false });
     expect(s.reading.passed).toBe(false);
-    expect(s.phase).toBe('writing');
-    s = reduce(s, { type: 'WRITING_ATTEMPT', passed: true });
+    expect(s.phase).toBe(AFTER_READING);
+    if (WRITING_TEST_ENABLED) s = reduce(s, { type: 'WRITING_ATTEMPT', passed: true });
     // Civics still passes on its own, but the overall outcome is failed and
     // only English is retaken.
     for (let i = 0; i < 12; i += 1) s = reduce(s, { type: 'CIVICS_ANSWER', correct: true });

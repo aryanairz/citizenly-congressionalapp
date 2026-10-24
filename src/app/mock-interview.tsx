@@ -51,6 +51,7 @@ import {
   determineRouting,
   reduce,
   summarize,
+  WRITING_TEST_ENABLED,
   type ApplicantProfile,
   type InterviewEvent,
   type InterviewState,
@@ -70,6 +71,12 @@ import { useLang } from '@/lib/use-lang';
  * civics → result, with the officer stopping the moment the outcome is
  * decided). This component only renders state and dispatches events - it
  * never re-implements scoring or stop rules.
+ *
+ * The writing phase is switched off for now by WRITING_TEST_ENABLED in that
+ * reducer. Its UI below is still here and still correct; the machine simply
+ * hands off from reading straight to civics. The copy that promises a
+ * writing test and the result line that reports one both read the flag, so
+ * neither announces a test that did not run.
  *
  * Questions come from the bundled banks in src/data and the officer speaks
  * through on-device TTS, so the interview runs without a connection. Spoken
@@ -694,7 +701,11 @@ function ConfirmStage({
       ) : (
         <Card>
           <Speakable
-            text="The officer will also check reading, writing, and that you can understand spoken English."
+            text={
+              WRITING_TEST_ENABLED
+                ? 'The officer will also check reading, writing, and that you can understand spoken English.'
+                : 'The officer will also check reading and that you can understand spoken English.'
+            }
             speak={speak}
             variant="bodyLg"
             color="ink"
@@ -1114,7 +1125,9 @@ function ResultPhase({
       ) : (
         <Card>
           <Speakable
-            text={`Reading: ${portionLabel(summary.reading)}. Writing: ${portionLabel(summary.writing)}. Spoken English: ${
+            text={`Reading: ${portionLabel(summary.reading)}.${
+              WRITING_TEST_ENABLED ? ` Writing: ${portionLabel(summary.writing)}.` : ''
+            } Spoken English: ${
               summary.speakingUnderstood === false ? 'needs practice' : 'understood'
             }.`}
             speak={speak}
