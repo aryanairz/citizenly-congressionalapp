@@ -212,7 +212,7 @@ one thing to change first if this ever ships beyond a demo.
 
 | Layer      | Choice                                                       |
 |------------|--------------------------------------------------------------|
-| Framework  | Expo SDK 57 (iOS Expo Go only ships the newest SDK) · React 19.2 · RN 0.86 |
+| Framework  | Expo SDK 58 (iOS Expo Go only ships the newest SDK) · React 19.3 · RN 0.88 |
 | Routing    | expo-router v6, typed routes                                  |
 | Styling    | StyleSheet + shared design tokens (`src/constants/design-tokens.js` → typed constants in `src/constants/design.ts`), incl. depth and a size-specific type scale |
 | Motion     | Reanimated 4 springs from `src/constants/motion.ts`, described by damping ratio + response; reduced-motion handled in the presets |

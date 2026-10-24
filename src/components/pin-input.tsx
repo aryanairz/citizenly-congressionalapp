@@ -1,9 +1,8 @@
-import { useRef, useState } from 'react';
+import { useRef, useState, type ComponentRef } from 'react';
 import {
-  type NativeSyntheticEvent,
   StyleSheet,
   TextInput,
-  type TextInputKeyPressEventData,
+  type TextInputKeyPressEvent,
   View,
 } from 'react-native';
 
@@ -26,7 +25,7 @@ export interface PinInputProps {
  * is a low-stakes PIN and visible entry is easier for older users).
  */
 export function PinInput({ length = 5, onChange, error }: PinInputProps) {
-  const refs = useRef<(TextInput | null)[]>([]);
+  const refs = useRef<(ComponentRef<typeof TextInput> | null)[]>([]);
   const [digits, setDigits] = useState<string[]>(() => Array(length).fill(''));
   const [focusedIndex, setFocusedIndex] = useState<number | null>(null);
 
@@ -47,10 +46,7 @@ export function PinInput({ length = 5, onChange, error }: PinInputProps) {
     }
   };
 
-  const handleKeyPress = (
-    index: number,
-    event: NativeSyntheticEvent<TextInputKeyPressEventData>,
-  ) => {
+  const handleKeyPress = (index: number, event: TextInputKeyPressEvent) => {
     if (event.nativeEvent.key === 'Backspace' && !digits[index] && index > 0) {
       const next = [...digits];
       next[index - 1] = '';

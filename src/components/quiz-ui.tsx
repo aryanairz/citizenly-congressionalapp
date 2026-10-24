@@ -5,7 +5,7 @@
  */
 
 import { MaterialIcons } from '@expo/vector-icons';
-import { useCallback, useRef } from 'react';
+import { useCallback, useRef, type ComponentRef } from 'react';
 import {
   type NativeScrollEvent,
   type NativeSyntheticEvent,
@@ -68,12 +68,12 @@ const REVEAL_MARGIN = Spacing.sm;
  * made this screen feel unsettled before.
  */
 export function useGradedOptionReveal() {
-  const scrollRef = useRef<ScrollView>(null);
+  const scrollRef = useRef<ComponentRef<typeof ScrollView>>(null);
   // ScrollView does not expose measureInWindow, so the viewport is measured
   // through a plain View wrapped around it.
-  const viewportRef = useRef<View>(null);
+  const viewportRef = useRef<ComponentRef<typeof View>>(null);
   const scrollY = useRef(0);
-  const cardRefs = useRef<Record<number, View | null>>({});
+  const cardRefs = useRef<Record<number, ComponentRef<typeof View> | null>>({});
   const pending = useRef<number | null>(null);
 
   /** Call when the answer is graded, with the correct card's display index. */
@@ -115,7 +115,7 @@ export function useGradedOptionReveal() {
 
   /** Ref callback for the wrapper around each option card. */
   const registerCard = useCallback(
-    (displayIndex: number) => (node: View | null) => {
+    (displayIndex: number) => (node: ComponentRef<typeof View> | null) => {
       cardRefs.current[displayIndex] = node;
     },
     [],

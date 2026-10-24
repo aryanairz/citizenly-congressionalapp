@@ -1,11 +1,26 @@
 # Expo HAS CHANGED
 
-Read the exact versioned docs at https://docs.expo.dev/versions/v57.0.0/ before writing any code.
-This project tracks Expo SDK 57 (`expo: ^57.0.0` in package.json) because iOS
+Read the exact versioned docs at https://docs.expo.dev/versions/v58.0.0/ before writing any code.
+This project tracks Expo SDK 58 (`expo: ^58.0.19` in package.json) because iOS
 Expo Go only ever ships the newest SDK, so an older pin cannot be opened on an
-iPhone at all. Do not write against newer SDK APIs.
+iPhone at all. That is also why the SDK gets bumped promptly rather than when
+convenient: once Expo Go updates itself, a bundle on the previous SDK stops
+opening. Do not write against newer SDK APIs.
 
-Two things that moved in the 54 to 57 jump and will bite again:
+Things that moved in the 57 to 58 jump:
+
+- React Native 0.88 changed what a host ref is. A `View` ref is a
+  `ReactNativeElement`, a `ScrollView` ref is a `ScrollViewInstance`, and a
+  `TextInput` ref is a `TextInputInstance`; none of them is the component
+  class any more. Type refs as `ComponentRef<typeof View>` rather than
+  `View`, which asks the component for its own ref type and survives the next
+  rename.
+- `TextInputKeyPressEventData` is gone. Use `TextInputKeyPressEvent`, which is
+  already wrapped, so it replaces the whole
+  `NativeSyntheticEvent<TextInputKeyPressEventData>` and not just the inner
+  type.
+
+Things that moved in the 54 to 57 jump and will bite again:
 
 - `StyleSheet.absoluteFillObject` no longer exists in React Native 0.86. Use
   `AbsoluteFill` from `src/constants/design.ts`. The old property is now
